@@ -1,0 +1,113 @@
+<div class="p-8">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Documents</h1>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-wrap gap-3 items-end">
+    <div class="flex-1 min-w-48">
+      <label class="block text-xs font-medium text-gray-500 mb-1">Recherche</label>
+      <div class="relative">
+        <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></svg>
+        <input [(ngModel)]="searchQuery" type="text" placeholder="Nom, référence, contenu OCR..."
+          class="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+    </div>
+    <div class="min-w-48">
+      <label class="block text-xs font-medium text-gray-500 mb-1">Type</label>
+      <select [(ngModel)]="selectedType"
+        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option value="">Tous les types</option>
+        <option *ngFor="let t of docTypes" [value]="t">{{ docTypeLabels[t] }}</option>
+      </select>
+    </div>
+    <button (click)="search()"
+      class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+      Rechercher
+    </button>
+    <button (click)="clear()"
+      class="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+      Effacer
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div *ngIf="loading()" class="p-8 text-center text-gray-400 text-sm">Chargement...</div>
+    <div *ngIf="!loading() && documents().length === 0" class="p-8 text-center text-gray-400 text-sm">
+      Aucun document trouvé.
+    </div>
+    <table *ngIf="!loading() && documents().length > 0" class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-100">
+        <tr>
+          <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Document</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Référence</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Version</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
+          <th class="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-50">
+        <tr *ngFor="let doc of documents()" class="hover:bg-gray-50 transition-colors">
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
+                <svg lucideFileText class="w-4 h-4 text-blue-500"></svg>
+              </div>
+              <div>
+                <p class="font-medium text-gray-900">{{ doc.name }}</p>
+                <p class="text-xs text-gray-400">{{ doc.author }}</p>
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3">
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+              {{ docTypeLabels[doc.type] }}
+            </span>
+          </td>
+          <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ doc.documentReference }}</td>
+          <td class="px-4 py-3 text-gray-600">v{{ doc.currentVersion }}</td>
+          <td class="px-4 py-3 text-gray-500">{{ doc.createdAt | date:'dd/MM/yyyy' }}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center justify-end gap-1">
+              <button (click)="openVersions(doc)" title="Versions"
+                class="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors">
+                <svg lucideHistory class="w-4 h-4"></svg>
+              </button>
+              <button (click)="download(doc)" title="Télécharger"
+                class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors">
+                <svg lucideDownload class="w-4 h-4"></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Versions Modal -->
+<div *ngIf="showVersions()" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+    <div class="flex items-center justify-between p-5 border-b border-gray-100">
+      <h2 class="font-semibold text-gray-900">Versions — {{ selectedDoc()?.name }}</h2>
+      <button (click)="showVersions.set(false)" class="text-gray-400 hover:text-gray-600">
+        <svg lucideX class="w-5 h-5"></svg>
+      </button>
+    </div>
+    <div class="divide-y divide-gray-50 max-h-64 overflow-y-auto">
+      <div *ngFor="let v of versions()" class="p-4 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-900">Version {{ v.versionNumber }}</p>
+          <p class="text-xs text-gray-400">{{ v.createdAt | date:'dd/MM/yyyy HH:mm' }} · {{ v.uploadedBy }}</p>
+        </div>
+        <button (click)="downloadVersion(v)"
+          class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors">
+          <svg lucideDownload class="w-4 h-4"></svg>
+        </button>
+      </div>
+      <div *ngIf="versions().length === 0" class="p-6 text-center text-gray-400 text-sm">Aucune version.</div>
+    </div>
+  </div>
+</div>

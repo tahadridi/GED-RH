@@ -1,0 +1,13 @@
+package GED.ged_backend.domain.enums;
+
+public enum DocumentType {
+	PERSONAL_FILE,
+	EMPLOYMENT_CONTRACT,
+	PAYSLIP,
+	LEAVE_REQUEST,
+	EVALUATION,
+	TRAINING,
+	ADMINISTRATIVE,
+	DISCIPLINARY,
+	OTHER
+}

@@ -1,0 +1,145 @@
+<div class="p-8">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Tableau de Bord RH</h1>
+    <p class="text-sm text-gray-500 mt-1">Bienvenue, {{ userName }}</p>
+  </div>
+
+  <!-- Responsibilities badges -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Vos responsabilités</h2>
+    <div class="flex flex-wrap gap-2">
+      <span *ngFor="let r of responsibilities()"
+        class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+        {{ docTypeLabels[r] }}
+      </span>
+      <span *ngIf="responsibilities().length === 0" class="text-gray-400 text-sm">
+        Aucune responsabilité assignée. Contactez l'administrateur.
+      </span>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8" *ngIf="responsibilities().length > 0">
+    <button (click)="openUpload()"
+      class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow text-left group">
+      <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-3 group-hover:bg-blue-200 transition-colors">
+        <svg lucideUpload class="w-6 h-6 text-blue-600"></svg>
+      </div>
+      <h3 class="font-semibold text-gray-900">Ajouter un document</h3>
+      <p class="text-sm text-gray-500 mt-1">Upload + analyse OCR + révision avant enregistrement</p>
+    </button>
+
+    <a routerLink="/documents"
+      class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow text-left group block">
+      <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-3 group-hover:bg-green-200 transition-colors">
+        <svg lucideFileText class="w-6 h-6 text-green-600"></svg>
+      </div>
+      <h3 class="font-semibold text-gray-900">Consulter les documents</h3>
+      <p class="text-sm text-gray-500 mt-1">Voir et rechercher dans vos documents</p>
+    </a>
+  </div>
+
+  <!-- Employees list -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="p-4 border-b border-gray-100">
+      <h2 class="font-semibold text-gray-800">Employés ({{ employees().length }})</h2>
+    </div>
+    <div *ngIf="loading()" class="p-8 text-center text-gray-400 text-sm">Chargement...</div>
+    <div class="divide-y divide-gray-50">
+      <div *ngFor="let emp of employees()" class="p-4 flex items-center justify-between hover:bg-gray-50">
+        <div>
+          <p class="text-sm font-medium text-gray-900">{{ emp.firstName }} {{ emp.lastName }}</p>
+          <p class="text-xs text-gray-400">{{ emp.matricule }} · {{ emp.department }}</p>
+        </div>
+        <a [routerLink]="['/employees', emp.id]"
+          class="text-xs text-blue-600 hover:underline font-medium">Voir dossier</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Upload Modal -->
+<div *ngIf="showUpload()" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
+    <div class="flex items-center justify-between p-5 border-b border-gray-100">
+      <div>
+        <h2 class="text-lg font-semibold text-gray-900">Ajouter un document</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Étape {{ uploadStep() }} / 2</p>
+      </div>
+      <button (click)="showUpload.set(false)" class="text-gray-400 hover:text-gray-600">
+        <svg lucideX class="w-5 h-5"></svg>
+      </button>
+    </div>
+
+    <!-- Step 1 -->
+    <div *ngIf="uploadStep() === 1" class="p-5 space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Employé concerné *</label>
+        <select [(ngModel)]="selectedEmployee"
+          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">Sélectionner un employé</option>
+          <option *ngFor="let emp of employees()" [value]="emp.id">
+            {{ emp.firstName }} {{ emp.lastName }} — {{ emp.matricule }}
+          </option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Type de document *</label>
+        <select [(ngModel)]="uploadType"
+          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option *ngFor="let r of responsibilities()" [value]="r">{{ docTypeLabels[r] }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Fichier * (PDF, JPG, PNG)</label>
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="onFileSelected($event)"
+          class="w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-600 file:text-sm file:font-medium hover:file:bg-blue-100 cursor-pointer">
+        <p *ngIf="uploadFile" class="text-xs text-green-600 mt-1">✓ {{ uploadFile.name }}</p>
+      </div>
+      <div *ngIf="ocrError()" class="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{{ ocrError() }}</div>
+      <div class="flex justify-end gap-3 pt-2">
+        <button (click)="showUpload.set(false)" class="px-4 py-2 text-sm text-gray-600">Annuler</button>
+        <button (click)="analyzeOcr()" [disabled]="!uploadFile || !selectedEmployee || analyzingOcr()"
+          class="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium">
+          <svg lucideScanText class="w-4 h-4"></svg>
+          {{ analyzingOcr() ? 'Analyse...' : 'Analyser avec OCR' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div *ngIf="uploadStep() === 2" class="p-5 space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Nom du document *</label>
+        <input [(ngModel)]="uploadName" type="text"
+          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Référence</label>
+        <input [(ngModel)]="uploadRef" type="text" placeholder="Auto-générée si vide"
+          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">
+          Texte OCR extrait
+          <span class="text-gray-400 font-normal ml-1">(corrigez si nécessaire)</span>
+        </label>
+        <textarea [(ngModel)]="uploadOcrText" rows="5"
+          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono resize-y"
+          placeholder="Aucun texte extrait"></textarea>
+      </div>
+      <div *ngIf="saveError()" class="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{{ saveError() }}</div>
+      <div class="flex justify-between gap-3 pt-2">
+        <button (click)="uploadStep.set(1)" class="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg">← Retour</button>
+        <div class="flex gap-3">
+          <button (click)="showUpload.set(false)" class="px-4 py-2 text-sm text-gray-600">Annuler</button>
+          <button (click)="saveDocument()" [disabled]="!uploadName || saving()"
+            class="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium">
+            <svg lucideCheck class="w-4 h-4"></svg>
+            {{ saving() ? 'Enregistrement...' : 'Enregistrer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

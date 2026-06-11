@@ -1,0 +1,55 @@
+<div class="p-8">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Tableau de Bord — Direction Générale</h1>
+    <p class="text-sm text-gray-500 mt-1">Bienvenue, {{ userName }} — accès lecture seule</p>
+    <div class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium">
+      <svg lucideEye class="w-3.5 h-3.5"></svg>
+      Mode lecture seule — aucune modification autorisée
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+      <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+        <svg lucideUsers class="w-6 h-6 text-blue-600"></svg>
+      </div>
+      <div>
+        <p class="text-sm text-gray-500">Total Employés</p>
+        <p class="text-3xl font-bold text-gray-900">{{ totalEmployees() }}</p>
+      </div>
+    </div>
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+      <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+        <svg lucideFileText class="w-6 h-6 text-green-600"></svg>
+      </div>
+      <div>
+        <p class="text-sm text-gray-500">Total Documents</p>
+        <p class="text-3xl font-bold text-gray-900">{{ totalDocuments() }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <a routerLink="/employees"
+      class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow block">
+      <div class="flex items-center gap-3">
+        <svg lucideUsers class="w-5 h-5 text-blue-500"></svg>
+        <span class="font-medium text-gray-800">Consulter les dossiers employés</span>
+      </div>
+    </a>
+    <a routerLink="/documents"
+      class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow block">
+      <div class="flex items-center gap-3">
+        <svg lucideFileText class="w-5 h-5 text-green-500"></svg>
+        <span class="font-medium text-gray-800">Consulter tous les documents</span>
+      </div>
+    </a>
+    <a routerLink="/search"
+      class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow block md:col-span-2">
+      <div class="flex items-center gap-3">
+        <svg lucideEye class="w-5 h-5 text-purple-500"></svg>
+        <span class="font-medium text-gray-800">Recherche avancée</span>
+      </div>
+    </a>
+  </div>
+</div>

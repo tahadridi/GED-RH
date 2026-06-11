@@ -1,0 +1,150 @@
+<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+    <div class="flex items-center justify-between p-5 border-b border-gray-100">
+      <h2 class="text-lg font-semibold text-gray-900">
+        {{ isEdit ? 'Modifier l\'employé' : 'Nouvel employé' }}
+      </h2>
+      <button (click)="cancel()" class="text-gray-400 hover:text-gray-600 transition-colors">
+        <svg lucideX class="w-5 h-5"></svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="save()" class="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+      <!-- Name -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Prénom *</label>
+          <input [(ngModel)]="form.firstName" name="firstName" required
+            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Nom *</label>
+          <input [(ngModel)]="form.lastName" name="lastName" required
+            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+      </div>
+
+      <!-- Email + Phone -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Email *</label>
+          <input [(ngModel)]="form.email" name="email" type="email" required
+            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Téléphone</label>
+          <input [(ngModel)]="form.phoneNumber" name="phoneNumber" type="tel"
+            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+      </div>
+
+      <!-- Address -->
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Adresse</label>
+        <input [(ngModel)]="form.address" name="address" type="text"
+          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+
+      <!-- Department + Position -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Département</label>
+          <select [(ngModel)]="form.department" name="department" (change)="onDepartmentChange()"
+            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Sélectionner</option>
+            <option *ngFor="let d of departments()" [value]="d.name">{{ d.name }}</option>
+          </select>
+          <p *ngIf="departments().length === 0" class="text-[10px] text-amber-600 mt-1">
+            Aucun département configuré.
+          </p>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Poste</label>
+          <select [(ngModel)]="form.position" name="position"
+            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Sélectionner</option>
+            <option *ngFor="let p of filteredPositions()" [value]="p">{{ p }}</option>
+            <option *ngIf="form.position && !filteredPositions().includes(form.position)" [value]="form.position">{{ form.position }}</option>
+          </select>
+          <p *ngIf="form.department && filteredPositions().length === 0" class="text-[10px] text-amber-600 mt-1">
+            Aucun poste défini pour ce département.
+          </p>
+        </div>
+      </div>
+
+      <!-- Hire Date + Status -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Date d'embauche</label>
+          <input [(ngModel)]="form.hireDate" name="hireDate" type="date"
+            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Statut</label>
+          <select [(ngModel)]="form.status" name="status"
+            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option *ngFor="let s of statuses" [value]="s">{{ statusLabels[s] }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Manager selection (Refined Style) -->
+      <div class="space-y-3 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100">
+        <label class="block text-xs font-bold text-indigo-800 uppercase tracking-wider">Manager de cet employé</label>
+        
+        <div class="relative">
+          <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-indigo-400"></svg>
+          <input [(ngModel)]="managerSearchQuery" type="text" name="managerSearch" placeholder="Chercher un manager..."
+            class="w-full pl-9 pr-3 py-1.5 bg-white border border-indigo-100 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+        </div>
+
+        <div class="space-y-1 max-h-40 overflow-y-auto pr-2">
+          <div (click)="form.managerId = null"
+            class="flex items-center gap-3 p-2 rounded-lg hover:bg-white border border-transparent cursor-pointer transition-all group"
+            [class.bg-white]="form.managerId === null"
+            [class.border-indigo-100]="form.managerId === null">
+            <div class="w-4 h-4 border rounded-full flex items-center justify-center transition-colors"
+              [class.bg-indigo-600]="form.managerId === null"
+              [class.border-indigo-600]="form.managerId === null"
+              [class.border-gray-300]="form.managerId !== null">
+              <div class="w-1.5 h-1.5 bg-white rounded-full" *ngIf="form.managerId === null"></div>
+            </div>
+            <span class="text-xs font-medium text-gray-500">Aucun manager</span>
+          </div>
+
+          <div *ngFor="let m of filteredManagers" (click)="form.managerId = m.id"
+            class="flex items-center gap-3 p-2 rounded-lg hover:bg-white border border-transparent cursor-pointer transition-all group"
+            [class.bg-white]="form.managerId === m.id"
+            [class.border-indigo-100]="form.managerId === m.id">
+            <div class="w-4 h-4 border rounded-full flex items-center justify-center transition-colors"
+              [class.bg-indigo-600]="form.managerId === m.id"
+              [class.border-indigo-600]="form.managerId === m.id"
+              [class.border-gray-300]="form.managerId !== m.id">
+              <div class="w-1.5 h-1.5 bg-white rounded-full" *ngIf="form.managerId === m.id"></div>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <p class="text-xs font-medium text-gray-900">{{ m.firstName }} {{ m.lastName }}</p>
+                <span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-indigo-100 text-indigo-700 uppercase">Manager</span>
+              </div>
+              <p class="text-[10px] text-gray-400">{{ m.email }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="error" class="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{{ error }}</div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button type="button" (click)="cancel()"
+          class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors">
+          Annuler
+        </button>
+        <button type="submit" [disabled]="saving"
+          class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium">
+          {{ saving ? 'Enregistrement...' : (isEdit ? 'Enregistrer' : 'Créer') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

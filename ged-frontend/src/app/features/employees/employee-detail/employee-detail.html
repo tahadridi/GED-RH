@@ -1,0 +1,224 @@
+<div class="p-8" *ngIf="!loading()">
+  <!-- Header -->
+  <div class="flex items-center gap-4 mb-6">
+    <a routerLink="/employees"
+      class="p-2 text-gray-400 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors">
+      <svg lucideArrowLeft class="w-5 h-5"></svg>
+    </a>
+    <div class="flex-1">
+      <h1 class="text-2xl font-bold text-black-900">
+        {{ employee()?.firstName }} {{ employee()?.lastName }}
+      </h1>
+      <p class="text-sm text-gray-500">Matricule : {{ employee()?.matricule }}</p>
+    </div>
+    <button (click)="showEditForm.set(true)"
+      class="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+      <svg lucidePencil class="w-4 h-4"></svg>
+      Modifier
+    </button>
+    <button (click)="openUploadModal()"
+      class="flex items-center gap-2 px-4 py-2 bg-blue-800 text-white rounded-lg text-sm font-medium hover:bg-blue-900 transition-colors">
+      <svg lucideUpload class="w-4 h-4"></svg>
+      Ajouter un document
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Info Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+      <h2 class="font-semibold text-gray-800 mb-4">Informations</h2>
+      <dl class="space-y-3 text-sm">
+        <div><dt class="text-gray-500 text-xs">Email</dt><dd class="text-gray-800">{{ employee()?.email }}</dd></div>
+        <div><dt class="text-gray-500 text-xs">Département</dt><dd class="text-gray-800">{{ employee()?.department || '—' }}</dd></div>
+        <div><dt class="text-gray-500 text-xs">Poste</dt><dd class="text-gray-800">{{ employee()?.position || '—' }}</dd></div>
+        <div><dt class="text-gray-500 text-xs">Date d'embauche</dt><dd class="text-gray-800">{{ employee()?.hireDate | date:'dd/MM/yyyy' }}</dd></div>
+        <div>
+          <dt class="text-gray-500 text-xs">Statut</dt>
+          <dd>
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium"
+              [ngClass]="{
+                'bg-green-100 text-green-700': employee()?.status === 'ACTIVE',
+                'bg-gray-100 text-gray-600': employee()?.status === 'INACTIVE',
+                'bg-yellow-100 text-yellow-700': employee()?.status === 'ON_LEAVE',
+                'bg-red-100 text-red-600': employee()?.status === 'TERMINATED'
+              }">
+              {{ employee()?.status }}
+            </span>
+          </dd>
+        </div>
+      </dl>
+    </div>
+
+    <!-- Documents -->
+    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="font-semibold text-gray-800">Documents ({{ documents().length }})</h2>
+      </div>
+      <div *ngIf="documents().length === 0" class="p-8 text-center text-gray-400 text-sm">
+        Aucun document.
+      </div>
+      <div class="divide-y divide-gray-50">
+        <div *ngFor="let doc of documents()" class="p-4 flex items-center gap-3 hover:bg-gray-50">
+          <div class="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
+            <svg lucideFileText class="w-4 h-4 text-blue-800"></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-900 truncate">{{ doc.name }}</p>
+            <p class="text-xs text-gray-400">
+              {{ docTypeLabels[doc.type] }} · v{{ doc.currentVersion }} · {{ doc.createdAt | date:'dd/MM/yyyy' }}
+            </p>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button (click)="openVersions(doc)" title="Historique versions"
+              class="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors">
+              <svg lucideHistory class="w-4 h-4"></svg>
+            </button>
+            <button (click)="download(doc)" title="Télécharger"
+              class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors">
+              <svg lucideDownload class="w-4 h-4"></svg>
+            </button>
+            <button (click)="deleteDoc(doc)" title="Supprimer"
+              class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+              <svg lucideTrash2 class="w-4 h-4"></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="loading()" class="p-8 text-center text-gray-400">Chargement...</div>
+
+<!-- Edit Form Modal -->
+<app-employee-form *ngIf="showEditForm()" [employee]="employee()" (close)="onEditClose($event)"></app-employee-form>
+
+<!-- Upload Modal (2-step wizard) -->
+<div *ngIf="showUploadModal()" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between p-5 border-b border-gray-100">
+      <div>
+        <h2 class="text-lg font-semibold text-gray-900">Ajouter un document</h2>
+        <p class="text-xs text-gray-400 mt-0.5">
+          Étape {{ uploadStep() }} sur 2 —
+          {{ uploadStep() === 1 ? 'Sélection du fichier' : 'Révision et enregistrement' }}
+        </p>
+      </div>
+      <button (click)="showUploadModal.set(false)" class="text-gray-400 hover:text-gray-600">
+        <svg lucideX class="w-5 h-5"></svg>
+      </button>
+    </div>
+
+    <!-- Step indicators -->
+    <div class="flex items-center px-5 pt-4 gap-2">
+      <div class="flex items-center gap-1.5">
+        <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+          [class]="uploadStep() >= 1 ? 'bg-blue-800 text-white' : 'bg-gray-200 text-gray-500'">1</div>
+        <span class="text-xs text-gray-500">Fichier</span>
+      </div>
+      <div class="flex-1 h-px bg-gray-200 mx-1"></div>
+      <div class="flex items-center gap-1.5">
+        <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+          [class]="uploadStep() >= 2 ? 'bg-blue-800 text-white' : 'bg-gray-200 text-gray-500'">2</div>
+        <span class="text-xs text-gray-500">Révision OCR</span>
+      </div>
+    </div>
+
+    <!-- STEP 1: File selection -->
+    <div *ngIf="uploadStep() === 1" class="p-5 space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Fichier * (PDF, JPG, PNG)</label>
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="onFileSelected($event)"
+          class="w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-800 file:text-sm file:font-medium hover:file:bg-blue-100 cursor-pointer">
+        <p *ngIf="uploadFile" class="text-xs text-green-600 mt-1">✓ {{ uploadFile.name }}</p>
+      </div>
+      <div *ngIf="ocrError()" class="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{{ ocrError() }}</div>
+      <div class="flex justify-end gap-3 pt-2">
+        <button (click)="showUploadModal.set(false)" class="px-4 py-2 text-sm text-gray-600">Annuler</button>
+        <button (click)="analyzeOcr()" [disabled]="!uploadFile || analyzingOcr()"
+          class="flex items-center gap-2 px-4 py-2 text-sm bg-blue-800 text-white rounded-lg hover:bg-blue-900 disabled:opacity-50 font-medium">
+          <svg lucideScanText class="w-4 h-4"></svg>
+          {{ analyzingOcr() ? 'Analyse en cours...' : 'Analyser avec OCR' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Review OCR + fill metadata -->
+    <div *ngIf="uploadStep() === 2" class="p-5 space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div class="col-span-2">
+          <label class="block text-xs font-medium text-gray-700 mb-1">Nom du document *</label>
+          <input [(ngModel)]="uploadName" type="text"
+            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Référence</label>
+          <input [(ngModel)]="uploadRef" type="text" placeholder="Auto-générée si vide"
+            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Type *</label>
+          <select [(ngModel)]="uploadType"
+            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+            <option *ngFor="let t of docTypes" [value]="t">{{ docTypeLabels[t] }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- OCR text — editable -->
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">
+          Texte extrait par OCR
+          <span class="text-gray-400 font-normal ml-1">(modifiable — corrigez si nécessaire)</span>
+        </label>
+        <textarea [(ngModel)]="uploadOcrText" rows="6"
+          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 font-mono resize-y"
+          placeholder="Aucun texte extrait (document image non lisible ?)"></textarea>
+      </div>
+
+      <div *ngIf="saveError()" class="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{{ saveError() }}</div>
+
+      <div class="flex justify-between gap-3 pt-2">
+        <button (click)="uploadStep.set(1)" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-200 rounded-lg">
+          ← Retour
+        </button>
+        <div class="flex gap-3">
+          <button (click)="showUploadModal.set(false)" class="px-4 py-2 text-sm text-gray-600">Annuler</button>
+          <button (click)="saveDocument()" [disabled]="!uploadName || saving()"
+            class="flex items-center gap-2 px-4 py-2 text-sm bg-blue-800 text-white rounded-lg hover:bg-blue-900 disabled:opacity-50 font-medium">
+            <svg lucideCheck class="w-4 h-4"></svg>
+            {{ saving() ? 'Enregistrement...' : 'Enregistrer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Versions Modal -->
+<div *ngIf="showVersionsModal()" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+    <div class="flex items-center justify-between p-5 border-b border-gray-100">
+      <h2 class="text-lg font-semibold text-gray-900">Versions — {{ selectedDoc()?.name }}</h2>
+      <button (click)="showVersionsModal.set(false)" class="text-gray-400 hover:text-gray-600">
+        <svg lucideX class="w-5 h-5"></svg>
+      </button>
+    </div>
+    <div class="divide-y divide-gray-50 max-h-80 overflow-y-auto">
+      <div *ngFor="let v of versions()" class="p-4 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-900">Version {{ v.versionNumber }}</p>
+          <p class="text-xs text-gray-400">{{ v.createdAt | date:'dd/MM/yyyy HH:mm' }} · {{ v.uploadedBy }}</p>
+        </div>
+        <button (click)="downloadVersion(v)"
+          class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors">
+          <svg lucideDownload class="w-4 h-4"></svg>
+        </button>
+      </div>
+      <div *ngIf="versions().length === 0" class="p-6 text-center text-gray-400 text-sm">Aucune version.</div>
+    </div>
+  </div>
+</div>
