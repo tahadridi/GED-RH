@@ -6,20 +6,31 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
+import com.github.f4b6a3.uuid.UuidCreator;
 
 @Entity
-@Table(name = "document_versions")
+@Table(name = "document_versions", indexes = {
+	@Index(name = "idx_ver_document", columnList = "document_id, versionNumber")
+})
 public class DocumentVersion {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
 	private UUID id;
+
+	@PrePersist
+	protected void onCreate() {
+		if (this.id == null) {
+			this.id = UuidCreator.getTimeOrderedEpoch();
+		}
+	}
 
 	@Column(nullable = false)
 	private Integer versionNumber;
@@ -39,6 +50,7 @@ public class DocumentVersion {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "document_id", nullable = false)
+	@com.fasterxml.jackson.annotation.JsonIgnore
 	private EmployeeDocument document;
 
 	public UUID getId() {

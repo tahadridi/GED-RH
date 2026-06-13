@@ -15,6 +15,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -34,8 +36,6 @@ public class DocumentController {
     /** Step 1: upload file to temp storage, run OCR, return extracted text for review */
     @PostMapping(value = "/ocr-preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public OcrPreviewResponse ocrPreview(@RequestPart("file") MultipartFile file) throws Exception {
-        SystemUser actor = accessControlService.getCurrentUser();
-        if (actor == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
         DocumentService.OcrPreviewResult result = documentService.ocrPreview(
             file.getInputStream(), file.getContentType(), file.getOriginalFilename());
         return new OcrPreviewResponse(result.tempKey(), result.ocrText(), result.originalFilename());
@@ -43,40 +43,27 @@ public class DocumentController {
 
     /** Step 2: save the document using the temp key + user-reviewed metadata */
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ADMINISTRATOR') or (hasRole('RH') and @accessControlService.canManageDocument(principal, #req.type))")
     public EmployeeDocument createFromPreview(@RequestBody CreateFromPreviewRequest req) {
         SystemUser actor = accessControlService.getCurrentUser();
-        if (!accessControlService.canManageDocument(actor, dummyDocWithType(req.type))) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
-        }
         return documentService.createFromPreview(req.toCommand(), actor);
     }
 
     /** Legacy multipart create (kept for compatibility) */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMINISTRATOR') or (hasRole('RH') and @accessControlService.canManageDocument(principal, #req.type))")
     public EmployeeDocument create(
             @RequestPart("data") CreateDocumentRequest req,
             @RequestPart("file") MultipartFile file) throws Exception {
-        SystemUser actor = accessControlService.getCurrentUser();
-        // Permission check: Admin or RH with correct responsibility
-        // Note: For creation, we check if they can manage this TYPE of document.
-        // We can check after creating a dummy object or just check the type.
-        if (!accessControlService.canManageDocument(actor, dummyDocWithType(req.type))) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
-        }
-        
         return documentService.createDocument(new DocumentService.CreateDocumentCommand(
                 req.employeeId, req.documentReference, req.name, req.type, req.author, null),
                 file.getInputStream(), file.getContentType());
     }
 
     @GetMapping("/{id}/content")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'DIRECTION_GENERALE') or @accessControlService.canViewDocument(principal, #id)")
     public ResponseEntity<InputStreamResource> download(@PathVariable UUID id) {
-        SystemUser actor = accessControlService.getCurrentUser();
         EmployeeDocument doc = documentService.getDocument(id);
-        if (!accessControlService.canViewDocument(actor, doc)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
-        }
-        
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + doc.getName() + "\"")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -84,27 +71,18 @@ public class DocumentController {
     }
 
     @PostMapping(value = "/{id}/versions", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMINISTRATOR') or @accessControlService.canManageDocument(principal, #id)")
     public DocumentVersion addVersion(
             @PathVariable UUID id,
             @RequestParam("uploadedBy") String uploadedBy,
             @RequestPart("file") MultipartFile file) throws Exception {
-        SystemUser actor = accessControlService.getCurrentUser();
-        EmployeeDocument doc = documentService.getDocument(id);
-        if (!accessControlService.canManageDocument(actor, doc)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
-        }
-        
         return documentService.addVersion(id, uploadedBy, file.getInputStream(), file.getContentType());
     }
 
     @GetMapping("/versions/{versionId}/content")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'DIRECTION_GENERALE') or @accessControlService.canViewVersion(principal, #versionId)")
     public ResponseEntity<InputStreamResource> downloadVersion(@PathVariable UUID versionId) {
-        SystemUser actor = accessControlService.getCurrentUser();
         DocumentVersion v = documentService.getVersion(versionId);
-        if (!accessControlService.canViewDocument(actor, v.getDocument())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
-        }
-        
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"v" + v.getVersionNumber() + "_" + v.getDocument().getName() + "\"")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -112,25 +90,13 @@ public class DocumentController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'DIRECTION_GENERALE') or @accessControlService.canViewDocument(principal, #id)")
     public EmployeeDocument get(@PathVariable UUID id) {
-        SystemUser actor = accessControlService.getCurrentUser();
-        EmployeeDocument doc = documentService.getDocument(id);
-        if (!accessControlService.canViewDocument(actor, doc)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
-        }
-        return doc;
-    }
-
-    @GetMapping("/employee/{employeeId}")
-    public List<EmployeeDocument> listByEmployee(@PathVariable UUID employeeId) {
-        // Filter list based on permissions
-        SystemUser actor = accessControlService.getCurrentUser();
-        return documentService.listByEmployee(employeeId).stream()
-                .filter(doc -> accessControlService.canViewDocument(actor, doc))
-                .toList();
+        return documentService.getDocument(id);
     }
 
     @GetMapping("/search")
+    @Transactional(readOnly = true)
     public List<EmployeeDocument> search(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) DocumentType type,
@@ -138,17 +104,25 @@ public class DocumentController {
             @RequestParam(required = false) String department) {
         SystemUser actor = accessControlService.getCurrentUser();
         DocumentService.SearchCriteria criteria = new DocumentService.SearchCriteria(q, type, employeeId, department, null, null);
-        return documentService.searchDocuments(criteria).stream()
-                .filter(doc -> accessControlService.canViewDocument(actor, doc))
-                .toList();
+        // Security is handled at the database level via Specification
+        return documentService.searchDocuments(criteria, actor);
+    }
+
+    @GetMapping("/employee/{employeeId}")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'RH', 'DIRECTION_GENERALE') or @accessControlService.canViewEmployee(principal, #employeeId)")
+    @Transactional(readOnly = true)
+    public List<EmployeeDocument> listByEmployee(@PathVariable UUID employeeId) {
+        SystemUser actor = accessControlService.getCurrentUser();
+        // Still use searchDocuments to ensure security specifications are applied even for employee-specific listing
+        return documentService.searchDocuments(new DocumentService.SearchCriteria(null, null, employeeId, null, null, null), actor);
     }
 
     @GetMapping("/type/{type}")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'RH', 'DIRECTION_GENERALE')")
+    @Transactional(readOnly = true)
     public List<EmployeeDocument> listByType(@PathVariable String type) {
         SystemUser actor = accessControlService.getCurrentUser();
-        return documentService.listByType(DocumentType.valueOf(type)).stream()
-                .filter(doc -> accessControlService.canViewDocument(actor, doc))
-                .toList();
+        return documentService.searchDocuments(new DocumentService.SearchCriteria(null, DocumentType.valueOf(type), null, null, null, null), actor);
     }
 
     private EmployeeDocument dummyDocWithType(DocumentType type) {
@@ -168,11 +142,13 @@ public class DocumentController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRATOR') or @accessControlService.canManageDocument(principal, #id)")
     public EmployeeDocument update(@PathVariable UUID id, @RequestBody UpdateDocumentRequest req) {
         return documentService.updateDocument(id, new DocumentService.UpdateDocumentCommand(req.name, req.author, req.storagePath));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     public void delete(@PathVariable UUID id) {
         documentService.deleteDocument(id);
     }

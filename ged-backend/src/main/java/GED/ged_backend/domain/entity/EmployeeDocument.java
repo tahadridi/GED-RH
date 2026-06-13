@@ -58,9 +58,11 @@ public class EmployeeDocument {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "employee_id", nullable = false)
+	@com.fasterxml.jackson.annotation.JsonIgnore
 	private Employee employee;
 
 	@OneToMany(mappedBy = "document", fetch = FetchType.LAZY)
+	@com.fasterxml.jackson.annotation.JsonIgnore
 	private Set<DocumentVersion> versions = new LinkedHashSet<>();
 
 	public UUID getId() {

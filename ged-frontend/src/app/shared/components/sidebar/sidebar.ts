@@ -16,7 +16,10 @@ import {
   template: `
     <aside class="sidebar-container">
       <div class="sidebar-header flex items-center gap-3">
-        <img src="/logo.png" alt="Logo" class="w-8 h-8 object-contain">
+        <!-- Logo with white circular background -->
+        <div class="logo-circle">
+          <img src="/logo.png" alt="Logo" class="logo-img">
+        </div>
         <span>GED RH</span>
       </div>
 
@@ -27,7 +30,7 @@ import {
         </span>
       </div>
 
-      <nav class="flex-1 px-3 py-3 space-y-1">
+      <nav class="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
         <!-- Dashboard link -->
         <a [routerLink]="dashboardRoute" routerLinkActive="active-link"
            class="nav-link">
@@ -93,6 +96,11 @@ import {
     </aside>
   `,
   styles: [`
+    :host {
+      display: block;
+      height: 100%;
+    }
+
     /* Sidebar theme (always navy, no light/dark mode override) */
     .sidebar-container {
       width: 16rem;
@@ -100,7 +108,7 @@ import {
       color: rgba(255, 255, 255, 0.95);
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
+      height: 100%;
     }
 
     .sidebar-header {
@@ -109,6 +117,24 @@ import {
       font-weight: bold;
       border-bottom: 1px solid #203060;
       letter-spacing: 0.025em;
+    }
+
+    /* Logo circle white background */
+    .logo-circle {
+      width: 48px;
+      height: 48px;
+      background-color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .logo-img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
     }
 
     .role-badge {

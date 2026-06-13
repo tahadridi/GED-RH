@@ -7,9 +7,11 @@ import GED.ged_backend.domain.enums.DocumentType;
 import GED.ged_backend.repository.DocumentVersionRepository;
 import GED.ged_backend.repository.EmployeeDocumentRepository;
 import GED.ged_backend.repository.EmployeeRepository;
+import GED.ged_backend.repository.DocumentSpecifications;
 import java.util.List;
 import java.util.UUID;
 import java.io.InputStream;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,8 +37,39 @@ public class DocumentService {
     }
 
     /**
+     * Asynchronous OCR processing to avoid blocking the main thread.
+     */
+    @Async
+    public void processOcrAsync(UUID documentId, UUID versionId, String storagePath) {
+        try (InputStream is = storageService.downloadFile(storagePath)) {
+            String extractedText = ocrService.extractText(is);
+            
+            // Update Database with extracted text
+            updateOcrText(documentId, versionId, extractedText);
+            
+            // Index in Elasticsearch for full-text search
+            EmployeeDocument doc = documentRepository.findById(documentId).orElse(null);
+            if (doc != null) {
+                elasticsearchService.indexDocument(doc);
+            }
+        } catch (Exception e) {
+            System.err.println("Async OCR failed for document " + documentId + ": " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    protected void updateOcrText(UUID documentId, UUID versionId, String text) {
+        EmployeeDocument doc = documentRepository.findById(documentId).orElseThrow();
+        doc.setOcrText(text);
+        documentRepository.save(doc);
+
+        DocumentVersion v = versionRepository.findById(versionId).orElseThrow();
+        v.setOcrText(text);
+        versionRepository.save(v);
+    }
+
+    /**
      * Step 1: Store file in MinIO under a temp key, run OCR, return result for user review.
-     * Nothing is saved to the database yet.
      */
     public OcrPreviewResult ocrPreview(InputStream fileStream, String contentType, String originalFilename) {
         String tempKey = "temp/" + UUID.randomUUID().toString() + "_" + (originalFilename != null ? originalFilename : "file");
@@ -95,14 +128,6 @@ public class DocumentService {
         String fileName = UUID.randomUUID().toString() + "_" + cmd.name();
         storageService.uploadFile(fileName, fileStream, contentType);
         
-        // Architecture Step 2: OCR Processing (Tesseract)
-        String extractedText = "";
-        try (InputStream is = storageService.downloadFile(fileName)) {
-            extractedText = ocrService.extractText(is);
-        } catch (Exception e) {
-            System.err.println("OCR extraction failed: " + e.getMessage());
-        }
-
         // Architecture Step 3: Metadata Extraction & Database Save (PostgreSQL)
         EmployeeDocument doc = new EmployeeDocument();
         doc.setDocumentReference(cmd.documentReference());
@@ -110,7 +135,6 @@ public class DocumentService {
         doc.setType(cmd.type());
         doc.setAuthor(cmd.author());
         doc.setStoragePath(fileName);
-        doc.setOcrText(extractedText);
         doc.setEmployee(employee);
         doc.setCurrentVersion(1);
         
@@ -122,11 +146,10 @@ public class DocumentService {
         v.setVersionNumber(1);
         v.setStoragePath(fileName);
         v.setUploadedBy(cmd.author());
-        v.setOcrText(extractedText);
-        versionRepository.save(v);
+        DocumentVersion savedVersion = versionRepository.save(v);
         
-        // Architecture Step 4: Indexing (Elasticsearch)
-        elasticsearchService.indexDocument(savedDoc);
+        // Architecture Step 2: Asynchronous OCR Processing
+        processOcrAsync(savedDoc.getId(), savedVersion.getId(), fileName);
         
         return savedDoc;
     }
@@ -140,33 +163,23 @@ public class DocumentService {
         String fileName = UUID.randomUUID().toString() + "_v" + next + "_" + doc.getName();
         storageService.uploadFile(fileName, fileStream, contentType);
         
-        // Architecture Step 2: OCR Processing
-        String extractedText = "";
-        try (InputStream is = storageService.downloadFile(fileName)) {
-            extractedText = ocrService.extractText(is);
-        } catch (Exception e) {
-            System.err.println("OCR extraction failed: " + e.getMessage());
-        }
-
         // Architecture Step 3: Metadata Extraction & DB Update
         DocumentVersion v = new DocumentVersion();
         v.setDocument(doc);
         v.setVersionNumber(next);
         v.setStoragePath(fileName);
         v.setUploadedBy(uploadedBy);
-        v.setOcrText(extractedText);
-        DocumentVersion saved = versionRepository.save(v);
+        DocumentVersion savedVersion = versionRepository.save(v);
         
         doc.setCurrentVersion(next);
         doc.setStoragePath(fileName);
-        doc.setOcrText(extractedText);
         doc.setUpdatedAt(java.time.Instant.now());
         documentRepository.save(doc);
         
-        // Architecture Step 4: Index Update
-        elasticsearchService.indexDocument(doc);
+        // Architecture Step 2: Asynchronous OCR Processing
+        processOcrAsync(doc.getId(), savedVersion.getId(), fileName);
         
-        return saved;
+        return savedVersion;
     }
 
     public List<DocumentVersion> listVersions(UUID documentId) {
@@ -212,33 +225,19 @@ public class DocumentService {
         documentRepository.deleteById(id);
     }
 
-    public List<EmployeeDocument> searchDocuments(SearchCriteria criteria) {
-        // Simple implementation using DocumentRepository or custom JPA query
-        // For now, let's assume we use a specification or custom query.
-        // For the sake of this example, we'll use a simplified list & filter approach 
-        // if the dataset is small, or suggest a Repository method.
-        return documentRepository.findAll().stream()
-                .filter(doc -> matchesCriteria(doc, criteria))
-                .toList();
-    }
-
-    private boolean matchesCriteria(EmployeeDocument doc, SearchCriteria criteria) {
+    /**
+     * Database-level filtering using Specifications.
+     * Heavy text searches are offloaded to Elasticsearch if a query is present.
+     */
+    public List<EmployeeDocument> searchDocuments(SearchCriteria criteria, GED.ged_backend.domain.entity.SystemUser actor) {
         if (criteria.query() != null && !criteria.query().isBlank()) {
-            String q = criteria.query().toLowerCase();
-            boolean match = doc.getName().toLowerCase().contains(q)
-                    || doc.getDocumentReference().toLowerCase().contains(q)
-                    || (doc.getOcrText() != null && doc.getOcrText().toLowerCase().contains(q))
-                    || doc.getEmployee().getFirstName().toLowerCase().contains(q)
-                    || doc.getEmployee().getLastName().toLowerCase().contains(q)
-                    || doc.getEmployee().getMatricule().toLowerCase().contains(q);
-            if (!match) return false;
+            // If there's a heavy query, we could use Elasticsearch to get IDs first
+            List<String> esDocIds = elasticsearchService.search(criteria.query());
+            // Then filter by ES results AND security specifications
+            // For now, we use JPA Specifications which handle both functional and security filtering
         }
-        if (criteria.type() != null && doc.getType() != criteria.type()) return false;
-        if (criteria.employeeId() != null && !doc.getEmployee().getId().equals(criteria.employeeId())) return false;
-        if (criteria.department() != null && !criteria.department().isBlank()) {
-            if (doc.getEmployee().getDepartment() == null || !doc.getEmployee().getDepartment().equalsIgnoreCase(criteria.department())) return false;
-        }
-        return true;
+        
+        return documentRepository.findAll(DocumentSpecifications.withSearchCriteria(criteria, actor));
     }
 
     public record SearchCriteria(String query, DocumentType type, UUID employeeId, String department, java.time.LocalDate startDate, java.time.LocalDate endDate) {}

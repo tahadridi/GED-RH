@@ -24,8 +24,12 @@ public class ElasticsearchService {
     }
 
     public List<String> search(String query) {
-        // Advanced full-text search logic
+        // Logic to perform a complex full-text search across document name, reference, and OCR text
+        // In production, this would use the Elasticsearch REST client or Spring Data Elasticsearch
         System.out.println("Performing Elasticsearch full-text search for: " + query);
+        
+        // Return a list of document IDs that match the search
+        // The Service will then use these IDs to filter the JPA query
         return new ArrayList<>();
     }
 }

@@ -12,21 +12,33 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
+import com.github.f4b6a3.uuid.UuidCreator;
 
 @Entity
-@Table(name = "system_users")
+@Table(name = "system_users", indexes = {
+	@Index(name = "idx_user_email", columnList = "email", unique = true),
+	@Index(name = "idx_user_auth_uid", columnList = "authUid", unique = true)
+})
 public class SystemUser {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
 	private UUID id;
+
+	@PrePersist
+	protected void onCreate() {
+		if (this.id == null) {
+			this.id = UuidCreator.getTimeOrderedEpoch();
+		}
+	}
 
 	@Column(nullable = false, unique = true, length = 128)
 	private String authUid;
@@ -45,9 +57,11 @@ public class SystemUser {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "manager_id")
+	@com.fasterxml.jackson.annotation.JsonIgnore
 	private SystemUser manager;
 
 	@OneToOne(mappedBy = "account", fetch = FetchType.LAZY)
+	@com.fasterxml.jackson.annotation.JsonIgnore
 	private Employee employeeProfile;
 
 	@ElementCollection(fetch = FetchType.EAGER)

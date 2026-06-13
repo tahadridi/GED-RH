@@ -54,20 +54,14 @@ public class SupabaseAuthenticationFilter extends OncePerRequestFilter {
                             Collection<GrantedAuthority> authorities = new ArrayList<>();
                             if (user.getRoles() != null) {
                                 user.getRoles().forEach(role -> {
-                                    // Map both styles to be 100% bulletproof for matchers
                                     authorities.add(new SimpleGrantedAuthority("ROLE_" + role.name()));
                                     authorities.add(new SimpleGrantedAuthority(role.name()));
                                 });
                             }
 
-                            // FIX: Build a standard Spring UserDetails principal object instead of passing raw entity
-                            User principal = new User(user.getEmail(), "", authorities);
-
+                            // Use the custom SystemUser as principal so AccessControlService can still use it directly
                             Authentication authentication = new UsernamePasswordAuthenticationToken(
-                                    principal, // ◄── Standard Spring principal
-                                    null,      // Clear credentials
-                                    authorities
-                            );
+                                    user, null, authorities);
                             
                             SecurityContextHolder.getContext().setAuthentication(authentication);
                             System.out.println("[AUTH] Successfully synchronized security context for: " + email);

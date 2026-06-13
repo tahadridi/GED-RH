@@ -59,16 +59,20 @@ public class Employee {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "manager_id")
+	@com.fasterxml.jackson.annotation.JsonIgnore
 	private Employee manager;
 
 	@OneToMany(mappedBy = "manager", fetch = FetchType.LAZY)
+	@com.fasterxml.jackson.annotation.JsonIgnore
 	private Set<Employee> directReports = new LinkedHashSet<>();
 
 	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "account_id", unique = true)
+	@com.fasterxml.jackson.annotation.JsonIgnore
 	private SystemUser account;
 
 	@OneToMany(mappedBy = "employee", fetch = FetchType.LAZY)
+	@com.fasterxml.jackson.annotation.JsonIgnore
 	private Set<EmployeeDocument> documents = new LinkedHashSet<>();
 
 	public UUID getId() {

@@ -22,6 +22,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import GED.ged_backend.repository.SystemUserRepository;
 
 @Configuration
+@org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 public class SecurityConfig {
 
     private final SystemUserRepository userRepository;
@@ -51,6 +52,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/health", "/actuator/**").permitAll()
+                .requestMatchers("/api/auth/me").permitAll()
+                .requestMatchers("/api/documents/ocr-preview").permitAll()
                 .requestMatchers("/api/organization/**").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMINISTRATOR")
                 .anyRequest().authenticated()

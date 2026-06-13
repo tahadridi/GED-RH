@@ -1,8 +1,10 @@
 package GED.ged_backend.service;
 
 import GED.ged_backend.domain.entity.Employee;
+import GED.ged_backend.domain.entity.SystemUser;
 import GED.ged_backend.domain.enums.EmployeeStatus;
 import GED.ged_backend.repository.EmployeeRepository;
+import GED.ged_backend.repository.EmployeeSpecifications;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -109,15 +111,27 @@ public class EmployeeService {
     }
 
     @Transactional(readOnly = true)
+    public Set<Employee> listEmployees(SystemUser actor) {
+        return new LinkedHashSet<>(employeeRepository.findAll(EmployeeSpecifications.withSecurityFilter(actor)));
+    }
+
+    @Transactional(readOnly = true)
     public Set<Employee> listEmployees() {
         return new LinkedHashSet<>(employeeRepository.findAll());
     }
 
-    public void deleteEmployee(UUID id) {
+    public void deactivateEmployee(UUID id) {
         Employee e = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
         e.setStatus(EmployeeStatus.INACTIVE);
         employeeRepository.save(e);
+    }
+
+    public void deleteEmployee(UUID id) {
+        if (!employeeRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found");
+        }
+        employeeRepository.deleteById(id);
     }
 
     public void assignDirectReports(UUID managerId, Set<UUID> reportIds) {

@@ -9,9 +9,9 @@ import { AuthService } from '../../../core/services/auth.service';
   standalone: true,
   imports: [CommonModule, RouterModule, Sidebar],
   template: `
-    <div class="flex min-h-screen bg-gray-50">
-      <app-sidebar [userEmail]="userEmail"></app-sidebar>
-      <main class="flex-1 overflow-auto">
+    <div class="flex h-screen bg-gray-50 overflow-hidden">
+      <app-sidebar [userEmail]="userEmail" class="h-full flex-none"></app-sidebar>
+      <main class="flex-1 overflow-y-auto">
         <router-outlet></router-outlet>
       </main>
     </div>

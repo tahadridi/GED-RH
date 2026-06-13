@@ -26,6 +26,10 @@ export class EmployeeService {
     return this.api.delete<void>(`/employees/${id}`);
   }
 
+  deactivate(id: string): Promise<void> {
+    return this.api.post<void>(`/employees/${id}/deactivate`, {});
+  }
+
   assignReports(managerId: string, reportIds: string[]): Promise<void> {
     return this.api.post<void>(`/employees/${managerId}/reports`, reportIds);
   }

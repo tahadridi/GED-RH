@@ -34,7 +34,7 @@ export class Dashboard implements OnInit {
         this.employeeService.list(),
         this.documentService.search({})
       ]);
-      this.totalEmployees.set(employees.length);
+      this.totalEmployees.set(employees.filter(e => e.status === 'ACTIVE').length);
       this.totalDocuments.set(docs.length);
       this.recentDocuments.set(docs.slice(0, 5));
     } catch (e) {

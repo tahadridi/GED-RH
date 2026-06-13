@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,6 +37,7 @@ public class EmployeeController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     public Set<EmployeeResponse> list() {
         SystemUser actor = accessControlService.getCurrentUser();
         return employeeService.listEmployees().stream()
@@ -45,6 +47,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/{id}")
+    @Transactional(readOnly = true)
     public EmployeeResponse get(@PathVariable UUID id) {
         SystemUser actor = accessControlService.getCurrentUser();
         Employee e = employeeService.getEmployee(id);
