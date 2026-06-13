@@ -7,14 +7,13 @@ import { SystemUser, SystemRole, DocumentType } from '../../../core/models/user.
 import { Employee } from '../../../core/models/employee.model';
 import {
   LucideUserPlus, LucidePencil, LucideUserX, LucideKey,
-  LucideX, LucideCheck, LucideTrash2, LucideChevronDown, LucideChevronRight,
-  LucideSearch
+  LucideX, LucideCheck, LucideTrash2, LucideSearch
 } from '@lucide/angular';
 
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideUserPlus, LucidePencil, LucideUserX, LucideKey, LucideX, LucideCheck, LucideTrash2, LucideChevronDown, LucideChevronRight, LucideSearch],
+  imports: [CommonModule, FormsModule, LucideUserPlus, LucidePencil, LucideUserX, LucideKey, LucideX, LucideCheck, LucideTrash2, LucideSearch],
   templateUrl: './admin-users.html'
 })
 export class AdminUsers implements OnInit {
@@ -45,17 +44,13 @@ export class AdminUsers implements OnInit {
     email: '', firstName: '', lastName: '',
     temporaryPassword: '', active: true,
     managerId: null as string | null,
+    employeeId: null as string | null,
     roles: [] as SystemRole[],
     rhResponsibilities: [] as DocumentType[]
   };
 
   allEmployees: Employee[] = [];
-  groupedEmployees: { dept: string, employees: Employee[] }[] = [];
-  selectedReports = new Set<string>();
-  expandedDepts = new Set<string>();
-
-  // Search for subordinates
-  subordinateSearchQuery = '';
+  employeePickerSearchQuery = '';
   managerSearchQuery = '';
 
   constructor(
@@ -76,18 +71,17 @@ export class AdminUsers implements OnInit {
     );
   }
 
-  get filteredGroupedEmployees() {
-    const q = this.subordinateSearchQuery.toLowerCase();
-    if (!q) return this.groupedEmployees;
+  get filteredEmployeesForPicker() {
+    const q = this.employeePickerSearchQuery.toLowerCase();
+    // Get list of employee IDs that already have a user account
+    const existingAccountEmployeeIds = this.users().map(u => u.employeeProfileId).filter(id => !!id);
 
-    return this.groupedEmployees.map(g => ({
-      dept: g.dept,
-      employees: g.employees.filter(e => 
-        e.firstName.toLowerCase().includes(q) || 
-        e.lastName.toLowerCase().includes(q) || 
-        e.matricule.toLowerCase().includes(q)
-      )
-    })).filter(g => g.employees.length > 0);
+    return this.allEmployees.filter(e => 
+      !existingAccountEmployeeIds.includes(e.id) && 
+      (e.firstName.toLowerCase().includes(q) || 
+       e.lastName.toLowerCase().includes(q) || 
+       (e.matricule && e.matricule.toLowerCase().includes(q)))
+    );
   }
 
   getManagerName(id: string | null): string {
@@ -108,30 +102,34 @@ export class AdminUsers implements OnInit {
   async loadEmployees() {
     try {
       this.allEmployees = await this.employeeService.list();
-      this.groupEmployees();
     } catch (e) {
       console.error('Failed to load employees', e);
     }
   }
 
-  groupEmployees() {
-    const groups: Record<string, Employee[]> = {};
-    this.allEmployees.forEach(e => {
-      const dept = e.department || 'Sans service';
-      if (!groups[dept]) groups[dept] = [];
-      groups[dept].push(e);
-    });
-    this.groupedEmployees = Object.entries(groups).map(([dept, employees]) => ({ dept, employees }));
-    // Expand all by default
-    this.groupedEmployees.forEach(g => this.expandedDepts.add(g.dept));
-  }
-
   openCreate() {
     this.editingUser.set(null);
-    this.form = { email: '', firstName: '', lastName: '', temporaryPassword: '', active: true, managerId: null, roles: [], rhResponsibilities: [] };
-    this.selectedReports.clear();
+    this.form = { 
+      email: '', firstName: '', lastName: '', 
+      temporaryPassword: '', active: true, 
+      managerId: null, employeeId: null,
+      roles: [], rhResponsibilities: [] 
+    };
+    this.employeePickerSearchQuery = '';
     this.formError.set('');
     this.showForm.set(true);
+  }
+
+  selectEmployee(e: Employee) {
+    this.form.firstName = e.firstName;
+    this.form.lastName = e.lastName;
+    this.form.email = e.email || '';
+    this.form.employeeId = e.id;
+    
+    // Auto-link manager from employee profile if possible
+    const managerUser = this.users().find(u => u.employeeProfileId === e.managerId);
+    this.form.managerId = managerUser ? managerUser.id : null;
+    this.employeePickerSearchQuery = '';
   }
 
   openEdit(u: SystemUser) {
@@ -140,13 +138,10 @@ export class AdminUsers implements OnInit {
       email: u.email, firstName: u.firstName, lastName: u.lastName,
       temporaryPassword: '', active: u.active,
       managerId: u.managerId,
+      employeeId: u.employeeProfileId || null,
       roles: [...u.roles],
       rhResponsibilities: [...u.rhResponsibilities]
     };
-    this.selectedReports.clear();
-    if (u.employeeProfileId) {
-      this.allEmployees.filter(e => e.managerId === u.employeeProfileId).forEach(e => this.selectedReports.add(e.id));
-    }
     this.formError.set('');
     this.showForm.set(true);
   }
@@ -166,32 +161,12 @@ export class AdminUsers implements OnInit {
   hasRole(role: SystemRole) { return this.form.roles.includes(role); }
   hasDocType(type: DocumentType) { return this.form.rhResponsibilities.includes(type); }
 
-  toggleReport(empId: string) {
-    if (this.selectedReports.has(empId)) this.selectedReports.delete(empId);
-    else this.selectedReports.add(empId);
-  }
-
-  toggleDept(dept: string, select: boolean) {
-    const group = this.groupedEmployees.find(g => g.dept === dept);
-    if (!group) return;
-    group.employees.forEach(e => {
-      if (select) this.selectedReports.add(e.id);
-      else this.selectedReports.delete(e.id);
-    });
-  }
-
-  isDeptSelected(dept: string) {
-    const group = this.groupedEmployees.find(g => g.dept === dept);
-    return group && group.employees.every(e => this.selectedReports.has(e.id));
-  }
-
   async save() {
     this.saving.set(true);
     this.formError.set('');
     try {
-      let savedUser: SystemUser;
       if (this.editingUser()) {
-        savedUser = await this.userService.update(this.editingUser()!.id, {
+        await this.userService.update(this.editingUser()!.id, {
           email: this.form.email, firstName: this.form.firstName,
           lastName: this.form.lastName, active: this.form.active,
           managerId: this.form.managerId,
@@ -199,23 +174,19 @@ export class AdminUsers implements OnInit {
           rhResponsibilities: this.form.rhResponsibilities
         });
       } else {
-        savedUser = await this.userService.create({
+        await this.userService.create({
           email: this.form.email, firstName: this.form.firstName,
           lastName: this.form.lastName, temporaryPassword: this.form.temporaryPassword,
           managerId: this.form.managerId,
+          employeeId: this.form.employeeId,
           roles: this.form.roles,
           rhResponsibilities: this.form.rhResponsibilities
         });
       }
 
-      // If user is a manager and has an employee profile, assign reports
-      if (this.hasRole('MANAGER') && savedUser.employeeProfileId) {
-        await this.employeeService.assignReports(savedUser.employeeProfileId, Array.from(this.selectedReports));
-      }
-
       this.showForm.set(false);
       await this.load();
-      await this.loadEmployees(); // Refresh employee list to get updated manager links
+      await this.loadEmployees();
     } catch (e: any) {
       this.formError.set(e?.error?.message ?? 'Une erreur est survenue');
     } finally {

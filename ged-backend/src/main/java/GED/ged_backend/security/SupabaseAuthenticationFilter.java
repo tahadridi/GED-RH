@@ -64,7 +64,7 @@ public class SupabaseAuthenticationFilter extends OncePerRequestFilter {
                                     user, null, authorities);
                             
                             SecurityContextHolder.getContext().setAuthentication(authentication);
-                            System.out.println("[AUTH] Successfully synchronized security context for: " + email);
+                            System.out.println("[AUTH] Successfully synchronized security context for: " + email + " with authorities: " + authorities);
                         }
                     }
                 }

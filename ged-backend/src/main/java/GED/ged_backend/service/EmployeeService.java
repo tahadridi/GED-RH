@@ -128,10 +128,18 @@ public class EmployeeService {
     }
 
     public void deleteEmployee(UUID id) {
-        if (!employeeRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found");
-        }
-        employeeRepository.deleteById(id);
+        Employee e = employeeRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
+        
+        // Remove this employee as manager from all subordinates first to avoid FK constraint error
+        employeeRepository.findAll().stream()
+                .filter(report -> report.getManager() != null && report.getManager().getId().equals(id))
+                .forEach(report -> {
+                    report.setManager(null);
+                    employeeRepository.save(report);
+                });
+
+        employeeRepository.delete(e);
     }
 
     public void assignDirectReports(UUID managerId, Set<UUID> reportIds) {

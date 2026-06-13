@@ -51,11 +51,11 @@ public class AdminUserService {
 
 		SystemUser savedUser = systemUserRepository.save(user);
 
-		// Auto-link to employee profile if email matches
-		employeeRepository.findByEmail(command.email()).ifPresent(emp -> {
-			emp.setAccount(savedUser);
-			employeeRepository.save(emp);
-		});
+		// Mandatory link to employee
+		Employee emp = employeeRepository.findById(command.employeeId())
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Employee not found"));
+		emp.setAccount(savedUser);
+		employeeRepository.save(emp);
 
 		return savedUser;
 	}
@@ -78,8 +78,10 @@ public class AdminUserService {
 
 		SystemUser savedUser = systemUserRepository.save(user);
 
-		// Auto-link or update link if email changed
+		// Sync employee profile info if exists
 		employeeRepository.findByEmail(command.email()).ifPresent(emp -> {
+			emp.setFirstName(command.firstName());
+			emp.setLastName(command.lastName());
 			emp.setAccount(savedUser);
 			employeeRepository.save(emp);
 		});
@@ -177,6 +179,7 @@ public class AdminUserService {
 			String firstName,
 			String lastName,
 			UUID managerId,
+			UUID employeeId,
 			Set<SystemRole> roles,
 			Set<DocumentType> rhResponsibilities,
 			String temporaryPassword) {

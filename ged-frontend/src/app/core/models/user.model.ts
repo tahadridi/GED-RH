@@ -28,6 +28,7 @@ export interface CreateUserRequest {
   firstName: string;
   lastName: string;
   managerId?: string | null;
+  employeeId?: string | null;
   roles: SystemRole[];
   rhResponsibilities: DocumentType[];
   temporaryPassword: string;

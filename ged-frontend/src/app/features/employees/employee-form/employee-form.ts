@@ -3,15 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { OrganizationService, Department } from '../../../core/services/organization.service';
-import { UserService } from '../../../core/services/user.service';
-import { SystemUser } from '../../../core/models/user.model';
 import { Employee, EmployeeStatus } from '../../../core/models/employee.model';
-import { LucideX, LucideSearch } from '@lucide/angular';
+import { LucideX, LucideSearch, LucideCheck, LucideChevronDown, LucideChevronRight } from '@lucide/angular';
 
 @Component({
   selector: 'app-employee-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideX, LucideSearch],
+  imports: [CommonModule, FormsModule, LucideX, LucideSearch, LucideCheck, LucideChevronDown, LucideChevronRight],
   templateUrl: './employee-form.html'
 })
 export class EmployeeForm implements OnInit {
@@ -34,12 +32,16 @@ export class EmployeeForm implements OnInit {
 
   saving = false;
   error = '';
-  // Only users with MANAGER role
-  managers = signal<SystemUser[]>([]);
+  
+  allEmployees = signal<Employee[]>([]);
+  selectedReportIds = signal<Set<string>>(new Set());
+  
   departments = signal<Department[]>([]);
   filteredPositions = signal<string[]>([]);
   
   managerSearchQuery = '';
+  reportSearchQuery = '';
+  expandedDepts = new Set<string>();
 
   statuses: EmployeeStatus[] = ['ACTIVE', 'INACTIVE', 'ON_LEAVE', 'TERMINATED'];
   statusLabels: Record<string, string> = {
@@ -48,14 +50,13 @@ export class EmployeeForm implements OnInit {
 
   constructor(
     private employeeService: EmployeeService,
-    private organizationService: OrganizationService,
-    private userService: UserService
+    private organizationService: OrganizationService
   ) {}
 
   async ngOnInit() {
     // Non-blocking load
     this.loadDepartments();
-    this.loadManagers();
+    this.loadAllEmployees();
 
     if (this.employee) {
       this.form = {
@@ -71,40 +72,99 @@ export class EmployeeForm implements OnInit {
         status: this.employee.status ?? 'ACTIVE',
         managerId: this.employee.managerId ?? null
       };
+      if (this.employee.directReportIds) {
+        this.selectedReportIds.set(new Set(this.employee.directReportIds));
+      }
     }
   }
 
   get filteredManagers() {
     const q = this.managerSearchQuery.toLowerCase();
-    return this.managers().filter(m => 
-      m.firstName.toLowerCase().includes(q) || 
-      m.lastName.toLowerCase().includes(q) || 
-      m.email.toLowerCase().includes(q)
+    return this.allEmployees().filter(e => 
+      e.id !== this.employee?.id && 
+      (e.position || '').toLowerCase().includes('responsable') &&
+      (e.firstName.toLowerCase().includes(q) || 
+       e.lastName.toLowerCase().includes(q) || 
+       e.email.toLowerCase().includes(q) ||
+       e.matricule.toLowerCase().includes(q))
     );
+  }
+
+  get filteredPotentialReports() {
+    const q = this.reportSearchQuery.toLowerCase();
+    // Cannot be their own manager, and cannot be their own report
+    return this.allEmployees().filter(e => 
+      e.id !== this.employee?.id && 
+      e.id !== this.form.managerId &&
+      (e.firstName.toLowerCase().includes(q) || 
+       e.lastName.toLowerCase().includes(q) || 
+       e.email.toLowerCase().includes(q) ||
+       e.matricule.toLowerCase().includes(q))
+    );
+  }
+
+  get groupedPotentialReports() {
+    const employees = this.filteredPotentialReports;
+    const groups: Record<string, Employee[]> = {};
+    
+    employees.forEach(e => {
+      const dept = e.department || 'Sans service';
+      if (!groups[dept]) groups[dept] = [];
+      groups[dept].push(e);
+    });
+
+    return Object.entries(groups)
+      .map(([dept, employees]) => ({ dept, employees }))
+      .sort((a, b) => a.dept.localeCompare(b.dept));
   }
 
   async loadDepartments() {
     try {
-      // Fetching directly from 'departments' table via OrganizationService
       const depts = await this.organizationService.listDepartments();
-      console.log('Departments fetched from database:', depts);
       this.departments.set(depts);
       if (this.employee || this.form.department) this.updatePositions();
     } catch (err) {
-      console.error('Error fetching departments from database:', err);
+      console.error('Error fetching departments:', err);
       this.departments.set([]);
     }
   }
 
-  async loadManagers() {
+  async loadAllEmployees() {
     try {
-      const allUsers = await this.userService.list();
-      // Filter only users with MANAGER role
-      this.managers.set(allUsers.filter(u => u.roles.includes('MANAGER') && u.active));
+      const emps = await this.employeeService.list();
+      this.allEmployees.set(emps);
+      // Auto-expand all depts initially
+      const depts = new Set(emps.map(e => e.department || 'Sans service'));
+      this.expandedDepts = depts;
     } catch (err) {
-      console.error('Error loading managers:', err);
-      this.managers.set([]);
+      console.error('Error loading employees:', err);
+      this.allEmployees.set([]);
     }
+  }
+
+  toggleReport(id: string) {
+    const set = new Set(this.selectedReportIds());
+    if (set.has(id)) set.delete(id);
+    else set.add(id);
+    this.selectedReportIds.set(set);
+  }
+
+  toggleDeptReports(dept: string, select: boolean) {
+    const group = this.groupedPotentialReports.find(g => g.dept === dept);
+    if (!group) return;
+    
+    const set = new Set(this.selectedReportIds());
+    group.employees.forEach(e => {
+      if (select) set.add(e.id);
+      else set.delete(e.id);
+    });
+    this.selectedReportIds.set(set);
+  }
+
+  isDeptFullySelected(dept: string): boolean {
+    const group = this.groupedPotentialReports.find(g => g.dept === dept);
+    if (!group || group.employees.length === 0) return false;
+    return group.employees.every(e => this.selectedReportIds().has(e.id));
   }
 
   updatePositions() {
@@ -112,7 +172,6 @@ export class EmployeeForm implements OnInit {
     const positions = dept ? dept.positions.map((p: any) => p.title) : [];
     this.filteredPositions.set(positions);
     
-    // Keep existing position value if it's valid, otherwise reset only for new employees
     if (!this.isEdit && positions.length > 0 && !positions.includes(this.form.position)) {
       this.form.position = '';
     }
@@ -128,11 +187,16 @@ export class EmployeeForm implements OnInit {
     this.saving = true;
     this.error = '';
     try {
+      let savedEmployee: Employee;
       if (this.isEdit && this.employee) {
-        await this.employeeService.update(this.employee.id, this.form);
+        savedEmployee = await this.employeeService.update(this.employee.id, this.form);
       } else {
-        await this.employeeService.create(this.form);
+        savedEmployee = await this.employeeService.create(this.form);
       }
+
+      // Assign reports
+      await this.employeeService.assignReports(savedEmployee.id, Array.from(this.selectedReportIds()));
+
       this.close.emit(true);
     } catch (e: any) {
       this.error = e?.error?.message ?? 'Une erreur est survenue';

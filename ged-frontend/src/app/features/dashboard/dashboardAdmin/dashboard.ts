@@ -4,12 +4,11 @@ import { RouterModule } from '@angular/router';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { DocumentService } from '../../../core/services/document.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { LucideUsers, LucideFileText, LucideActivity } from '@lucide/angular';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, LucideUsers, LucideFileText, LucideActivity],
+  imports: [CommonModule, RouterModule],
   templateUrl: './dashboard.html',
   styles: ``
 })

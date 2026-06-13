@@ -13,6 +13,8 @@ export interface Employee {
   hireDate: string;
   status: EmployeeStatus;
   managerId: string | null;
+  managerName?: string | null;
+  directReportIds?: string[];
 }
 
 export interface CreateEmployeeRequest {

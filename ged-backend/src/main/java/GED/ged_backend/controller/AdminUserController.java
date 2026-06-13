@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -95,6 +96,7 @@ public class AdminUserController {
 			@NotBlank String firstName,
 			@NotBlank String lastName,
 			UUID managerId,
+			@NotNull UUID employeeId,
 			@NotEmpty Set<SystemRole> roles,
 			Set<DocumentType> rhResponsibilities,
 			@NotBlank String temporaryPassword) {
@@ -105,6 +107,7 @@ public class AdminUserController {
 					firstName,
 					lastName,
 					managerId,
+					employeeId,
 					roles,
 					rhResponsibilities == null ? Set.of() : rhResponsibilities,
 					temporaryPassword);

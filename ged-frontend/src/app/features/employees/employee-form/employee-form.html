@@ -125,10 +125,68 @@
             <div class="flex-1">
               <div class="flex items-center gap-2">
                 <p class="text-xs font-medium text-gray-900">{{ m.firstName }} {{ m.lastName }}</p>
-                <span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-indigo-100 text-indigo-700 uppercase">Manager</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-indigo-100 text-indigo-700 uppercase">{{ m.position }}</span>
               </div>
               <p class="text-[10px] text-gray-400">{{ m.email }}</p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Direct Reports Selection -->
+      <div class="space-y-3 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100">
+        <div class="flex items-center justify-between">
+          <label class="block text-xs font-bold text-emerald-800 uppercase tracking-wider">Subordonnés directs</label>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+            {{ selectedReportIds().size }} sélectionné(s)
+          </span>
+        </div>
+        
+        <div class="relative">
+          <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-emerald-400"></svg>
+          <input [(ngModel)]="reportSearchQuery" type="text" name="reportSearch" placeholder="Chercher un employé..."
+            class="w-full pl-9 pr-3 py-1.5 bg-white border border-emerald-100 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm">
+        </div>
+
+        <div class="space-y-4 max-h-60 overflow-y-auto pr-2">
+          <div *ngFor="let group of groupedPotentialReports" class="space-y-1">
+            <div class="flex items-center justify-between sticky top-0 bg-[#f9fefb] py-1 z-10 border-b border-emerald-50">
+              <div class="flex items-center gap-2">
+                <button type="button" (click)="expandedDepts.has(group.dept) ? expandedDepts.delete(group.dept) : expandedDepts.add(group.dept)" class="text-emerald-600">
+                  <svg *ngIf="expandedDepts.has(group.dept)" lucideChevronDown class="w-3.5 h-3.5"></svg>
+                  <svg *ngIf="!expandedDepts.has(group.dept)" lucideChevronRight class="w-3.5 h-3.5"></svg>
+                </button>
+                <span class="text-[11px] font-bold text-emerald-900">{{ group.dept }}</span>
+              </div>
+              <button type="button" (click)="toggleDeptReports(group.dept, !isDeptFullySelected(group.dept))"
+                class="text-[9px] font-bold px-2 py-0.5 rounded bg-white border border-emerald-100 text-emerald-700 hover:bg-emerald-50 transition-colors">
+                {{ isDeptFullySelected(group.dept) ? 'Désélectionner tout' : 'Tout sélectionner' }}
+              </button>
+            </div>
+
+            <div *ngIf="expandedDepts.has(group.dept)" class="space-y-1 mt-1 ml-4">
+              <div *ngFor="let e of group.employees" (click)="toggleReport(e.id)"
+                class="flex items-center gap-3 p-2 rounded-lg hover:bg-white border border-transparent cursor-pointer transition-all group"
+                [class.bg-white]="selectedReportIds().has(e.id)"
+                [class.border-emerald-100]="selectedReportIds().has(e.id)">
+                <div class="w-4 h-4 border rounded flex items-center justify-center transition-colors"
+                  [class.bg-emerald-600]="selectedReportIds().has(e.id)"
+                  [class.border-emerald-600]="selectedReportIds().has(e.id)"
+                  [class.border-gray-300]="!selectedReportIds().has(e.id)">
+                  <svg lucideCheck class="w-3 h-3 text-white" *ngIf="selectedReportIds().has(e.id)"></svg>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <p class="text-xs font-medium text-gray-900">{{ e.firstName }} {{ e.lastName }}</p>
+                    <span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-gray-100 text-gray-600 uppercase">{{ e.position }}</span>
+                  </div>
+                  <p class="text-[10px] text-gray-400">{{ e.email }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="groupedPotentialReports.length === 0" class="text-center py-4 text-xs text-gray-400">
+            Aucun employé trouvé.
           </div>
         </div>
       </div>

@@ -123,14 +123,18 @@ public class EmployeeController {
             String position,
             LocalDate hireDate,
             EmployeeStatus status,
-            UUID managerId) {
+            UUID managerId,
+            String managerName,
+            Set<UUID> directReportIds) {
 
         public static EmployeeResponse from(Employee e) {
             return new EmployeeResponse(
                     e.getId(), e.getMatricule(), e.getFirstName(), e.getLastName(), e.getEmail(),
                     e.getPhoneNumber(), e.getAddress(),
                     e.getDepartment(), e.getPosition(), e.getHireDate(), e.getStatus(),
-                    e.getManager() == null ? null : e.getManager().getId());
+                    e.getManager() == null ? null : e.getManager().getId(),
+                    e.getManager() == null ? null : e.getManager().getFirstName() + " " + e.getManager().getLastName(),
+                    e.getDirectReports().stream().map(Employee::getId).collect(Collectors.toSet()));
         }
     }
 }
