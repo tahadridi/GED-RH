@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { DocumentService, OcrPreviewResult } from '../../../core/services/document.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Employee } from '../../../core/models/employee.model';
 import { EmployeeDocument } from '../../../core/models/document.model';
 import { DocumentType } from '../../../core/models/user.model';
@@ -11,7 +12,7 @@ import { EmployeeForm } from '../employee-form/employee-form';
 import {
   LucideArrowLeft, LucideUpload, LucideDownload, LucideFileText,
   LucidePencil, LucideTrash2, LucideHistory, LucideX, LucideScanText,
-  LucideCheck
+  LucideCheck, LucideEye
 } from '@lucide/angular';
 
 @Component({
@@ -21,7 +22,7 @@ import {
     CommonModule, RouterModule, FormsModule, EmployeeForm,
     LucideArrowLeft, LucideUpload, LucideDownload, LucideFileText,
     LucidePencil, LucideTrash2, LucideHistory, LucideX, LucideScanText,
-    LucideCheck
+    LucideCheck, LucideEye
   ],
   templateUrl: './employee-detail.html'
 })
@@ -64,7 +65,8 @@ export class EmployeeDetail implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private employeeService: EmployeeService,
-    private documentService: DocumentService
+    private documentService: DocumentService,
+    private authService: AuthService
   ) {}
 
   async ngOnInit() {
@@ -93,9 +95,23 @@ export class EmployeeDetail implements OnInit {
     this.uploadRef = '';
     this.uploadOcrText = '';
     this.uploadTempKey = '';
-    this.uploadType = 'OTHER';
     this.ocrError.set('');
     this.saveError.set('');
+
+    // Filter doc types by RH responsibilities (admin sees all)
+    const isAdmin = this.authService.isAdmin();
+    const responsibilities = this.authService.getRhResponsibilities();
+    if (!isAdmin && responsibilities.length > 0) {
+      this.docTypes = responsibilities;
+      this.uploadType = responsibilities[0];
+    } else {
+      this.docTypes = [
+        'PERSONAL_FILE', 'EMPLOYMENT_CONTRACT', 'PAYSLIP', 'LEAVE_REQUEST',
+        'EVALUATION', 'TRAINING', 'ADMINISTRATIVE', 'OTHER'
+      ];
+      this.uploadType = 'OTHER';
+    }
+
     this.showUploadModal.set(true);
   }
 
@@ -114,10 +130,10 @@ export class EmployeeDetail implements OnInit {
     try {
       const result: OcrPreviewResult = await this.documentService.ocrPreview(this.uploadFile);
       this.uploadTempKey = result.tempKey;
-      this.uploadOcrText = result.ocrText;
+      this.uploadOcrText = result.ocrText ?? '';
       this.uploadStep.set(2);
     } catch (e: any) {
-      this.ocrError.set(e?.error?.message ?? 'Erreur lors de l\'analyse OCR');
+      this.ocrError.set(e?.error?.message ?? e?.message ?? 'Erreur lors de l\'analyse OCR');
     } finally {
       this.analyzingOcr.set(false);
     }
@@ -134,7 +150,7 @@ export class EmployeeDetail implements OnInit {
         documentReference: ref,
         name: this.uploadName,
         type: this.uploadType,
-        author: '',
+        author: `${this.employee()!.firstName} ${this.employee()!.lastName}`,
         tempKey: this.uploadTempKey,
         ocrText: this.uploadOcrText
       });
@@ -151,6 +167,10 @@ export class EmployeeDetail implements OnInit {
     await this.documentService.download(doc.id, doc.name);
   }
 
+  async openDoc(doc: EmployeeDocument) {
+    await this.documentService.open(doc.id, doc.name);
+  }
+
   async openVersions(doc: EmployeeDocument) {
     this.selectedDoc.set(doc);
     const v = await this.documentService.listVersions(doc.id);
@@ -164,8 +184,15 @@ export class EmployeeDetail implements OnInit {
 
   async deleteDoc(doc: EmployeeDocument) {
     if (!confirm(`Supprimer "${doc.name}" ?`)) return;
-    await this.documentService.delete(doc.id);
-    await this.load(this.employee()!.id);
+    try {
+      await this.documentService.delete(doc.id);
+      // Remove from local list immediately so UI updates without waiting for reload
+      this.documents.set(this.documents().filter(d => d.id !== doc.id));
+      // Then reload from server to ensure consistency
+      await this.load(this.employee()!.id);
+    } catch (e: any) {
+      alert(e?.error?.message ?? 'Erreur lors de la suppression');
+    }
   }
 
   onEditClose(saved: boolean) {

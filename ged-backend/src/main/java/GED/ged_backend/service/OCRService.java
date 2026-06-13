@@ -25,9 +25,21 @@ public class OCRService {
     private String defaultLanguage;
 
     public String extractText(InputStream inputStream) {
+        return extractText(inputStream, null);
+    }
+
+    public String extractText(InputStream inputStream, String originalFilename) {
         Path tempFile = null;
         try {
-            tempFile = Files.createTempFile("ocr_", ".tmp");
+            // Preserve extension so Tesseract can determine image format
+            String suffix = ".tmp";
+            if (originalFilename != null) {
+                String lower = originalFilename.toLowerCase();
+                if (lower.endsWith(".pdf")) suffix = ".pdf";
+                else if (lower.endsWith(".png")) suffix = ".png";
+                else if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) suffix = ".jpg";
+            }
+            tempFile = Files.createTempFile("ocr_", suffix);
             Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
             return extractText(tempFile.toFile());
         } catch (IOException e) {

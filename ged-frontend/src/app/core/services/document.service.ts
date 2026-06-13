@@ -74,12 +74,53 @@ export class DocumentService {
 
   async download(documentId: string, filename: string): Promise<void> {
     const blob = await this.api.downloadBlob(`/documents/${documentId}/content`);
-    this.triggerDownload(blob, filename);
+    // Get the stored filename with extension from the storagePath or use the doc name
+    const blobWithType = this.ensureCorrectType(blob, filename);
+    const ext = this.detectExtension(blob, filename);
+    const finalName = filename.includes('.') ? filename : `${filename}${ext}`;
+    this.triggerDownload(blobWithType, finalName);
   }
 
   async downloadVersion(versionId: string, filename: string): Promise<void> {
     const blob = await this.api.downloadBlob(`/documents/versions/${versionId}/content`);
-    this.triggerDownload(blob, filename);
+    const blobWithType = this.ensureCorrectType(blob, filename);
+    const ext = this.detectExtension(blob, filename);
+    const finalName = filename.includes('.') ? filename : `${filename}${ext}`;
+    this.triggerDownload(blobWithType, finalName);
+  }
+
+  async open(documentId: string, filename: string): Promise<void> {
+    const blob = await this.api.downloadBlob(`/documents/${documentId}/content`);
+    const blobWithType = this.ensureCorrectType(blob, filename);
+    const url = URL.createObjectURL(blobWithType);
+    // Open in new tab — browser will display PDF/image natively
+    const win = window.open(url, '_blank');
+    if (!win) {
+      // Fallback if popup blocked
+      this.triggerDownload(blobWithType, filename);
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  }
+
+  private ensureCorrectType(blob: Blob, filename: string): Blob {
+    const lower = filename.toLowerCase();
+    let mimeType = blob.type;
+    if (!mimeType || mimeType === 'application/octet-stream') {
+      if (lower.endsWith('.pdf')) mimeType = 'application/pdf';
+      else if (lower.endsWith('.png')) mimeType = 'image/png';
+      else if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) mimeType = 'image/jpeg';
+    }
+    // Also check magic bytes if no extension
+    return new Blob([blob], { type: mimeType });
+  }
+
+  private detectExtension(blob: Blob, filename: string): string {
+    if (filename.includes('.')) return '';
+    const type = blob.type;
+    if (type === 'application/pdf') return '.pdf';
+    if (type === 'image/png') return '.png';
+    if (type === 'image/jpeg') return '.jpg';
+    return '';
   }
 
   private triggerDownload(blob: Blob, filename: string): void {

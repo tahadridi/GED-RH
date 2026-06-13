@@ -77,7 +77,7 @@ public class DocumentService {
 
         String extractedText = "";
         try (InputStream is = storageService.downloadFile(tempKey)) {
-            extractedText = ocrService.extractText(is);
+            extractedText = ocrService.extractText(is, originalFilename);
         } catch (Exception e) {
             System.err.println("OCR preview failed: " + e.getMessage());
         }
@@ -221,8 +221,22 @@ public class DocumentService {
         return documentRepository.save(doc);
     }
 
+    @Transactional
     public void deleteDocument(UUID id) {
-        documentRepository.deleteById(id);
+        EmployeeDocument doc = documentRepository.findById(id).orElseThrow();
+        
+        // Delete all version files from MinIO
+        for (DocumentVersion v : versionRepository.findByDocumentIdOrderByVersionNumberDesc(id)) {
+            try { storageService.deleteFile(v.getStoragePath()); } catch (Exception ignored) {}
+        }
+        // Delete all versions from DB
+        versionRepository.deleteAll(versionRepository.findByDocumentIdOrderByVersionNumberDesc(id));
+        
+        // Delete the main file from MinIO
+        try { storageService.deleteFile(doc.getStoragePath()); } catch (Exception ignored) {}
+        
+        // Delete from DB
+        documentRepository.delete(doc);
     }
 
     /**
