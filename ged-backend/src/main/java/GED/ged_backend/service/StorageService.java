@@ -61,6 +61,20 @@ public class StorageService {
         }
     }
 
+    public String getContentType(String fileName) {
+        try {
+            var stat = minioClient.statObject(
+                    StatObjectArgs.builder()
+                            .bucket(minioProperties.getBucketName())
+                            .object(fileName)
+                            .build()
+            );
+            return stat.contentType();
+        } catch (Exception e) {
+            return "application/octet-stream";
+        }
+    }
+
     public void deleteFile(String fileName) {
         try {
             minioClient.removeObject(

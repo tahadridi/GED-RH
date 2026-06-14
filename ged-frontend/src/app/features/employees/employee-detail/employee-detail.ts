@@ -163,6 +163,25 @@ export class EmployeeDetail implements OnInit {
     }
   }
 
+  async updateFileVersion(doc: EmployeeDocument) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.jpg,.jpeg,.png';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      try {
+        const emp = this.employee();
+        const name = emp ? `${emp.firstName} ${emp.lastName}` : 'inconnu';
+        await this.documentService.addVersion(doc.id, file, name);
+        await this.load(this.employee()!.id);
+      } catch (e: any) {
+        alert(e?.error?.message ?? 'Erreur lors de l\'ajout de la version');
+      }
+    };
+    input.click();
+  }
+
   async download(doc: EmployeeDocument) {
     await this.documentService.download(doc.id, doc.name);
   }
@@ -173,9 +192,18 @@ export class EmployeeDetail implements OnInit {
 
   async openVersions(doc: EmployeeDocument) {
     this.selectedDoc.set(doc);
-    const v = await this.documentService.listVersions(doc.id);
-    this.versions.set(v);
-    this.showVersionsModal.set(true);
+    try {
+      const v = await this.documentService.listVersions(doc.id);
+      this.versions.set(v);
+      this.showVersionsModal.set(true);
+    } catch (e: any) {
+      console.error('Failed to load versions', e);
+      alert('Impossible de charger les versions. Vérifiez votre connexion ou réessayez.');
+    }
+  }
+
+  async openVersion(v: any) {
+    await this.documentService.openVersion(v.id, `v${v.versionNumber}_${this.selectedDoc()?.name}`);
   }
 
   async downloadVersion(v: any) {

@@ -121,11 +121,17 @@ public class DocumentService {
     }
 
     @Transactional
-    public EmployeeDocument createDocument(CreateDocumentCommand cmd, InputStream fileStream, String contentType) {
+    public EmployeeDocument createDocument(CreateDocumentCommand cmd, InputStream fileStream, String contentType, String originalFilename) {
         Employee employee = employeeRepository.findById(cmd.employeeId()).orElseThrow();
-        
+
+        // Extract extension from the uploaded file
+        String ext = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            ext = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+
         // Architecture Step 1: Store Original File (MinIO)
-        String fileName = UUID.randomUUID().toString() + "_" + cmd.name();
+        String fileName = UUID.randomUUID().toString() + "_" + cmd.name() + ext;
         storageService.uploadFile(fileName, fileStream, contentType);
         
         // Architecture Step 3: Metadata Extraction & Database Save (PostgreSQL)
@@ -155,12 +161,18 @@ public class DocumentService {
     }
 
     @Transactional
-    public DocumentVersion addVersion(UUID documentId, String uploadedBy, InputStream fileStream, String contentType) {
+    public DocumentVersion addVersion(UUID documentId, String uploadedBy, InputStream fileStream, String contentType, String originalFilename) {
         EmployeeDocument doc = documentRepository.findById(documentId).orElseThrow();
         int next = doc.getCurrentVersion() + 1;
-        
+
+        // Extract extension from the uploaded file
+        String ext = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            ext = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+
         // Architecture Step 1: Store Original File
-        String fileName = UUID.randomUUID().toString() + "_v" + next + "_" + doc.getName();
+        String fileName = UUID.randomUUID().toString() + "_v" + next + "_" + doc.getName() + ext;
         storageService.uploadFile(fileName, fileStream, contentType);
         
         // Architecture Step 3: Metadata Extraction & DB Update

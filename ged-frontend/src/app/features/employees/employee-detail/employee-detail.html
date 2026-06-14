@@ -77,6 +77,12 @@
               class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
               <svg lucideEye class="w-4 h-4"></svg>
             </button>
+            <button (click)="updateFileVersion(doc)" title="Modifier le fichier"
+              class="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 8l5-5m0 0l5 5m-5-5v12" />
+              </svg>
+            </button>
             <button (click)="download(doc)" title="Télécharger"
               class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors">
               <svg lucideDownload class="w-4 h-4"></svg>
@@ -217,10 +223,16 @@
           <p class="text-sm font-medium text-gray-900">Version {{ v.versionNumber }}</p>
           <p class="text-xs text-gray-400">{{ v.createdAt | date:'dd/MM/yyyy HH:mm' }} · {{ v.uploadedBy }}</p>
         </div>
-        <button (click)="downloadVersion(v)"
-          class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors">
-          <svg lucideDownload class="w-4 h-4"></svg>
-        </button>
+        <div class="flex items-center gap-1">
+          <button (click)="openVersion(v)" title="Ouvrir"
+            class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
+            <svg lucideEye class="w-4 h-4"></svg>
+          </button>
+          <button (click)="downloadVersion(v)" title="Télécharger"
+            class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors">
+            <svg lucideDownload class="w-4 h-4"></svg>
+          </button>
+        </div>
       </div>
       <div *ngIf="versions().length === 0" class="p-6 text-center text-gray-400 text-sm">Aucune version.</div>
     </div>

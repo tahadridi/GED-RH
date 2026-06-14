@@ -1,7 +1,17 @@
-<div class="p-8">
-  <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Tableau de Bord RH</h1>
-    <p class="text-sm text-gray-500 mt-1">Bienvenue, {{ userName }}</p>
+<div class="p-6 bg-gray-50 min-h-screen">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Tableau de Bord RH</h1>
+        <p class="text-gray-500 mt-1">Bienvenue, {{ userName }}</p>
+      </div>
+      <button (click)="openUpload()"
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+        <svg lucideUpload class="w-4 h-4"></svg>
+        Nouveau document
+      </button>
+    </div>
   </div>
 
   <!-- Responsibilities badges -->
@@ -18,47 +28,208 @@
     </div>
   </div>
 
-  <!-- Actions -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8" *ngIf="responsibilities().length > 0">
-    <button (click)="openUpload()"
-      class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow text-left group">
-      <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-3 group-hover:bg-blue-200 transition-colors">
-        <svg lucideUpload class="w-6 h-6 text-blue-600"></svg>
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Employés</p>
+          <p class="text-3xl font-bold text-gray-900">{{ totalEmployees() }}</p>
+        </div>
+        <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        </div>
       </div>
-      <h3 class="font-semibold text-gray-900">Ajouter un document</h3>
-      <p class="text-sm text-gray-500 mt-1">Upload + analyse OCR + révision avant enregistrement</p>
-    </button>
+    </div>
 
-    <a routerLink="/documents"
-      class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow text-left group block">
-      <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-3 group-hover:bg-green-200 transition-colors">
-        <svg lucideFileText class="w-6 h-6 text-green-600"></svg>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Documents traités</p>
+          <p class="text-3xl font-bold text-gray-900">{{ myDocumentsCount() }}</p>
+        </div>
+        <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
       </div>
-      <h3 class="font-semibold text-gray-900">Consulter les documents</h3>
-      <p class="text-sm text-gray-500 mt-1">Voir et rechercher dans vos documents</p>
-    </a>
+    </div>
+
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Départements</p>
+          <p class="text-3xl font-bold text-gray-900">{{ departmentsCount() }}</p>
+        </div>
+        <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Employees list -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-    <div class="p-4 border-b border-gray-100">
-      <h2 class="font-semibold text-gray-800">Employés ({{ employees().length }})</h2>
+  <!-- Main Grid: Recent Documents & Distribution -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Recent Documents -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="p-5 border-b border-gray-100 flex justify-between items-center">
+        <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Documents récents
+        </h2>
+        <a routerLink="/documents" class="text-blue-600 text-sm font-medium hover:underline">Voir tout</a>
+      </div>
+      <div *ngIf="recentDocsLoading()" class="p-8 text-center text-gray-400 text-sm">Chargement...</div>
+      <div *ngIf="!recentDocsLoading() && recentDocuments().length === 0" class="p-12 text-center text-gray-400 text-sm">
+        Aucun document récent.
+      </div>
+      <div *ngIf="!recentDocsLoading() && recentDocuments().length > 0" class="divide-y divide-gray-50">
+        <div *ngFor="let doc of recentDocuments()" class="p-4 flex items-center justify-between hover:bg-gray-50 group">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
+              <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-900">{{ doc.name }}</p>
+              <p class="text-xs text-gray-400">{{ doc.employeeName }} • {{ doc.createdAt | date:'dd/MM/yyyy' }}</p>
+            </div>
+          </div>
+          <span class="px-2 py-1 text-xs rounded-full" [ngClass]="{
+            'bg-green-100 text-green-700': doc.status === 'VALIDATED',
+            'bg-yellow-100 text-yellow-700': doc.status === 'PENDING',
+            'bg-gray-100 text-gray-700': doc.status === 'DRAFT'
+          }">{{ doc.status === 'VALIDATED' ? 'Validé' : doc.status === 'PENDING' ? 'En attente' : 'Brouillon' }}</span>
+        </div>
+      </div>
     </div>
-    <div *ngIf="loading()" class="p-8 text-center text-gray-400 text-sm">Chargement...</div>
-    <div class="divide-y divide-gray-50">
-      <div *ngFor="let emp of employees()" class="p-4 flex items-center justify-between hover:bg-gray-50">
+
+    <!-- Document Type Distribution -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+      <h2 class="font-semibold text-gray-800 flex items-center gap-2 mb-4">
+        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        Répartition par type
+      </h2>
+      <div *ngIf="distributionLoading()" class="p-8 text-center text-gray-400 text-sm">Chargement...</div>
+      <div *ngIf="!distributionLoading() && docDistribution().length === 0" class="p-8 text-center text-gray-400 text-sm">
+        Aucune donnée.
+      </div>
+      <div *ngIf="!distributionLoading() && docDistribution().length > 0" class="space-y-3">
+        <div *ngFor="let item of docDistribution()">
+          <div class="flex justify-between text-sm mb-1">
+            <span class="text-gray-600">{{ item.typeLabel }}</span>
+            <span class="font-medium text-gray-900">{{ item.count }} doc(s)</span>
+          </div>
+          <div class="w-full bg-gray-100 rounded-full h-2">
+            <div class="bg-blue-600 h-2 rounded-full" [style.width.%]="item.percentage"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Employee list with improved design and pagination -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+  <div class="p-5 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
+    <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+      Employés
+    </h2>
+    <div class="relative">
+      <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></svg>
+      <input type="text" placeholder="Rechercher un employé..." [(ngModel)]="employeeSearch"
+        (ngModelChange)="onEmployeeSearchChange()"
+        class="pl-9 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-64">
+    </div>
+  </div>
+
+  <!-- Loading & empty states -->
+  <div *ngIf="loading()" class="p-12 text-center text-gray-400 text-sm">Chargement des employés...</div>
+  <div *ngIf="!loading() && filteredEmployees().length === 0" class="p-12 text-center text-gray-400 text-sm">
+    Aucun employé trouvé.
+  </div>
+
+  <!-- Employee cards grid (10 per page) -->
+  <div *ngIf="!loading() && filteredEmployees().length > 0" class="divide-y divide-gray-100">
+    <div *ngFor="let emp of paginatedEmployeesList()" class="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors group">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-blue-700 font-semibold text-sm shadow-inner">
+          {{ (emp.firstName?.[0] || '') + (emp.lastName?.[0] || '') }}
+        </div>
         <div>
           <p class="text-sm font-medium text-gray-900">{{ emp.firstName }} {{ emp.lastName }}</p>
-          <p class="text-xs text-gray-400">{{ emp.matricule }} · {{ emp.department }}</p>
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+            <span class="font-mono">{{ emp.matricule }}</span>
+            <span class="inline-flex items-center gap-1">
+              <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              {{ emp.department || '—' }}
+            </span>
+            <span class="inline-flex items-center gap-1">
+              <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              {{ emp.email }}
+            </span>
+          </div>
         </div>
-        <a [routerLink]="['/employees', emp.id]"
-          class="text-xs text-blue-600 hover:underline font-medium">Voir dossier</a>
       </div>
+      <a [routerLink]="['/employees', emp.id]" 
+        class="text-sm text-blue-600 hover:text-blue-800 font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+        Voir dossier
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+    </div>
+  </div>
+
+  <!-- Pagination for employee list -->
+  <div *ngIf="!loading() && filteredEmployees().length > 0" class="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
+    <div class="text-xs text-gray-500">
+      {{ (employeeCurrentPage() - 1) * employeeItemsPerPage + 1 }} - 
+      {{ Math.min(employeeCurrentPage() * employeeItemsPerPage, filteredEmployees().length) }} 
+      sur {{ filteredEmployees().length }} employés
+    </div>
+    <div class="flex gap-1">
+      <button (click)="goToPrevEmployeePage()" [disabled]="employeeCurrentPage() === 1"
+        class="px-3 py-1 text-xs border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center gap-1">
+        <svg lucideChevronLeft class="w-3.5 h-3.5"></svg>
+        Précédent
+      </button>
+      <ng-container *ngFor="let page of employeeVisiblePages()">
+        <button (click)="goToEmployeePage(page)"
+          [class.bg-blue-800]="employeeCurrentPage() === page"
+          [class.text-white]="employeeCurrentPage() === page"
+          [class.border-blue-800]="employeeCurrentPage() === page"
+          class="px-3 py-1 text-xs border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+          {{ page }}
+        </button>
+      </ng-container>
+      <button (click)="goToNextEmployeePage()" [disabled]="employeeCurrentPage() === employeeTotalPages()"
+        class="px-3 py-1 text-xs border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center gap-1">
+        Suivant
+        <svg lucideChevronRight class="w-3.5 h-3.5"></svg>
+      </button>
     </div>
   </div>
 </div>
 
-<!-- Upload Modal -->
+<!-- Upload Modal (unchanged except minor style) -->
 <div *ngIf="showUpload()" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
   <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
     <div class="flex items-center justify-between p-5 border-b border-gray-100">
@@ -70,7 +241,6 @@
         <svg lucideX class="w-5 h-5"></svg>
       </button>
     </div>
-
     <!-- Step 1 -->
     <div *ngIf="uploadStep() === 1" class="p-5 space-y-4">
       <div>
@@ -106,8 +276,7 @@
         </button>
       </div>
     </div>
-
-    <!-- Step 2 -->
+    <!-- Step 2 (same as before) -->
     <div *ngIf="uploadStep() === 2" class="p-5 space-y-4">
       <div>
         <label class="block text-xs font-medium text-gray-700 mb-1">Nom du document *</label>

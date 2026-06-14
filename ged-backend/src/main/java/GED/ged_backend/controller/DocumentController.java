@@ -5,6 +5,7 @@ import GED.ged_backend.domain.entity.EmployeeDocument;
 import GED.ged_backend.domain.enums.DocumentType;
 import GED.ged_backend.service.DocumentService;
 import GED.ged_backend.service.AccessControlService;
+import GED.ged_backend.service.StorageService;
 import GED.ged_backend.domain.entity.SystemUser;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -24,10 +25,12 @@ public class DocumentController {
 
     private final DocumentService documentService;
     private final AccessControlService accessControlService;
+    private final StorageService storageService;
 
-    public DocumentController(DocumentService documentService, AccessControlService accessControlService) {
+    public DocumentController(DocumentService documentService, AccessControlService accessControlService, StorageService storageService) {
         this.documentService = documentService;
         this.accessControlService = accessControlService;
+        this.storageService = storageService;
     }
 
     /** Step 1: upload to temp storage + OCR */
@@ -53,20 +56,17 @@ public class DocumentController {
         return documentService.createDocument(
                 new DocumentService.CreateDocumentCommand(
                         req.employeeId, req.documentReference, req.name, req.type, req.author, null),
-                file.getInputStream(), file.getContentType());
+                file.getInputStream(), file.getContentType(), file.getOriginalFilename());
     }
 
     @GetMapping("/{id}/content")
     public ResponseEntity<InputStreamResource> download(@PathVariable UUID id) {
         EmployeeDocument doc = documentService.getDocument(id);
-        String path = doc.getStoragePath() != null ? doc.getStoragePath().toLowerCase() : "";
-        MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
-        if (path.contains(".pdf")) mediaType = MediaType.APPLICATION_PDF;
-        else if (path.contains(".png")) mediaType = MediaType.IMAGE_PNG;
-        else if (path.contains(".jpg") || path.contains(".jpeg")) mediaType = MediaType.IMAGE_JPEG;
+        String ext = detectExtension(doc.getStoragePath());
+        MediaType mediaType = resolveMediaType(doc.getStoragePath());
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + doc.getName() + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + doc.getName() + ext + "\"")
                 .contentType(mediaType)
                 .body(new InputStreamResource(documentService.getFileContent(id)));
     }
@@ -76,22 +76,42 @@ public class DocumentController {
             @PathVariable UUID id,
             @RequestParam("uploadedBy") String uploadedBy,
             @RequestPart("file") MultipartFile file) throws Exception {
-        return documentService.addVersion(id, uploadedBy, file.getInputStream(), file.getContentType());
+        return documentService.addVersion(id, uploadedBy, file.getInputStream(), file.getContentType(), file.getOriginalFilename());
     }
 
     @GetMapping("/versions/{versionId}/content")
     public ResponseEntity<InputStreamResource> downloadVersion(@PathVariable UUID versionId) {
         DocumentVersion v = documentService.getVersion(versionId);
-        String path = v.getStoragePath() != null ? v.getStoragePath().toLowerCase() : "";
-        MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
-        if (path.contains(".pdf")) mediaType = MediaType.APPLICATION_PDF;
-        else if (path.contains(".png")) mediaType = MediaType.IMAGE_PNG;
-        else if (path.contains(".jpg") || path.contains(".jpeg")) mediaType = MediaType.IMAGE_JPEG;
+        String ext = detectExtension(v.getStoragePath());
+        MediaType mediaType = resolveMediaType(v.getStoragePath());
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"v" + v.getVersionNumber() + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"v" + v.getVersionNumber() + ext + "\"")
                 .contentType(mediaType)
                 .body(new InputStreamResource(documentService.getVersionContent(versionId)));
+    }
+
+    private String detectExtension(String storagePath) {
+        String path = storagePath != null ? storagePath.toLowerCase() : "";
+        if (path.contains(".pdf")) return ".pdf";
+        if (path.contains(".png")) return ".png";
+        if (path.contains(".jpg") || path.contains(".jpeg")) return ".jpg";
+        return "";
+    }
+
+    private MediaType resolveMediaType(String storagePath) {
+        // First try to determine from the storage path extension
+        String path = storagePath != null ? storagePath.toLowerCase() : "";
+        if (path.contains(".pdf")) return MediaType.APPLICATION_PDF;
+        if (path.contains(".png")) return MediaType.IMAGE_PNG;
+        if (path.contains(".jpg") || path.contains(".jpeg")) return MediaType.IMAGE_JPEG;
+
+        // Fallback: read the content type stored in MinIO (set during upload)
+        String storedType = storageService.getContentType(storagePath);
+        if (storedType != null && !storedType.isBlank() && !"application/octet-stream".equals(storedType)) {
+            return MediaType.parseMediaType(storedType);
+        }
+        return MediaType.APPLICATION_OCTET_STREAM;
     }
 
     @GetMapping("/{id}")
@@ -128,6 +148,7 @@ public class DocumentController {
     }
 
     @GetMapping("/{id}/versions")
+    @Transactional(readOnly = true)
     public List<DocumentVersion> versions(@PathVariable UUID id) {
         return documentService.listVersions(id);
     }

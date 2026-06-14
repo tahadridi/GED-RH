@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -44,6 +44,30 @@ export class EmployeesList implements OnInit {
     ACTIVE: 'Actif', INACTIVE: 'Inactif', ON_LEAVE: 'En congé', TERMINATED: 'Terminé'
   };
 
+  // Pagination
+  currentPage = signal(1);
+  itemsPerPage = 10;
+
+  // Computed pagination values
+  totalPages = computed(() => Math.ceil(this.filtered().length / this.itemsPerPage));
+  paginatedEmployees = computed(() => {
+    const start = (this.currentPage() - 1) * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    return this.filtered().slice(start, end);
+  });
+  visiblePages = computed(() => {
+    const total = this.totalPages();
+    const current = this.currentPage();
+    const delta = 2;
+    let start = Math.max(1, current - delta);
+    let end = Math.min(total, current + delta);
+    if (end - start < 4) {
+      if (start === 1) end = Math.min(total, start + 4);
+      else if (end === total) start = Math.max(1, end - 4);
+    }
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  });
+
   constructor(
     private employeeService: EmployeeService,
     private userService: UserService
@@ -67,7 +91,6 @@ export class EmployeesList implements OnInit {
     try {
       const list = await this.employeeService.list();
       this.employees.set(list);
-      // Extract unique departments for filter dropdown
       this.departments = [...new Set(list.map(e => e.department).filter(Boolean))].sort();
       this.applyFilter();
     } finally {
@@ -110,6 +133,8 @@ export class EmployeesList implements OnInit {
     });
 
     this.filtered.set(result);
+    // Reset to first page when filters/sort change
+    this.currentPage.set(1);
   }
 
   sortBy(field: SortField) {
@@ -135,7 +160,7 @@ export class EmployeesList implements OnInit {
   }
 
   openEdit(emp: Employee) {
-    this.editingEmployee.set({ ...emp }); // pass a copy to avoid mutation
+    this.editingEmployee.set({ ...emp });
     this.showForm.set(true);
   }
 
@@ -158,5 +183,19 @@ export class EmployeesList implements OnInit {
       TERMINATED: 'bg-red-100 text-red-600'
     };
     return m[s] ?? '';
+  }
+
+  // Pagination methods
+  goToPage(page: number) {
+    if (page < 1 || page > this.totalPages()) return;
+    this.currentPage.set(page);
+  }
+
+  nextPage() {
+    this.goToPage(this.currentPage() + 1);
+  }
+
+  prevPage() {
+    this.goToPage(this.currentPage() - 1);
   }
 }

@@ -91,12 +91,19 @@ export class DocumentService {
 
   async open(documentId: string, filename: string): Promise<void> {
     const blob = await this.api.downloadBlob(`/documents/${documentId}/content`);
+    await this.openBlob(blob, filename);
+  }
+
+  async openVersion(versionId: string, filename: string): Promise<void> {
+    const blob = await this.api.downloadBlob(`/documents/versions/${versionId}/content`);
+    await this.openBlob(blob, filename);
+  }
+
+  private async openBlob(blob: Blob, filename: string): Promise<void> {
     const blobWithType = this.ensureCorrectType(blob, filename);
     const url = URL.createObjectURL(blobWithType);
-    // Open in new tab — browser will display PDF/image natively
     const win = window.open(url, '_blank');
     if (!win) {
-      // Fallback if popup blocked
       this.triggerDownload(blobWithType, filename);
     }
     setTimeout(() => URL.revokeObjectURL(url), 30000);
