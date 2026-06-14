@@ -58,6 +58,7 @@ public class EmployeeController {
     }
 
     @PostMapping
+    @Transactional
     public EmployeeResponse create(@RequestBody CreateEmployeeRequest req) {
         Employee e = employeeService.createEmployee(new EmployeeService.CreateEmployeeCommand(
                 req.matricule, req.firstName, req.lastName, req.email,
@@ -67,6 +68,7 @@ public class EmployeeController {
     }
 
     @PutMapping("/{id}")
+    @Transactional
     public EmployeeResponse update(@PathVariable UUID id, @RequestBody UpdateEmployeeRequest req) {
         Employee e = employeeService.updateEmployee(id, new EmployeeService.UpdateEmployeeCommand(
                 req.firstName, req.lastName, req.email, req.phoneNumber, req.address,
