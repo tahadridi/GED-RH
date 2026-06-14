@@ -146,6 +146,17 @@ public class EmployeeService {
         Employee manager = managerId == null ? null : employeeRepository.findById(managerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Manager not found"));
 
+        // Unassign reports that were removed
+        if (managerId != null) {
+            employeeRepository.findByManagerId(managerId).stream()
+                    .filter(report -> !reportIds.contains(report.getId()))
+                    .forEach(report -> {
+                        report.setManager(null);
+                        employeeRepository.save(report);
+                    });
+        }
+
+        // Assign new reports
         for (UUID reportId : reportIds) {
             Employee report = employeeRepository.findById(reportId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee report not found"));

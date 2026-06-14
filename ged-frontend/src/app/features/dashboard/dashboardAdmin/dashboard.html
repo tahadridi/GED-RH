@@ -1,81 +1,260 @@
-<div class="p-8 bg-white text-gray-900">
-  <div class="mb-6">
-    <h1 class="text-2xl font-bold text-black-900">Tableau de Bord</h1>
-    <p class="text-sm text-gray-500 mt-1">Bienvenue, {{ userEmail }}</p>
+<div class="p-6 bg-gray-50 min-h-screen">
+  <!-- Header with dynamic greeting -->
+  <div class="mb-8">
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">
+          {{ greeting() }}, {{ (userEmail?.split('@') ?? [])[0] || 'Utilisateur' }}
+        </h1>
+        <p class="text-gray-500 mt-1">Voici ce qui se passe dans votre entreprise aujourd'hui.</p>
+      </div>
+      <div class="flex gap-3">
+        <button (click)="refreshData()" class="px-4 py-2 text-sm bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Actualiser
+        </button>
+        <button routerLink="/documents/upload" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Nouveau document
+        </button>
+      </div>
+    </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <!-- Card 1 -->
-    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-      <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-        <svg class="w-6 h-6 text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-      </div>
-      <div>
-        <p class="text-sm text-gray-500">Employés actifs</p>
-        <p class="text-3xl font-bold text-gray-900">{{ totalEmployees() }}</p>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Employés actifs</p>
+          <p class="text-3xl font-bold text-gray-900 mt-1">{{ totalEmployees() }}</p>
+          <p class="text-xs text-green-600 mt-2 flex items-center gap-1">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            </svg>
+            +{{ newEmployeesThisMonth() }} ce mois
+          </p>
+        </div>
+        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        </div>
       </div>
     </div>
 
     <!-- Card 2 -->
-    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-      <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-        <svg class="w-6 h-6 text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      </div>
-      <div>
-        <p class="text-sm text-gray-500">Total Documents</p>
-        <p class="text-3xl font-bold text-gray-900">{{ totalDocuments() }}</p>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Total documents</p>
+          <p class="text-3xl font-bold text-gray-900 mt-1">{{ totalDocuments() }}</p>
+          <p class="text-xs text-gray-500 mt-2">{{ documentsThisMonth() }} ajoutés ce mois</p>
+        </div>
+        <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
+          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
       </div>
     </div>
 
-    <!-- Card 3 -->
-    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-      <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-        <svg class="w-6 h-6 text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      </div>
-      <div>
-        <p class="text-sm text-gray-500">Documents récents</p>
-        <p class="text-3xl font-bold text-gray-900">{{ recentDocuments().length }}</p>
+    
+
+    <!-- Card 4 -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Stockage utilisé</p>
+          <p class="text-3xl font-bold text-gray-900 mt-1">{{ storageUsed }} MB</p>
+          <div class="w-full bg-gray-200 rounded-full h-1.5 mt-3">
+            <div class="bg-blue-600 h-1.5 rounded-full" [style.width.%]="storagePercentage"></div>
+          </div>
+        </div>
+        <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
+          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1.5 4 4 4h8c2.5 0 4-2 4-4V7c0-2-1.5-4-4-4H8C5.5 3 4 5 4 7z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8M8 11h8M8 15h4" />
+          </svg>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-    <div class="p-5 border-b border-gray-100 flex justify-between items-center">
-      <h2 class="font-semibold text-gray-800">Documents récents</h2>
-      <a routerLink="/documents" class="text-blue-800 text-sm font-medium hover:text-blue-900 hover:underline">Voir tout</a>
-    </div>
+  <!-- Main Grid: Documents & Employees -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Recent Documents Section -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="p-5 border-b border-gray-100 flex justify-between items-center">
+        <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Documents récents
+        </h2>
+        <a routerLink="/documents" class="text-blue-600 text-sm font-medium hover:underline">Voir tous</a>
+      </div>
 
-    <div *ngIf="loading()" class="p-8 text-center text-gray-400 text-sm">
-      Chargement...
-    </div>
-
-    <div *ngIf="!loading() && recentDocuments().length === 0" class="p-8 text-center text-gray-400 text-sm">
-      Aucun document pour le moment.
-    </div>
-
-    <div class="divide-y divide-gray-50">
-      <div *ngFor="let doc of recentDocuments()" class="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
-            <svg class="w-4 h-4 text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      <!-- Loading State with Skeleton -->
+      @if (loading()) {
+        <div class="p-4 space-y-3">
+          @for (item of [1,2,3]; track item) {
+            <div class="flex items-center gap-3 animate-pulse">
+              <div class="w-9 h-9 bg-gray-200 rounded-lg"></div>
+              <div class="flex-1">
+                <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+              </div>
+              <div class="h-6 bg-gray-200 rounded w-16"></div>
+            </div>
+          }
+        </div>
+      } @else if (recentDocuments().length === 0) {
+        <div class="p-12 text-center">
+          <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
-          <div>
-            <p class="text-sm font-medium text-gray-900">{{ doc.name }}</p>
-            <p class="text-xs text-gray-400">{{ doc.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
-          </div>
+          <h3 class="text-gray-600 font-medium mb-2">Aucun document</h3>
+          <p class="text-gray-400 text-sm mb-4">Commencez par importer votre premier document</p>
+          <button routerLink="/documents/upload" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition">
+            + Importer un document
+          </button>
         </div>
-        <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700 font-medium">
-          {{ documentTypeLabel(doc.type) }}
-        </span>
+      } @else {
+        <div class="divide-y divide-gray-50">
+          @for (doc of recentDocuments(); track doc.id) {
+            <div (click)="openDocument(doc)" class="p-4 flex items-center justify-between hover:bg-blue-50 transition-colors group cursor-pointer">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition shrink-0">
+                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-gray-900 truncate">{{ doc.name }}</p>
+                  <p class="text-xs text-gray-400">{{ doc.author }} • {{ doc.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+                  <span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-blue-100 text-blue-700">{{ documentTypeLabel(doc.type) }}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 shrink-0">
+                <span class="px-2 py-1 text-xs rounded-full" [ngClass]="{
+                  'bg-green-100 text-green-700': doc.status === 'validé',
+                  'bg-yellow-100 text-yellow-700': doc.status === 'en attente',
+                  'bg-gray-100 text-gray-700': doc.status === 'brouillon'
+                }">
+                  {{ doc.status }}
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Recent Employees & Distribution -->
+    <div class="space-y-8">
+      <!-- Recent Employees -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-5 border-b border-gray-100 flex justify-between items-center">
+          <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            Nouveaux employés
+          </h2>
+          <a routerLink="/employees" class="text-blue-600 text-sm font-medium hover:underline">Voir tout</a>
+        </div>
+        
+        @if (recentEmployees().length === 0) {
+          <div class="p-8 text-center text-gray-400 text-sm">
+            Aucun employé récent
+          </div>
+        } @else {
+          <div class="divide-y divide-gray-50">
+            @for (emp of recentEmployees(); track emp.id) {
+              <div class="p-4 flex items-center gap-3 hover:bg-gray-50 transition">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                  {{ emp.firstName[0] }}{{ emp.lastName[0] }}
+                </div>
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-gray-900">{{ emp.firstName }} {{ emp.lastName }}</p>
+                  <p class="text-xs text-gray-400">{{ emp.position }} • {{ emp.hireDate | date:'dd/MM/yyyy' }}</p>
+                </div>
+                <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">Nouveau</span>
+              </div>
+            }
+          </div>
+        }
       </div>
+
+      <!-- Document Type Distribution -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <h2 class="font-semibold text-gray-800 flex items-center gap-2 mb-4">
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          Répartition par type
+        </h2>
+        <div class="space-y-3">
+          @for (type of documentDistribution(); track type.name) {
+            <div>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-gray-600">{{ type.name }}</span>
+                <span class="font-medium text-gray-900">{{ type.count }} docs</span>
+              </div>
+              <div class="w-full bg-gray-100 rounded-full h-2">
+                <div class="bg-blue-600 h-2 rounded-full transition-all duration-500" [style.width.%]="type.percentage"></div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+    <h2 class="font-semibold text-gray-800 mb-4">Actions rapides</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <button routerLink="/employees/add" class="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition group">
+        <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition">
+          <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+          </svg>
+        </div>
+        <span class="text-xs text-gray-700">Ajouter employé</span>
+      </button>
+      <button routerLink="/documents/upload" class="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition group">
+        <div class="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center group-hover:bg-purple-100 transition">
+          <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+        </div>
+        <span class="text-xs text-gray-700">Upload document</span>
+      </button>
+      <button class="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition group">
+        <div class="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center group-hover:bg-green-100 transition">
+          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <span class="text-xs text-gray-700">Générer rapport</span>
+      </button>
+      <button class="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition group">
+        <div class="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center group-hover:bg-orange-100 transition">
+          <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+        </div>
+        <span class="text-xs text-gray-700">Notifications</span>
+      </button>
     </div>
   </div>
 </div>
