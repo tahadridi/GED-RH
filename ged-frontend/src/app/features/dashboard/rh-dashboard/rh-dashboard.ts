@@ -7,12 +7,12 @@ import { DocumentService, OcrPreviewResult } from '../../../core/services/docume
 import { EmployeeService } from '../../../core/services/employee.service';
 import { Employee } from '../../../core/models/employee.model';
 import { DocumentType } from '../../../core/models/user.model';
+import { environment } from '../../../../environments/environment';
 import {
   LucideUpload,
   LucideScanText,
   LucideCheck,
   LucideX,
-  LucideFileText,
   LucideSearch,
   LucideChevronLeft,
   LucideChevronRight
@@ -22,9 +22,10 @@ interface DocumentItem {
   id: string;
   name: string;
   employeeName: string;
+  employeeMatricule: string;
+  employeeEmail: string;
   employeeId: string;
   type: DocumentType;
-  status: 'VALIDATED' | 'PENDING' | 'DRAFT';
   createdAt: Date;
 }
 
@@ -45,7 +46,6 @@ interface DistributionItem {
     LucideScanText,
     LucideCheck,
     LucideX,
-    LucideFileText,
     LucideSearch,
     LucideChevronLeft,
     LucideChevronRight
@@ -53,6 +53,8 @@ interface DistributionItem {
   templateUrl: './rh-dashboard.html'
 })
 export class RhDashboard implements OnInit {
+  apiUrl = environment.apiUrl;
+
   // Data signals
   employees = signal<Employee[]>([]);
   responsibilities = signal<DocumentType[]>([]);
@@ -66,7 +68,7 @@ export class RhDashboard implements OnInit {
   allDocuments = signal<any[]>([]); // store all docs for client-side stats
 
   // Employee search
-  employeeSearch = '';
+  employeeSearch = signal('');
 
   // Employee pagination
   employeeCurrentPage = signal(1);
@@ -96,7 +98,7 @@ export class RhDashboard implements OnInit {
   });
 
   filteredEmployees = computed(() => {
-    const search = this.employeeSearch.toLowerCase().trim();
+    const search = this.employeeSearch().toLowerCase().trim();
     if (!search) return this.employees();
     return this.employees().filter(emp =>
       `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(search) ||
@@ -130,10 +132,6 @@ export class RhDashboard implements OnInit {
   myDocumentsCount = computed(() => {
     const currentUser = this.authService.profile()?.email;
     return this.allDocuments().filter(d => d.author === currentUser).length;
-  });
-
-  pendingDocsCount = computed(() => {
-    return this.allDocuments().filter(d => d.status === 'PENDING').length;
   });
 
   // Helper for template
@@ -177,17 +175,24 @@ export class RhDashboard implements OnInit {
 
       const recent = await Promise.all(sorted.map(async (doc: any) => {
         let employeeName = '';
+        let employeeMatricule = '';
+        let employeeEmail = '';
         try {
           const emp = await this.employeeService.get(doc.employeeId);
-          employeeName = emp ? `${emp.firstName} ${emp.lastName}` : '';
+          if (emp) {
+            employeeName = `${emp.firstName} ${emp.lastName}`;
+            employeeMatricule = emp.matricule ?? '';
+            employeeEmail = emp.email ?? '';
+          }
         } catch (e) { /* ignore */ }
         return {
           id: doc.id,
           name: doc.name,
           employeeName,
+          employeeMatricule,
+          employeeEmail,
           employeeId: doc.employeeId,
           type: doc.type,
-          status: doc.status || 'PENDING',
           createdAt: new Date(doc.createdAt)
         };
       }));
@@ -235,7 +240,7 @@ export class RhDashboard implements OnInit {
   }
 
   onEmployeeSearchChange() {
-    this.employeeCurrentPage.set(1); // reset to first page when searching
+    this.employeeCurrentPage.set(1);
   }
 
   // Upload methods
@@ -305,29 +310,34 @@ export class RhDashboard implements OnInit {
       const docs = await this.documentService.search({});
       this.allDocuments.set(docs);
 
-      // Refresh recent docs
       const sorted = [...docs].sort((a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       ).slice(0, 5);
       const recent = await Promise.all(sorted.map(async (doc: any) => {
         let employeeName = '';
+        let employeeMatricule = '';
+        let employeeEmail = '';
         try {
           const emp = await this.employeeService.get(doc.employeeId);
-          employeeName = emp ? `${emp.firstName} ${emp.lastName}` : '';
+          if (emp) {
+            employeeName = `${emp.firstName} ${emp.lastName}`;
+            employeeMatricule = emp.matricule ?? '';
+            employeeEmail = emp.email ?? '';
+          }
         } catch (e) { /* ignore */ }
         return {
           id: doc.id,
           name: doc.name,
           employeeName,
+          employeeMatricule,
+          employeeEmail,
           employeeId: doc.employeeId,
           type: doc.type,
-          status: doc.status || 'PENDING',
           createdAt: new Date(doc.createdAt)
         };
       }));
       this.recentDocuments.set(recent);
 
-      // Refresh distribution
       const typeCounts = new Map<string, number>();
       docs.forEach((doc: any) => {
         const type = doc.type;

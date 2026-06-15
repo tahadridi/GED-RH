@@ -53,8 +53,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/health", "/actuator/**").permitAll()
                 .requestMatchers("/api/auth/me").permitAll()
-                .requestMatchers("/api/documents/ocr-preview").permitAll()
                 .requestMatchers("/api/organization/**").permitAll()
+                .requestMatchers("/api/employees/*/photo/content").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMINISTRATOR")
                 .anyRequest().authenticated()
             );

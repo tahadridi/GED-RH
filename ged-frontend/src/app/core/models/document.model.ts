@@ -2,6 +2,7 @@ import { DocumentType } from './user.model';
 
 export interface EmployeeDocument {
   id: string;
+  employeeId: string;
   documentReference: string;
   name: string;
   type: DocumentType;

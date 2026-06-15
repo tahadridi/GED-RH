@@ -108,9 +108,11 @@
             <!-- Employee name + avatar -->
             <td class="px-5 py-3.5">
               <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-blue-700 font-semibold text-sm shadow-inner">
-                  {{ (emp.firstName?.[0] || '') + (emp.lastName?.[0] || '') }}
+                <div *ngIf="!emp.photoUrl" class="w-9 h-9 rounded-full bg-white flex items-center justify-center border border-gray-200">
+                  <img src="/UserIcon.png" alt="User" class="w-5 h-5 object-contain">
                 </div>
+                <img *ngIf="emp.photoUrl" [src]="apiUrl + '/employees/' + emp.id + '/photo/content'" alt="Photo"
+                  class="w-9 h-9 rounded-full object-cover border border-gray-200">
                 <div>
                   <p class="font-semibold text-gray-800">{{ emp.firstName }} {{ emp.lastName }}</p>
                   <p class="text-[11px] text-gray-400 truncate max-w-[200px]" [title]="emp.address || ''">{{ emp.address || 'Adresse non renseignée' }}</p>
@@ -127,7 +129,7 @@
                 </p>
                 <p class="text-gray-400 text-[11px] flex items-center gap-1" *ngIf="emp.phoneNumber">
                   <svg lucidePhone class="w-3 h-3 text-gray-400"></svg>
-                  {{ emp.phoneNumber }}
+                  {{ emp.phoneNumber || 'Numero non renseigné' }}
                 </p>
                 <p class="text-gray-400 text-[11px]" *ngIf="!emp.phoneNumber">—</p>
               </div>

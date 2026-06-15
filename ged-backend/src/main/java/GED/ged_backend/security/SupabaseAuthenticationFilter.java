@@ -69,15 +69,14 @@ public class SupabaseAuthenticationFilter extends OncePerRequestFilter {
                     }
                 }
             } catch (ParseException | BadJWTException e) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token structure");
-                return;
+                System.err.println("[AUTH] Invalid token: " + e.getMessage());
+                SecurityContextHolder.clearContext();
             } catch (Exception ex) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token validation error");
-                return;
+                System.err.println("[AUTH] Token validation error: " + ex.getMessage());
+                SecurityContextHolder.clearContext();
             }
         }
 
-        // Always executes seamlessly down the filter chain
         filterChain.doFilter(request, response);
     }
 }

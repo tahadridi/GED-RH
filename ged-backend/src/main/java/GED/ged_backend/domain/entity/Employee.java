@@ -45,6 +45,9 @@ public class Employee {
 	@Column(length = 500)
 	private String address;
 
+	@Column(length = 500)
+	private String photoPath;
+
 	@Column(length = 120)
 	private String department;
 
@@ -149,6 +152,14 @@ public class Employee {
 
 	public void setHireDate(LocalDate hireDate) {
 		this.hireDate = hireDate;
+	}
+
+	public String getPhotoPath() {
+		return photoPath;
+	}
+
+	public void setPhotoPath(String photoPath) {
+		this.photoPath = photoPath;
 	}
 
 	public EmployeeStatus getStatus() {

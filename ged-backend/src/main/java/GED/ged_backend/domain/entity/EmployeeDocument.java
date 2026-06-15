@@ -69,6 +69,11 @@ public class EmployeeDocument {
 		return id;
 	}
 
+	@com.fasterxml.jackson.annotation.JsonProperty("employeeId")
+	public UUID getEmployeeId() {
+		return employee != null ? employee.getId() : null;
+	}
+
 	public String getDocumentReference() {
 		return documentReference;
 	}

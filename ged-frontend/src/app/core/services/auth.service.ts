@@ -14,6 +14,9 @@ export interface UserProfile {
   roles: SystemRole[];
   rhResponsibilities: DocumentType[];
   active: boolean;
+  employeeId: string | null;
+  matricule: string | null;
+  photoUrl: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -109,5 +112,23 @@ export class AuthService {
 
   getRhResponsibilities(): DocumentType[] {
     return this._profile()?.rhResponsibilities ?? [];
+  }
+
+  async updateProfile(data: { email?: string; firstName?: string; lastName?: string }): Promise<UserProfile> {
+    const token = await this.getToken();
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' });
+    const profile = await firstValueFrom(this.http.put<UserProfile>(`${environment.apiUrl}/auth/profile`, data, { headers }));
+    this._profile.set(profile);
+    return profile;
+  }
+
+  async uploadPhoto(file: File): Promise<UserProfile> {
+    const token = await this.getToken();
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    const formData = new FormData();
+    formData.append('file', file);
+    const profile = await firstValueFrom(this.http.post<UserProfile>(`${environment.apiUrl}/auth/photo`, formData, { headers }));
+    this._profile.set(profile);
+    return profile;
   }
 }

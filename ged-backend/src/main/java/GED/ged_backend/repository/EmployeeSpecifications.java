@@ -22,10 +22,7 @@ public class EmployeeSpecifications {
 
             if (actor.getRoles().contains(SystemRole.MANAGER)) {
                 if (actor.getEmployeeProfile() != null) {
-                    return cb.or(
-                        cb.equal(root.get("id"), actor.getEmployeeProfile().getId()),
-                        cb.equal(root.get("manager").get("id"), actor.getEmployeeProfile().getId())
-                    );
+                    return cb.equal(root.get("manager").get("id"), actor.getEmployeeProfile().getId());
                 }
             }
 

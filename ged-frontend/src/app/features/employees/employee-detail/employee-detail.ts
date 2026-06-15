@@ -6,6 +6,7 @@ import { EmployeeService } from '../../../core/services/employee.service';
 import { DocumentService, OcrPreviewResult } from '../../../core/services/document.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Employee } from '../../../core/models/employee.model';
+import { environment } from '../../../../environments/environment';
 import { EmployeeDocument } from '../../../core/models/document.model';
 import { DocumentType } from '../../../core/models/user.model';
 import { EmployeeForm } from '../employee-form/employee-form';
@@ -27,6 +28,7 @@ import {
   templateUrl: './employee-detail.html'
 })
 export class EmployeeDetail implements OnInit {
+  apiUrl = environment.apiUrl;
   employee = signal<Employee | null>(null);
   documents = signal<EmployeeDocument[]>([]);
   selectedDoc = signal<EmployeeDocument | null>(null);

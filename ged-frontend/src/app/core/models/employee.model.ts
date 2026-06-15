@@ -15,6 +15,7 @@ export interface Employee {
   managerId: string | null;
   managerName?: string | null;
   directReportIds?: string[];
+  photoUrl?: string | null;
 }
 
 export interface CreateEmployeeRequest {

@@ -5,6 +5,7 @@ import GED.ged_backend.domain.entity.SystemUser;
 import GED.ged_backend.domain.enums.EmployeeStatus;
 import GED.ged_backend.repository.EmployeeRepository;
 import GED.ged_backend.repository.EmployeeSpecifications;
+import java.io.InputStream;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -19,10 +20,12 @@ public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final GED.ged_backend.repository.DepartmentRepository departmentRepository;
+    private final StorageService storageService;
 
-    public EmployeeService(EmployeeRepository employeeRepository, GED.ged_backend.repository.DepartmentRepository departmentRepository) {
+    public EmployeeService(EmployeeRepository employeeRepository, GED.ged_backend.repository.DepartmentRepository departmentRepository, StorageService storageService) {
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
+        this.storageService = storageService;
     }
 
     public Employee createEmployee(CreateEmployeeCommand cmd) {
@@ -163,6 +166,27 @@ public class EmployeeService {
             report.setManager(manager);
             employeeRepository.save(report);
         }
+    }
+
+    public Employee savePhoto(UUID id, InputStream fileStream, String contentType, String originalFilename) {
+        Employee e = employeeRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
+
+        // Delete old photo if exists
+        if (e.getPhotoPath() != null) {
+            storageService.deleteFile(e.getPhotoPath());
+        }
+
+        // Extract extension from the uploaded file
+        String ext = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            ext = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+
+        String fileName = "photos/" + id + ext;
+        storageService.uploadFile(fileName, fileStream, contentType);
+        e.setPhotoPath(fileName);
+        return employeeRepository.save(e);
     }
 
     public record CreateEmployeeCommand(

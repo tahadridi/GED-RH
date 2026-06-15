@@ -91,8 +91,9 @@ public class DocumentService {
     public EmployeeDocument createFromPreview(CreateFromPreviewCommand cmd, GED.ged_backend.domain.entity.SystemUser actor) {
         Employee employee = employeeRepository.findById(cmd.employeeId()).orElseThrow();
 
-        // Move temp file to final path
-        String finalKey = cmd.tempKey().replaceFirst("^temp/", "docs/");
+        // Move temp file into the employee's folder
+        String fileName = cmd.tempKey().replaceFirst("^temp/", "");
+        String finalKey = employeeFolder(employee) + fileName;
         storageService.copyFile(cmd.tempKey(), finalKey);
         storageService.deleteFile(cmd.tempKey());
 
@@ -131,7 +132,7 @@ public class DocumentService {
         }
 
         // Architecture Step 1: Store Original File (MinIO)
-        String fileName = UUID.randomUUID().toString() + "_" + cmd.name() + ext;
+        String fileName = employeeFolder(employee) + UUID.randomUUID().toString() + "_" + cmd.name() + ext;
         storageService.uploadFile(fileName, fileStream, contentType);
         
         // Architecture Step 3: Metadata Extraction & Database Save (PostgreSQL)
@@ -172,7 +173,8 @@ public class DocumentService {
         }
 
         // Architecture Step 1: Store Original File
-        String fileName = UUID.randomUUID().toString() + "_v" + next + "_" + doc.getName() + ext;
+        Employee employee = doc.getEmployee();
+        String fileName = employeeFolder(employee) + UUID.randomUUID().toString() + "_v" + next + "_" + doc.getName() + ext;
         storageService.uploadFile(fileName, fileStream, contentType);
         
         // Architecture Step 3: Metadata Extraction & DB Update
@@ -217,7 +219,7 @@ public class DocumentService {
     }
 
     public List<EmployeeDocument> listByEmployee(UUID employeeId) {
-        return documentRepository.findByEmployeeId(employeeId);
+        return documentRepository.findByEmployee_Id(employeeId);
     }
 
     public List<EmployeeDocument> listByType(DocumentType type) {
@@ -264,6 +266,12 @@ public class DocumentService {
         }
         
         return documentRepository.findAll(DocumentSpecifications.withSearchCriteria(criteria, actor));
+    }
+
+    private String employeeFolder(Employee employee) {
+        String sanitizedFirstName = employee.getFirstName().replaceAll("[^a-zA-Z0-9_-]", "");
+        String sanitizedLastName = employee.getLastName().replaceAll("[^a-zA-Z0-9_-]", "");
+        return "docs/" + sanitizedFirstName + "_" + sanitizedLastName + "_" + employee.getMatricule() + "/";
     }
 
     public record SearchCriteria(String query, DocumentType type, UUID employeeId, String department, java.time.LocalDate startDate, java.time.LocalDate endDate) {}

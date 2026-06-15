@@ -55,6 +55,9 @@ public class SystemUser {
 	@Column(nullable = false)
 	private boolean active = true;
 
+	@Column(length = 512)
+	private String photoPath;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "manager_id")
 	@com.fasterxml.jackson.annotation.JsonIgnore
@@ -118,6 +121,14 @@ public class SystemUser {
 
 	public void setActive(boolean active) {
 		this.active = active;
+	}
+
+	public String getPhotoPath() {
+		return photoPath;
+	}
+
+	public void setPhotoPath(String photoPath) {
+		this.photoPath = photoPath;
 	}
 
 	public SystemUser getManager() {

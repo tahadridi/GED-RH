@@ -6,6 +6,7 @@ import { EmployeeService } from '../../../core/services/employee.service';
 import { UserService } from '../../../core/services/user.service';
 import { Employee, EmployeeStatus } from '../../../core/models/employee.model';
 import { EmployeeForm } from '../employee-form/employee-form';
+import { environment } from '../../../../environments/environment';
 import {
   LucideUserPlus, LucidePencil, LucideTrash2, LucideSearch,
   LucideFolderOpen, LucideChevronUp, LucideChevronDown, LucideFilter
@@ -24,6 +25,7 @@ type SortField = 'matricule' | 'firstName' | 'department' | 'status' | 'hireDate
   templateUrl: './employees-list.html'
 })
 export class EmployeesList implements OnInit {
+  apiUrl = environment.apiUrl;
   employees = signal<Employee[]>([]);
   filtered = signal<Employee[]>([]);
   users = signal<Record<string, string>>({}); // id -> name mapping

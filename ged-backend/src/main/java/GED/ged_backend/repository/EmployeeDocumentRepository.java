@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface EmployeeDocumentRepository extends JpaRepository<EmployeeDocument, UUID>, JpaSpecificationExecutor<EmployeeDocument> {
 
-	List<EmployeeDocument> findByEmployeeId(UUID employeeId);
+	List<EmployeeDocument> findByEmployee_Id(UUID employeeId);
 
 	List<EmployeeDocument> findByType(DocumentType type);
 }

@@ -33,4 +33,10 @@ export class EmployeeService {
   assignReports(managerId: string, reportIds: string[]): Promise<void> {
     return this.api.post<void>(`/employees/${managerId}/reports`, reportIds);
   }
+
+  async uploadPhoto(employeeId: string, file: File): Promise<Employee> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.api.postFormData<Employee>(`/employees/${employeeId}/photo`, form);
+  }
 }

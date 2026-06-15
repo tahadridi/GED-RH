@@ -4,12 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { OrganizationService, Department } from '../../../core/services/organization.service';
 import { Employee, EmployeeStatus } from '../../../core/models/employee.model';
-import { LucideX, LucideSearch, LucideCheck, LucideChevronDown, LucideChevronRight } from '@lucide/angular';
+import { LucideX, LucideSearch, LucideCheck, LucideChevronDown, LucideChevronRight, LucideCamera } from '@lucide/angular';
 
 @Component({
   selector: 'app-employee-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideX, LucideSearch, LucideCheck, LucideChevronDown, LucideChevronRight],
+  imports: [CommonModule, FormsModule, LucideX, LucideSearch, LucideCheck, LucideChevronDown, LucideChevronRight, LucideCamera],
   templateUrl: './employee-form.html'
 })
 export class EmployeeForm implements OnInit {
@@ -32,7 +32,9 @@ export class EmployeeForm implements OnInit {
 
   saving = false;
   error = '';
-  
+  photoFile: File | null = null;
+  photoPreview: string | null = null;
+
   allEmployees = signal<Employee[]>([]);
   selectedReportIds = signal<Set<string>>(new Set());
   
@@ -183,6 +185,16 @@ export class EmployeeForm implements OnInit {
 
   get isEdit() { return !!this.employee; }
 
+  onPhotoSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.photoFile = file;
+    const reader = new FileReader();
+    reader.onload = () => this.photoPreview = reader.result as string;
+    reader.readAsDataURL(file);
+  }
+
   async save() {
     this.saving = true;
     this.error = '';
@@ -192,6 +204,11 @@ export class EmployeeForm implements OnInit {
         savedEmployee = await this.employeeService.update(this.employee.id, this.form);
       } else {
         savedEmployee = await this.employeeService.create(this.form);
+      }
+
+      // Upload photo if selected
+      if (this.photoFile) {
+        await this.employeeService.uploadPhoto(savedEmployee.id, this.photoFile);
       }
 
       // Assign reports

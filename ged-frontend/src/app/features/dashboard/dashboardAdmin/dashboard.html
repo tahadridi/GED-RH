@@ -166,8 +166,8 @@
           <div class="divide-y divide-gray-50">
             @for (emp of recentEmployees(); track emp.id) {
               <div class="p-4 flex items-center gap-3 hover:bg-gray-50 transition">
-                <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                  {{ emp.firstName[0] }}{{ emp.lastName[0] }}
+                <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center border border-gray-200">
+                  <img src="/UserIcon.png" alt="User" class="w-6 h-6 object-contain">
                 </div>
                 <div class="flex-1">
                   <p class="text-sm font-medium text-gray-900">{{ emp.firstName }} {{ emp.lastName }}</p>
