@@ -69,6 +69,11 @@ import {
               <svg lucideBuilding class="w-4 h-4 shrink-0"></svg>
               Departements
             </a>
+            <a routerLink="/admin/doc-types" routerLinkActive="active-link"
+               class="nav-link">
+              <svg lucideFileText class="w-4 h-4 shrink-0"></svg>
+              Types de documents
+            </a>
           </div>
         </div>
       </nav>

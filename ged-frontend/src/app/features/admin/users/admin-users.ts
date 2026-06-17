@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../../core/services/user.service';
 import { EmployeeService } from '../../../core/services/employee.service';
-import { SystemUser, SystemRole, DocumentType } from '../../../core/models/user.model';
+import { SystemUser, SystemRole } from '../../../core/models/user.model';
 import { Employee } from '../../../core/models/employee.model';
+import { DocTypeService, DocType } from '../../../core/services/doc-type.service';
 import {
   LucideUserPlus, LucidePencil, LucideUserX, LucideKey,
   LucideX, LucideCheck, LucideTrash2, LucideSearch
@@ -26,19 +27,34 @@ export class AdminUsers implements OnInit {
   resetNotif = signal<{ user: string; password: string } | null>(null);
 
   allRoles: SystemRole[] = ['ADMINISTRATOR', 'DIRECTION_GENERALE', 'MANAGER', 'RH'];
-  allDocTypes: DocumentType[] = [
-    'PERSONAL_FILE','EMPLOYMENT_CONTRACT','PAYSLIP','LEAVE_REQUEST',
-    'EVALUATION','TRAINING','ADMINISTRATIVE','DISCIPLINARY','OTHER'
-  ];
   roleLabels: Record<string, string> = {
     ADMINISTRATOR: 'Administrateur', DIRECTION_GENERALE: 'Direction Générale',
     MANAGER: 'Manager', RH: 'Ressources Humaines'
   };
-  docTypeLabels: Record<string, string> = {
-    PERSONAL_FILE: 'Dossier', EMPLOYMENT_CONTRACT: 'Contrat',
-    PAYSLIP: 'Paie', LEAVE_REQUEST: 'Congés',
-    EVALUATION: 'Évaluation', TRAINING: 'Formation',
-    ADMINISTRATIVE: 'Administartive', DISCIPLINARY: 'Disciplinaire', OTHER: 'Autre'
+  availableDocTypes = signal<DocType[]>([]);
+
+  private nameToEnum: Record<string, string> = {
+    'Dossier': 'PERSONAL_FILE',
+    'Contrat': 'EMPLOYMENT_CONTRACT',
+    'Paie': 'PAYSLIP',
+    'Congés': 'LEAVE_REQUEST',
+    'Évaluation': 'EVALUATION',
+    'Formation': 'TRAINING',
+    'Administrative': 'ADMINISTRATIVE',
+    'Disciplinaire': 'DISCIPLINARY',
+    'Autre': 'OTHER'
+  };
+
+  private enumToName: Record<string, string> = {
+    'PERSONAL_FILE': 'Dossier',
+    'EMPLOYMENT_CONTRACT': 'Contrat',
+    'PAYSLIP': 'Paie',
+    'LEAVE_REQUEST': 'Congés',
+    'EVALUATION': 'Évaluation',
+    'TRAINING': 'Formation',
+    'ADMINISTRATIVE': 'Administrative',
+    'DISCIPLINARY': 'Disciplinaire',
+    'OTHER': 'Autre'
   };
 
   form = {
@@ -47,7 +63,7 @@ export class AdminUsers implements OnInit {
     managerId: null as string | null,
     employeeId: null as string | null,
     roles: [] as SystemRole[],
-    rhResponsibilities: [] as DocumentType[]
+    rhResponsibilities: [] as string[]  // stores French names for UI, mapped to enum for backend
   };
 
   allEmployees: Employee[] = [];
@@ -56,11 +72,12 @@ export class AdminUsers implements OnInit {
 
   constructor(
     private userService: UserService,
-    private employeeService: EmployeeService
+    private employeeService: EmployeeService,
+    private docTypeService: DocTypeService
   ) {}
 
   async ngOnInit() {
-    await Promise.all([this.load(), this.loadEmployees()]);
+    await Promise.all([this.load(), this.loadEmployees(), this.loadDocTypes()]);
   }
 
   get filteredManagers() {
@@ -108,6 +125,14 @@ export class AdminUsers implements OnInit {
     }
   }
 
+  async loadDocTypes() {
+    try {
+      this.availableDocTypes.set(await this.docTypeService.list());
+    } catch (e) {
+      console.error('Failed to load doc types', e);
+    }
+  }
+
   openCreate() {
     this.editingUser.set(null);
     this.form = { 
@@ -141,7 +166,7 @@ export class AdminUsers implements OnInit {
       managerId: u.managerId,
       employeeId: u.employeeProfileId || null,
       roles: [...u.roles],
-      rhResponsibilities: [...u.rhResponsibilities]
+      rhResponsibilities: u.rhResponsibilities.map(e => this.enumToName[e] || e)
     };
     this.formError.set('');
     this.showForm.set(true);
@@ -153,18 +178,23 @@ export class AdminUsers implements OnInit {
     else this.form.roles.push(role);
   }
 
-  toggleDocType(type: DocumentType) {
-    const idx = this.form.rhResponsibilities.indexOf(type);
+  toggleDocType(name: string) {
+    const idx = this.form.rhResponsibilities.indexOf(name);
     if (idx >= 0) this.form.rhResponsibilities.splice(idx, 1);
-    else this.form.rhResponsibilities.push(type);
+    else this.form.rhResponsibilities.push(name);
   }
 
   hasRole(role: SystemRole) { return this.form.roles.includes(role); }
-  hasDocType(type: DocumentType) { return this.form.rhResponsibilities.includes(type); }
+  hasDocType(name: string) { return this.form.rhResponsibilities.includes(name); }
+
+  docTypeLabel(val: string): string {
+    return this.enumToName[val] || val;
+  }
 
   async save() {
     this.saving.set(true);
     this.formError.set('');
+    const rhRespEnum = this.form.rhResponsibilities.map(n => this.nameToEnum[n] || n);
     try {
       if (this.editingUser()) {
         await this.userService.update(this.editingUser()!.id, {
@@ -172,7 +202,7 @@ export class AdminUsers implements OnInit {
           lastName: this.form.lastName, active: this.form.active,
           managerId: this.form.managerId,
           roles: this.form.roles,
-          rhResponsibilities: this.form.rhResponsibilities
+          rhResponsibilities: rhRespEnum
         });
       } else {
         await this.userService.create({
@@ -181,7 +211,7 @@ export class AdminUsers implements OnInit {
           managerId: this.form.managerId,
           employeeId: this.form.employeeId,
           roles: this.form.roles,
-          rhResponsibilities: this.form.rhResponsibilities
+          rhResponsibilities: rhRespEnum
         });
       }
 

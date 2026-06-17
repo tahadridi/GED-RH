@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { SystemUser, CreateUserRequest, UpdateUserRequest } from '../models/user.model';
-import { DocumentType } from '../models/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -39,7 +38,7 @@ export class UserService {
     return this.api.post<SystemUser>(`/admin/users/${userId}/assign-manager/${managerId}`, {});
   }
 
-  assignRhResponsibilities(userId: string, responsibilities: DocumentType[]): Promise<SystemUser> {
+  assignRhResponsibilities(userId: string, responsibilities: string[]): Promise<SystemUser> {
     return this.api.post<SystemUser>(`/admin/users/${userId}/rh-responsibilities`, { rhResponsibilities: responsibilities });
   }
 }

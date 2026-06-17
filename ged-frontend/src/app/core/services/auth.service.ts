@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
 import { Router } from '@angular/router';
-import { SystemUser, SystemRole, DocumentType } from '../models/user.model';
+import { SystemUser, SystemRole } from '../models/user.model';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
@@ -12,7 +12,7 @@ export interface UserProfile {
   firstName: string;
   lastName: string;
   roles: SystemRole[];
-  rhResponsibilities: DocumentType[];
+  rhResponsibilities: string[];
   active: boolean;
   employeeId: string | null;
   matricule: string | null;
@@ -110,7 +110,7 @@ export class AuthService {
   isRH(): boolean { return this.hasRole('RH'); }
   isDG(): boolean { return this.hasRole('DIRECTION_GENERALE'); }
 
-  getRhResponsibilities(): DocumentType[] {
+  getRhResponsibilities(): string[] {
     return this._profile()?.rhResponsibilities ?? [];
   }
 

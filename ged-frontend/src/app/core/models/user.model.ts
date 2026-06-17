@@ -1,14 +1,5 @@
 export type SystemRole = 'ADMINISTRATOR' | 'DIRECTION_GENERALE' | 'MANAGER' | 'RH';
-export type DocumentType =
-  | 'PERSONAL_FILE'
-  | 'EMPLOYMENT_CONTRACT'
-  | 'PAYSLIP'
-  | 'LEAVE_REQUEST'
-  | 'EVALUATION'
-  | 'TRAINING'
-  | 'ADMINISTRATIVE'
-  | 'DISCIPLINARY'
-  | 'OTHER';
+export type DocumentType = string;
 
 export interface SystemUser {
   id: string;
@@ -20,7 +11,7 @@ export interface SystemUser {
   managerId: string | null;
   employeeProfileId: string | null;
   roles: SystemRole[];
-  rhResponsibilities: DocumentType[];
+  rhResponsibilities: string[];
 }
 
 export interface CreateUserRequest {
@@ -30,7 +21,7 @@ export interface CreateUserRequest {
   managerId?: string | null;
   employeeId?: string | null;
   roles: SystemRole[];
-  rhResponsibilities: DocumentType[];
+  rhResponsibilities: string[];
   temporaryPassword: string;
 }
 
@@ -41,5 +32,5 @@ export interface UpdateUserRequest {
   active: boolean;
   managerId?: string | null;
   roles: SystemRole[];
-  rhResponsibilities: DocumentType[];
+  rhResponsibilities: string[];
 }
