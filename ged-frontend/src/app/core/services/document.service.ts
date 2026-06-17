@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { EmployeeDocument, DocumentVersion, DocumentSearchParams } from '../models/document.model';
-import { DocumentType } from '../models/user.model';
 
 export interface OcrPreviewResult {
   tempKey: string;
@@ -13,7 +12,7 @@ export interface CreateFromPreviewRequest {
   employeeId: string;
   documentReference: string;
   name: string;
-  type: DocumentType;
+  type: string;
   author: string;
   tempKey: string;
   ocrText: string;
@@ -53,7 +52,7 @@ export class DocumentService {
   }
 
   /** Legacy: upload + save in one step (kept for version uploads) */
-  upload(employeeId: string, file: File, name: string, type: DocumentType, author: string, documentReference: string): Promise<EmployeeDocument> {
+  upload(employeeId: string, file: File, name: string, type: string, author: string, documentReference: string): Promise<EmployeeDocument> {
     const form = new FormData();
     const data = { employeeId, documentReference, name, type, author, storagePath: '' };
     form.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }));

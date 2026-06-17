@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { DocumentService } from '../../../core/services/document.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ApiService } from '../../../core/services/api.service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -21,11 +22,35 @@ export class Dashboard implements OnInit {
   allEmployees = signal<any[]>([]);
   allDocuments = signal<any[]>([]);
   loading = signal(true);
+  expandedRecentGroups = signal<Set<string>>(new Set());
+  storageBytes = signal(0);
+  storageObjectCount = signal(0);
+  diskTotal = signal(0);
+  diskFree = signal(0);
+
+  recentGroups = computed(() => {
+    const map = new Map<string, { employeeId: string; employeeFirstName: string; employeeLastName: string; employeeMatricule: string; documents: any[] }>();
+    for (const doc of this.recentDocuments()) {
+      const key = doc.employeeId || 'unknown';
+      if (!map.has(key)) {
+        map.set(key, {
+          employeeId: key,
+          employeeFirstName: doc.employeeFirstName || '',
+          employeeLastName: doc.employeeLastName || '',
+          employeeMatricule: doc.employeeMatricule || '',
+          documents: []
+        });
+      }
+      map.get(key)!.documents.push(doc);
+    }
+    return Array.from(map.values());
+  });
 
   constructor(
     private employeeService: EmployeeService,
     private documentService: DocumentService,
     private authService: AuthService,
+    private apiService: ApiService,
     private router: Router
   ) {}
 
@@ -78,33 +103,17 @@ export class Dashboard implements OnInit {
   }
 
   documentDistribution() {
-    const types = ['Contrats', 'Factures', 'Rapports', 'Autres'];
-    const typeMap: Record<string, string[]> = {
-      'Contrats': ['EMPLOYMENT_CONTRACT', 'CONTRACT'],
-      'Factures': ['INVOICE', 'PAYSLIP'],
-      'Rapports': ['EVALUATION', 'REPORT'],
-      'Autres': ['LEAVE_REQUEST', 'TRAINING', 'ADMINISTRATIVE', 'PERSONAL_FILE', 'OTHER']
-    };
-    const counts = types.map(type => {
-      const keys = typeMap[type];
-      return this.allDocuments().filter(doc => keys.includes(doc.type)).length;
-    });
-    const total = counts.reduce((a, b) => a + b, 0);
-    return types.map((name, i) => ({
-      name,
-      count: counts[i],
-      percentage: total === 0 ? 0 : (counts[i] / total) * 100
+    const counts = new Map<string, number>();
+    for (const doc of this.allDocuments()) {
+      const type = doc.type;
+      counts.set(type, (counts.get(type) || 0) + 1);
+    }
+    const total = this.allDocuments().length;
+    return Array.from(counts.entries()).map(([type, count]) => ({
+      name: this.documentTypeLabel(type),
+      count,
+      percentage: total > 0 ? (count / total) * 100 : 0
     }));
-  }
-
-  get storageUsed(): number {
-    // Approx 2 MB per document (no file size tracking yet)
-    return Math.round(this.totalDocuments() * 2);
-  }
-
-  get storagePercentage(): number {
-    // Assuming a 500 MB quota
-    return Math.min(100, +(this.storageUsed / 5).toFixed(1));
   }
 
   // Refresh data
@@ -120,6 +129,7 @@ export class Dashboard implements OnInit {
       this.totalEmployees.set(employees.filter(e => e.status === 'ACTIVE').length);
       this.totalDocuments.set(docs.length);
       this.recentDocuments.set(docs.slice(0, 5));
+      this.expandAllRecentGroups();
     } catch (e) {
       console.error('Refresh failed', e);
     } finally {
@@ -127,8 +137,56 @@ export class Dashboard implements OnInit {
     }
   }
 
+  async refreshStorageStats() {
+    try {
+      const [stats, disk] = await Promise.all([
+        this.apiService.get<{ totalSize: number; objectCount: number }>('/storage/stats'),
+        this.apiService.get<{ totalSpace: number; usedSpace: number; freeSpace: number }>('/storage/disk')
+      ]);
+      this.storageBytes.set(stats.totalSize);
+      this.storageObjectCount.set(stats.objectCount);
+      this.diskTotal.set(disk.totalSpace);
+      this.diskFree.set(disk.freeSpace);
+    } catch (e) {
+      console.error('Failed to load storage stats', e);
+    }
+  }
+
+  get storageUsed(): string {
+    return formatBytes(this.storageBytes());
+  }
+
+  get storageFree(): string {
+    return formatBytes(this.diskFree());
+  }
+
+  get storageTotal(): string {
+    return formatBytes(this.diskTotal());
+  }
+
+  get storagePercentage(): number {
+    const total = this.diskTotal();
+    if (total === 0) return 0;
+    return Math.min(100, +(this.storageBytes() / total * 100).toFixed(1));
+  }
+
   async ngOnInit() {
-    await this.refreshData();
+    await Promise.all([
+      this.refreshData(),
+      this.refreshStorageStats()
+    ]);
+  }
+
+  toggleRecentGroup(employeeId: string) {
+    const set = new Set(this.expandedRecentGroups());
+    if (set.has(employeeId)) set.delete(employeeId);
+    else set.add(employeeId);
+    this.expandedRecentGroups.set(set);
+  }
+
+  expandAllRecentGroups() {
+    const set = new Set(this.recentGroups().map(g => g.employeeId));
+    this.expandedRecentGroups.set(set);
   }
 
   async openDocument(doc: any) {
@@ -147,4 +205,12 @@ export class Dashboard implements OnInit {
     };
     return labels[type] ?? type;
   }
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KiB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }

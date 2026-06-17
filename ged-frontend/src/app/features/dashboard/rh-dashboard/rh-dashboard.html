@@ -91,28 +91,47 @@
       <div *ngIf="!recentDocsLoading() && recentDocuments().length === 0" class="p-12 text-center text-gray-400 text-sm">
         Aucun document récent.
       </div>
-      <div *ngIf="!recentDocsLoading() && recentDocuments().length > 0" class="divide-y divide-gray-50">
-        <a *ngFor="let doc of recentDocuments()" [routerLink]="['/employees', doc.employeeId]"
-          class="p-4 flex items-center gap-3 hover:bg-gray-50 group transition-colors">
-          <div class="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <div class="min-w-0 flex-1">
-            <p class="text-sm font-medium text-gray-900 truncate">{{ doc.name }}</p>
-            <p class="text-xs font-medium text-gray-600">{{ doc.employeeName }}</p>
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-400">
-              <span class="font-mono">{{ doc.employeeMatricule }}</span>
-              <span>{{ doc.employeeEmail }}</span>
-              <span>• {{ docTypeLabels[doc.type] || doc.type }}</span>
-              <span>• {{ doc.createdAt | date:'dd/MM/yyyy' }}</span>
+      <div *ngIf="!recentDocsLoading() && recentDocuments().length > 0" class="space-y-3 p-3">
+        <div *ngFor="let group of recentGroups()" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <!-- Employee header -->
+          <button (click)="toggleRecentGroup(group.employeeId)"
+            class="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-blue-900 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
+                {{ (group.employeeFirstName || '?').charAt(0) }}{{ (group.employeeLastName || '?').charAt(0) }}
+              </div>
+              <div class="text-left">
+                <p class="font-semibold text-gray-900 text-sm">{{ group.employeeFirstName || '' }} {{ group.employeeLastName || '' }}</p>
+                <p class="text-xs text-gray-500">{{ group.employeeMatricule || '—' }} — {{ group.documents.length }} document(s)</p>
+              </div>
             </div>
+            <svg class="w-4 h-4 text-gray-400 transition-transform" [class.rotate-180]="expandedRecentGroups().has(group.employeeId)"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <!-- Documents -->
+          <div *ngIf="expandedRecentGroups().has(group.employeeId)" class="divide-y divide-gray-50">
+            <a *ngFor="let doc of group.documents" [routerLink]="['/employees', doc.employeeId]"
+              class="p-3 flex items-center gap-3 hover:bg-gray-50 group transition-colors">
+              <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium text-gray-900 truncate">{{ doc.name }}</p>
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-400">
+                  <span>{{ docTypeLabels[doc.type] || doc.type }}</span>
+                  <span>• {{ doc.createdAt | date:'dd/MM/yyyy' }}</span>
+                </div>
+              </div>
+              <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
           </div>
-          <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </a>
+        </div>
       </div>
     </div>
 

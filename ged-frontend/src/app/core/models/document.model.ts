@@ -1,18 +1,18 @@
-import { DocumentType } from './user.model';
-
 export interface EmployeeDocument {
   id: string;
   employeeId: string;
+  employeeFirstName: string;
+  employeeLastName: string;
+  employeeMatricule: string;
   documentReference: string;
   name: string;
-  type: DocumentType;
+  type: string;
   currentVersion: number;
   createdAt: string;
   updatedAt: string;
   author: string;
   storagePath: string;
   ocrText: string;
-  employee: { id: string } | null;
 }
 
 export interface DocumentVersion {
@@ -26,7 +26,7 @@ export interface DocumentVersion {
 
 export interface DocumentSearchParams {
   q?: string;
-  type?: DocumentType;
+  type?: string;
   employeeId?: string;
   department?: string;
 }

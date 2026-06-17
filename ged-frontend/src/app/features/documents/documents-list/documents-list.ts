@@ -1,29 +1,37 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { DocumentService } from '../../../core/services/document.service';
 import { EmployeeDocument } from '../../../core/models/document.model';
-import { DocumentType } from '../../../core/models/user.model';
-import { LucideSearch, LucideFileText, LucideDownload, LucideHistory, LucideX, LucideEye } from '@lucide/angular';
+import { LucideSearch, LucideFileText, LucideDownload, LucideHistory, LucideX, LucideEye, LucideChevronDown } from '@lucide/angular';
+
+export interface EmployeeGroup {
+  employeeId: string;
+  employeeFirstName: string;
+  employeeLastName: string;
+  employeeMatricule: string;
+  documents: EmployeeDocument[];
+}
 
 @Component({
   selector: 'app-documents-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, LucideSearch, LucideFileText, LucideDownload, LucideHistory, LucideX, LucideEye],
+  imports: [CommonModule, FormsModule, RouterModule, LucideSearch, LucideFileText, LucideDownload, LucideHistory, LucideX, LucideEye, LucideChevronDown],
   templateUrl: './documents-list.html'
 })
 export class DocumentsList implements OnInit {
   documents = signal<EmployeeDocument[]>([]);
   loading = signal(false);
   searchQuery = '';
-  selectedType: DocumentType | '' = '';
+  selectedType = '';
   selectedDoc = signal<EmployeeDocument | null>(null);
   versions = signal<any[]>([]);
   showVersions = signal(false);
+  expandedGroups = signal<Set<string>>(new Set());
   private searchTimeout: any = null;
 
-  docTypes: DocumentType[] = [
+  docTypes: string[] = [
     'PERSONAL_FILE','EMPLOYMENT_CONTRACT','PAYSLIP','LEAVE_REQUEST',
     'EVALUATION','TRAINING','ADMINISTRATIVE','DISCIPLINARY','OTHER'
   ];
@@ -33,6 +41,26 @@ export class DocumentsList implements OnInit {
     EVALUATION: 'Évaluation', TRAINING: 'Formation',
     ADMINISTRATIVE: 'Administratif', DISCIPLINARY: 'Document disciplinaire', OTHER: 'Autre'
   };
+
+  groups = computed<EmployeeGroup[]>(() => {
+    const map = new Map<string, EmployeeGroup>();
+    for (const doc of this.documents()) {
+      const key = doc.employeeId;
+      if (!map.has(key)) {
+        map.set(key, {
+          employeeId: doc.employeeId,
+          employeeFirstName: doc.employeeFirstName,
+          employeeLastName: doc.employeeLastName,
+          employeeMatricule: doc.employeeMatricule,
+          documents: []
+        });
+      }
+      map.get(key)!.documents.push(doc);
+    }
+    return Array.from(map.values()).sort((a, b) =>
+      (a.employeeLastName + a.employeeFirstName).localeCompare(b.employeeLastName + b.employeeFirstName)
+    );
+  });
 
   constructor(private documentService: DocumentService) {}
 
@@ -50,10 +78,20 @@ export class DocumentsList implements OnInit {
         if (this.selectedType) params.type = this.selectedType;
         const docs = await this.documentService.search(params);
         this.documents.set(docs);
+        this.expandedGroups.set(new Set(docs.map(d => d.employeeId)));
+      } catch (e) {
+        console.error('Search failed', e);
+        this.documents.set([]);
       } finally {
         this.loading.set(false);
       }
     }, 300);
+  }
+
+  toggleGroup(id: string) {
+    const s = new Set(this.expandedGroups());
+    if (s.has(id)) s.delete(id); else s.add(id);
+    this.expandedGroups.set(s);
   }
 
   async download(doc: EmployeeDocument) {

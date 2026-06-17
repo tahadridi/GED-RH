@@ -74,6 +74,26 @@ public class EmployeeDocument {
 		return employee != null ? employee.getId() : null;
 	}
 
+	@com.fasterxml.jackson.annotation.JsonProperty("employeeFirstName")
+	public String getEmployeeFirstName() {
+		return employee != null ? employee.getFirstName() : null;
+	}
+
+	@com.fasterxml.jackson.annotation.JsonProperty("employeeLastName")
+	public String getEmployeeLastName() {
+		return employee != null ? employee.getLastName() : null;
+	}
+
+	@com.fasterxml.jackson.annotation.JsonProperty("employeeMatricule")
+	public String getEmployeeMatricule() {
+		return employee != null ? employee.getMatricule() : null;
+	}
+
+	@com.fasterxml.jackson.annotation.JsonProperty("employeeEmail")
+	public String getEmployeeEmail() {
+		return employee != null ? employee.getEmail() : null;
+	}
+
 	public String getDocumentReference() {
 		return documentReference;
 	}

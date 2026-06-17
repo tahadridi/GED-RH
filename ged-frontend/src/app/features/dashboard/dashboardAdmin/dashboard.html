@@ -54,20 +54,30 @@
 
     <!-- Card 4 -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between mb-4">
         <div>
-          <p class="text-sm text-gray-500">Stockage utilisé</p>
-          <p class="text-3xl font-bold text-gray-900 mt-1">{{ storageUsed }} MB</p>
-          <div class="w-full bg-gray-200 rounded-full h-1.5 mt-3">
-            <div class="bg-blue-600 h-1.5 rounded-full" [style.width.%]="storagePercentage"></div>
-          </div>
+          <p class="text-sm text-gray-500">Stockage</p>
+          <p class="text-3xl font-bold text-gray-900 mt-1">{{ storageUsed }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">sur {{ storageTotal }}</p>
         </div>
         <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
           <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1.5 4 4 4h8c2.5 0 4-2 4-4V7c0-2-1.5-4-4-4H8C5.5 3 4 5 4 7z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8M8 11h8M8 15h4" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12a8 8 0 11-16 0 8 8 0 0116 0z" />
           </svg>
         </div>
+      </div>
+      <div class="w-full bg-gray-100 rounded-full h-2.5">
+        <div class="h-2.5 rounded-full transition-all duration-500" [style.width.%]="storagePercentage"
+          [ngClass]="{
+            'bg-green-500': storagePercentage < 60,
+            'bg-yellow-500': storagePercentage >= 60 && storagePercentage < 85,
+            'bg-red-500': storagePercentage >= 85
+          }"></div>
+      </div>
+      <div class="flex justify-between text-xs text-gray-500 mt-2">
+        <span>{{ storageFree }} libres</span>
+        <span>{{ storagePercentage }}% utilisé</span>
       </div>
     </div>
   </div>
@@ -114,30 +124,54 @@
           </button>
         </div>
       } @else {
-        <div class="divide-y divide-gray-50">
-          @for (doc of recentDocuments(); track doc.id) {
-            <div (click)="openDocument(doc)" class="p-4 flex items-center justify-between hover:bg-blue-50 transition-colors group cursor-pointer">
-              <div class="flex items-center gap-3 min-w-0">
-                <div class="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition shrink-0">
-                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
+        <div class="space-y-3 p-3">
+          @for (group of recentGroups(); track group.employeeId) {
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              <!-- Employee header -->
+              <button (click)="toggleRecentGroup(group.employeeId)"
+                class="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 bg-blue-900 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    {{ (group.employeeFirstName || '?').charAt(0) }}{{ (group.employeeLastName || '?').charAt(0) }}
+                  </div>
+                  <div class="text-left">
+                    <p class="font-semibold text-gray-900 text-sm">{{ group.employeeFirstName }} {{ group.employeeLastName }}</p>
+                    <p class="text-xs text-gray-500">{{ group.employeeMatricule || '—' }} — {{ group.documents.length }} document(s)</p>
+                  </div>
                 </div>
-                <div class="min-w-0">
-                  <p class="text-sm font-medium text-gray-900 truncate">{{ doc.name }}</p>
-                  <p class="text-xs text-gray-400">{{ doc.author }} • {{ doc.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
-                  <span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-blue-100 text-blue-700">{{ documentTypeLabel(doc.type) }}</span>
+                <svg class="w-4 h-4 text-gray-400 transition-transform" [class.rotate-180]="expandedRecentGroups().has(group.employeeId)"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <!-- Documents -->
+              @if (expandedRecentGroups().has(group.employeeId)) {
+                <div class="divide-y divide-gray-50">
+                  @for (doc of group.documents; track doc.id) {
+                    <div (click)="openDocument(doc)"
+                      class="p-3 flex items-center justify-between hover:bg-blue-50 transition-colors group cursor-pointer">
+                      <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
+                          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </div>
+                        <div class="min-w-0">
+                          <p class="text-sm font-medium text-gray-900 truncate">{{ doc.name }}</p>
+                          <p class="text-xs text-gray-400">{{ documentTypeLabel(doc.type) }} • {{ doc.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-3 shrink-0">
+                        <span class="px-2 py-1 text-xs rounded-full" [ngClass]="{
+                          'bg-green-100 text-green-700': doc.status === 'validé',
+                          'bg-yellow-100 text-yellow-700': doc.status === 'en attente',
+                          'bg-gray-100 text-gray-700': doc.status === 'brouillon'
+                        }">{{ doc.status }}</span>
+                      </div>
+                    </div>
+                  }
                 </div>
-              </div>
-              <div class="flex items-center gap-3 shrink-0">
-                <span class="px-2 py-1 text-xs rounded-full" [ngClass]="{
-                  'bg-green-100 text-green-700': doc.status === 'validé',
-                  'bg-yellow-100 text-yellow-700': doc.status === 'en attente',
-                  'bg-gray-100 text-gray-700': doc.status === 'brouillon'
-                }">
-                  {{ doc.status }}
-                </span>
-              </div>
+              }
             </div>
           }
         </div>

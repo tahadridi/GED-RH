@@ -3,10 +3,13 @@ package GED.ged_backend.service;
 import GED.ged_backend.config.MinioProperties;
 import io.minio.*;
 import io.minio.errors.*;
+import io.minio.messages.Item;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -32,13 +35,49 @@ public class StorageService {
         }
     }
 
+    public Map<String, Object> getBucketStats() {
+        long totalSize = 0;
+        long objectCount = 0;
+        try {
+            var results = minioClient.listObjects(
+                ListObjectsArgs.builder()
+                    .bucket(minioProperties.getBucketName())
+                    .recursive(true)
+                    .build()
+            );
+            for (var result : results) {
+                Item item = result.get();
+                totalSize += item.size();
+                objectCount++;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error getting bucket stats", e);
+        }
+        return Map.of(
+            "totalSize", totalSize,
+            "objectCount", objectCount
+        );
+    }
+
+    public Map<String, Object> getDiskInfo() {
+        File root = new File(".");
+        long total = root.getTotalSpace();
+        long free = root.getUsableSpace();
+        long used = total - free;
+        return Map.of(
+            "totalSpace", total,
+            "usedSpace", used,
+            "freeSpace", free
+        );
+    }
+
     public String uploadFile(String fileName, InputStream inputStream, String contentType) {
         try {
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(minioProperties.getBucketName())
                             .object(fileName)
-                            .stream(inputStream, -1, 10485760) // 10MB part size
+                            .stream(inputStream, -1, 10485760)
                             .contentType(contentType)
                             .build()
             );

@@ -6,7 +6,7 @@ import GED.ged_backend.domain.entity.SystemUser;
 import GED.ged_backend.domain.enums.DocumentType;
 import GED.ged_backend.domain.enums.SystemRole;
 import GED.ged_backend.service.DocumentService;
-import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +16,8 @@ public class DocumentSpecifications {
 
     public static Specification<EmployeeDocument> withSearchCriteria(DocumentService.SearchCriteria criteria, SystemUser actor) {
         return (root, query, cb) -> {
+            // Explicit fetch to avoid LazyInitializationException with open-in-view=false
+            root.fetch("employee", JoinType.INNER);
             List<Predicate> predicates = new ArrayList<>();
 
             // 1. Security Filtering (Database Level)
@@ -26,21 +28,18 @@ public class DocumentSpecifications {
                         predicates.add(root.get("type").in(actor.getRhResponsibilities()));
                     } else if (actor.getRoles().contains(SystemRole.MANAGER)) {
                         // Manager can see own and direct reports' documents
-                        Join<EmployeeDocument, Employee> employeeJoin = root.join("employee");
                         if (actor.getEmployeeProfile() != null) {
                             predicates.add(cb.or(
-                                cb.equal(employeeJoin.get("id"), actor.getEmployeeProfile().getId()),
-                                cb.equal(employeeJoin.get("manager").get("id"), actor.getEmployeeProfile().getId())
+                                cb.equal(root.get("employee").get("id"), actor.getEmployeeProfile().getId()),
+                                cb.equal(root.get("employee").get("manager").get("id"), actor.getEmployeeProfile().getId())
                             ));
                         } else {
-                            // If manager has no profile, they see nothing (safety)
                             predicates.add(cb.disjunction());
                         }
                     } else {
                         // Regular employee can only see their own documents
-                        Join<EmployeeDocument, Employee> employeeJoin = root.join("employee");
                         if (actor.getEmployeeProfile() != null) {
-                            predicates.add(cb.equal(employeeJoin.get("id"), actor.getEmployeeProfile().getId()));
+                            predicates.add(cb.equal(root.get("employee").get("id"), actor.getEmployeeProfile().getId()));
                         } else {
                             predicates.add(cb.disjunction());
                         }

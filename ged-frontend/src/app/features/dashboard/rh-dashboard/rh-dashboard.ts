@@ -21,12 +21,21 @@ import {
 interface DocumentItem {
   id: string;
   name: string;
-  employeeName: string;
+  employeeFirstName: string;
+  employeeLastName: string;
   employeeMatricule: string;
   employeeEmail: string;
   employeeId: string;
   type: DocumentType;
   createdAt: Date;
+}
+
+interface EmployeeGroup {
+  employeeId: string;
+  employeeFirstName: string;
+  employeeLastName: string;
+  employeeMatricule: string;
+  documents: DocumentItem[];
 }
 
 interface DistributionItem {
@@ -63,6 +72,23 @@ export class RhDashboard implements OnInit {
   // Statistics & additional data
   recentDocuments = signal<DocumentItem[]>([]);
   recentDocsLoading = signal(true);
+  expandedRecentGroups = signal<Set<string>>(new Set());
+  recentGroups = computed(() => {
+    const map = new Map<string, EmployeeGroup>();
+    for (const doc of this.recentDocuments()) {
+      if (!map.has(doc.employeeId)) {
+        map.set(doc.employeeId, {
+          employeeId: doc.employeeId,
+          employeeFirstName: doc.employeeFirstName,
+          employeeLastName: doc.employeeLastName,
+          employeeMatricule: doc.employeeMatricule,
+          documents: []
+        });
+      }
+      map.get(doc.employeeId)!.documents.push(doc);
+    }
+    return Array.from(map.values());
+  });
   docDistribution = signal<DistributionItem[]>([]);
   distributionLoading = signal(true);
   allDocuments = signal<any[]>([]); // store all docs for client-side stats
@@ -168,35 +194,24 @@ export class RhDashboard implements OnInit {
       this.employees.set(emps);
       this.allDocuments.set(docs);
 
-      // Recent documents (last 5)
+      // Recent documents (last 5) — backend now returns employeeFirstName, employeeLastName, employeeMatricule
       const sorted = [...docs].sort((a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       ).slice(0, 5);
 
-      const recent = await Promise.all(sorted.map(async (doc: any) => {
-        let employeeName = '';
-        let employeeMatricule = '';
-        let employeeEmail = '';
-        try {
-          const emp = await this.employeeService.get(doc.employeeId);
-          if (emp) {
-            employeeName = `${emp.firstName} ${emp.lastName}`;
-            employeeMatricule = emp.matricule ?? '';
-            employeeEmail = emp.email ?? '';
-          }
-        } catch (e) { /* ignore */ }
-        return {
-          id: doc.id,
-          name: doc.name,
-          employeeName,
-          employeeMatricule,
-          employeeEmail,
-          employeeId: doc.employeeId,
-          type: doc.type,
-          createdAt: new Date(doc.createdAt)
-        };
+      const recent: DocumentItem[] = sorted.map((doc: any) => ({
+        id: doc.id,
+        name: doc.name,
+        employeeFirstName: doc.employeeFirstName || '',
+        employeeLastName: doc.employeeLastName || '',
+        employeeMatricule: doc.employeeMatricule || '',
+        employeeEmail: doc.employeeEmail || '',
+        employeeId: doc.employeeId,
+        type: doc.type,
+        createdAt: new Date(doc.createdAt)
       }));
       this.recentDocuments.set(recent);
+      this.expandAllRecentGroups();
 
       // Document distribution
       const typeCounts = new Map<string, number>();
@@ -223,6 +238,21 @@ export class RhDashboard implements OnInit {
   get userName() {
     const p = this.authService.profile();
     return p ? `${p.firstName} ${p.lastName}` : '';
+  }
+
+  toggleRecentGroup(employeeId: string) {
+    const set = new Set(this.expandedRecentGroups());
+    if (set.has(employeeId)) {
+      set.delete(employeeId);
+    } else {
+      set.add(employeeId);
+    }
+    this.expandedRecentGroups.set(set);
+  }
+
+  expandAllRecentGroups() {
+    const set = new Set(this.recentGroups().map(g => g.employeeId));
+    this.expandedRecentGroups.set(set);
   }
 
   // Employee pagination methods
@@ -313,28 +343,16 @@ export class RhDashboard implements OnInit {
       const sorted = [...docs].sort((a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       ).slice(0, 5);
-      const recent = await Promise.all(sorted.map(async (doc: any) => {
-        let employeeName = '';
-        let employeeMatricule = '';
-        let employeeEmail = '';
-        try {
-          const emp = await this.employeeService.get(doc.employeeId);
-          if (emp) {
-            employeeName = `${emp.firstName} ${emp.lastName}`;
-            employeeMatricule = emp.matricule ?? '';
-            employeeEmail = emp.email ?? '';
-          }
-        } catch (e) { /* ignore */ }
-        return {
-          id: doc.id,
-          name: doc.name,
-          employeeName,
-          employeeMatricule,
-          employeeEmail,
-          employeeId: doc.employeeId,
-          type: doc.type,
-          createdAt: new Date(doc.createdAt)
-        };
+      const recent: DocumentItem[] = sorted.map((doc: any) => ({
+        id: doc.id,
+        name: doc.name,
+        employeeFirstName: doc.employeeFirstName || '',
+        employeeLastName: doc.employeeLastName || '',
+        employeeMatricule: doc.employeeMatricule || '',
+        employeeEmail: doc.employeeEmail || '',
+        employeeId: doc.employeeId,
+        type: doc.type,
+        createdAt: new Date(doc.createdAt)
       }));
       this.recentDocuments.set(recent);
 
