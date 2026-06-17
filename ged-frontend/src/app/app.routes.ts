@@ -45,6 +45,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/documents/documents-list/documents-list').then(m => m.DocumentsList)
       },
       {
+        path: 'reclamations',
+        loadComponent: () => import('./features/reclamations/user-reclamations').then(m => m.UserReclamations)
+      },
+      {
         path: 'search',
         loadComponent: () => import('./features/search/search').then(m => m.Search)
       },
@@ -55,7 +59,7 @@ export const routes: Routes = [
       {
         path: 'admin/organization',
         loadComponent: () => import('./features/admin/organization/admin-organization').then(m => m.AdminOrganization)
-      }
+      },
     ]
   },
   { path: '**', redirectTo: 'auth/login' }

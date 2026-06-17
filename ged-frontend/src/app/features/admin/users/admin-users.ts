@@ -23,6 +23,7 @@ export class AdminUsers implements OnInit {
   editingUser = signal<SystemUser | null>(null);
   saving = signal(false);
   formError = signal('');
+  resetNotif = signal<{ user: string; password: string } | null>(null);
 
   allRoles: SystemRole[] = ['ADMINISTRATOR', 'DIRECTION_GENERALE', 'MANAGER', 'RH'];
   allDocTypes: DocumentType[] = [
@@ -208,7 +209,13 @@ export class AdminUsers implements OnInit {
 
   async resetPassword(u: SystemUser) {
     if (!confirm(`Réinitialiser le mot de passe de ${u.firstName} ${u.lastName} ?`)) return;
-    await this.userService.resetPassword(u.id);
-    alert('Mot de passe réinitialisé avec succès.');
+    const result = await this.userService.resetPassword(u.id);
+    if (result?.temporaryPassword) {
+      this.resetNotif.set({ user: `${u.firstName} ${u.lastName}`, password: result.temporaryPassword });
+      setTimeout(() => this.resetNotif.set(null), 8000);
+    } else {
+      this.resetNotif.set({ user: `${u.firstName} ${u.lastName}`, password: 'Mot de passe réinitialisé (voir email)' });
+      setTimeout(() => this.resetNotif.set(null), 5000);
+    }
   }
 }

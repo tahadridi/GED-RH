@@ -1,4 +1,22 @@
 <div class="p-8">
+  <!-- Reset password notification -->
+  <div *ngIf="resetNotif()" class="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm flex items-start gap-3">
+    <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
+      <svg lucideKey class="w-3.5 h-3.5 text-green-700"></svg>
+    </div>
+    <div class="flex-1 min-w-0">
+      <p class="text-sm font-semibold text-green-800">Mot de passe réinitialisé — {{ resetNotif()?.user }}</p>
+      <p class="text-xs text-green-700 mt-1">
+        Nouveau mot de passe temporaire :
+        <code class="ml-1 px-2 py-0.5 bg-green-100 text-green-900 rounded font-bold text-sm border border-green-300 select-all">{{ resetNotif()?.password }}</code>
+      </p>
+      <p class="text-[10px] text-green-500 mt-1">Ce mot de passe ne sera plus affiché. Copiez-le maintenant.</p>
+    </div>
+    <button (click)="resetNotif.set(null)" class="text-green-400 hover:text-green-700 shrink-0">
+      <svg lucideX class="w-4 h-4"></svg>
+    </button>
+  </div>
+
   <div class="flex items-center justify-between mb-6">
     <div>
       <h1 class="text-2xl font-bold text-black-900">Gestion des utilisateurs</h1>

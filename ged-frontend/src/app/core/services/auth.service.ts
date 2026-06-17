@@ -131,4 +131,58 @@ export class AuthService {
     this._profile.set(profile);
     return profile;
   }
+
+  async createReclamation(title: string, message?: string, newValue?: string): Promise<any> {
+    const token = await this.getToken();
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' });
+    return firstValueFrom(this.http.post(`${environment.apiUrl}/reclamations`, { title, message, newValue }, { headers }));
+  }
+
+  async updatePassword(newPassword: string): Promise<void> {
+    const token = await this.getToken();
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' });
+    await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/password`, { newPassword }, { headers }));
+  }
+
+  async getReclamations(): Promise<any[]> {
+    const token = await this.getToken();
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    return firstValueFrom(this.http.get<any[]>(`${environment.apiUrl}/reclamations`, { headers }));
+  }
+
+  async getMyReclamations(): Promise<any[]> {
+    const token = await this.getToken();
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    return firstValueFrom(this.http.get<any[]>(`${environment.apiUrl}/reclamations/mine`, { headers }));
+  }
+
+  async getTeamReclamations(): Promise<any[]> {
+    const token = await this.getToken();
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    return firstValueFrom(this.http.get<any[]>(`${environment.apiUrl}/reclamations/team`, { headers }));
+  }
+
+  async approveReclamation(id: string): Promise<any> {
+    const token = await this.getToken();
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    return firstValueFrom(this.http.put(`${environment.apiUrl}/reclamations/${id}/approve`, {}, { headers }));
+  }
+
+  async rejectReclamation(id: string): Promise<any> {
+    const token = await this.getToken();
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    return firstValueFrom(this.http.put(`${environment.apiUrl}/reclamations/${id}/reject`, {}, { headers }));
+  }
+
+  async applyEmailChange(id: string): Promise<any> {
+    const token = await this.getToken();
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    return firstValueFrom(this.http.put(`${environment.apiUrl}/reclamations/${id}/apply-email-change`, {}, { headers }));
+  }
+
+  async acknowledgeReclamation(id: string): Promise<any> {
+    const token = await this.getToken();
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    return firstValueFrom(this.http.put(`${environment.apiUrl}/reclamations/${id}/acknowledge`, {}, { headers }));
+  }
 }

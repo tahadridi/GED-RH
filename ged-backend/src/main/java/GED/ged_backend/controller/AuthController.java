@@ -1,5 +1,6 @@
 package GED.ged_backend.controller;
 
+import GED.ged_backend.config.SupabaseAdminClient;
 import GED.ged_backend.domain.entity.SystemUser;
 import GED.ged_backend.domain.enums.DocumentType;
 import GED.ged_backend.domain.enums.SystemRole;
@@ -7,8 +8,10 @@ import GED.ged_backend.repository.SystemUserRepository;
 import GED.ged_backend.service.AccessControlService;
 import GED.ged_backend.service.StorageService;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -33,11 +36,13 @@ public class AuthController {
     private final AccessControlService accessControlService;
     private final SystemUserRepository userRepository;
     private final StorageService storageService;
+    private final ObjectProvider<SupabaseAdminClient> supabaseAdminClientProvider;
 
-    public AuthController(AccessControlService accessControlService, SystemUserRepository userRepository, StorageService storageService) {
+    public AuthController(AccessControlService accessControlService, SystemUserRepository userRepository, StorageService storageService, ObjectProvider<SupabaseAdminClient> supabaseAdminClientProvider) {
         this.accessControlService = accessControlService;
         this.userRepository = userRepository;
         this.storageService = storageService;
+        this.supabaseAdminClientProvider = supabaseAdminClientProvider;
     }
 
     @GetMapping("/me")
@@ -128,4 +133,23 @@ public class AuthController {
 
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     private static class UnauthorizedException extends RuntimeException {}
+
+    @PostMapping("/password")
+    public void changePassword(@RequestBody ChangePasswordRequest req) {
+        SystemUser user = accessControlService.getCurrentUser();
+        if (user == null) throw new UnauthorizedException();
+
+        SupabaseAdminClient client = supabaseAdminClientProvider.getIfAvailable();
+        if (client == null) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Supabase admin is not enabled");
+        }
+
+        try {
+            client.updateUser(user.getAuthUid(), Map.of("password", req.newPassword));
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to update password", e);
+        }
+    }
+
+    public record ChangePasswordRequest(String newPassword) {}
 }

@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -77,8 +78,8 @@ public class AdminUserController {
 	}
 
 	@PostMapping("/{userId}/reset-password")
-	public void resetPassword(@PathVariable UUID userId) {
-		adminUserService.resetPassword(userId);
+	public Map<String, String> resetPassword(@PathVariable UUID userId) {
+		return adminUserService.resetPassword(userId);
 	}
 
 	@PostMapping("/{userId}/assign-manager/{managerId}")

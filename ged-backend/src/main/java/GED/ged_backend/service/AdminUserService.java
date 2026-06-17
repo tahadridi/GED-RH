@@ -110,18 +110,21 @@ public class AdminUserService {
 		systemUserRepository.delete(user);
 	}
 
-	public void resetPassword(UUID userId) {
+	public Map<String, String> resetPassword(UUID userId) {
 		SystemUser user = findUser(userId);
 		SupabaseAdminClient client = supabaseClientProvider.getIfAvailable();
 		if (client == null) {
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Supabase admin is not enabled");
 		}
 
+		String tempPassword = generateTemporaryPassword();
 		try {
-			client.updateUser(user.getAuthUid(), Map.of("password", generateTemporaryPassword()));
+			client.updateUser(user.getAuthUid(), Map.of("password", tempPassword));
 		} catch (Exception exception) {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to reset Supabase password", exception);
 		}
+
+		return Map.of("temporaryPassword", tempPassword);
 	}
 
 	public SystemUser assignManager(UUID userId, UUID managerId) {

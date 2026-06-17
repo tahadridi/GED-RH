@@ -31,8 +31,8 @@ export class UserService {
     return this.api.delete<void>(`/admin/users/${id}`);
   }
 
-  resetPassword(id: string): Promise<void> {
-    return this.api.post<void>(`/admin/users/${id}/reset-password`, {});
+  resetPassword(id: string): Promise<any> {
+    return this.api.post<any>(`/admin/users/${id}/reset-password`, {});
   }
 
   assignManager(userId: string, managerId: string): Promise<SystemUser> {

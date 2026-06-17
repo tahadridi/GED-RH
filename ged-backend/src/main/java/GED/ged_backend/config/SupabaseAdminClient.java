@@ -2,6 +2,7 @@ package GED.ged_backend.config;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestTemplate;
 import java.util.Map;
@@ -41,8 +42,11 @@ public class SupabaseAdminClient {
         headers.setBearerAuth(serviceRoleKey);
         headers.set("apikey", serviceRoleKey);
         HttpEntity<Map<String, Object>> req = new HttpEntity<>(updates, headers);
-        restTemplate.put(url, req);
-        return Map.of();
+        var response = restTemplate.exchange(url, org.springframework.http.HttpMethod.PUT, req, Map.class);
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new RuntimeException("Supabase admin API returned " + response.getStatusCode());
+        }
+        return response.getBody() != null ? response.getBody() : Map.of();
     }
 
     public void deleteUser(String uid) {
@@ -51,5 +55,13 @@ public class SupabaseAdminClient {
         headers.setBearerAuth(serviceRoleKey);
         headers.set("apikey", serviceRoleKey);
         restTemplate.delete(url, headers);
+    }
+
+    public void revokeSessions(String uid) {
+        String url = supabaseUrl + "/auth/v1/admin/users/" + uid + "/sessions";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(serviceRoleKey);
+        headers.set("apikey", serviceRoleKey);
+        restTemplate.exchange(url, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }
 }

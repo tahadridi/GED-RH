@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -6,7 +6,8 @@ import { environment } from '../../../../environments/environment';
 import { FormsModule } from '@angular/forms';
 import {
   LucideLayoutDashboard, LucideFileText,
-  LucideSearch, LucideShield, LucideLogOut, LucideUser, LucideBuilding, LucideX, LucideCamera
+  LucideSearch, LucideShield, LucideLogOut, LucideUser, LucideBuilding, LucideX, LucideCamera,
+  LucideEye, LucideEyeOff, LucideCheck
 } from '@lucide/angular';
 
 @Component({
@@ -14,7 +15,8 @@ import {
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule,
     LucideLayoutDashboard, LucideFileText,
-    LucideSearch, LucideShield, LucideLogOut, LucideUser, LucideBuilding, LucideX, LucideCamera],
+    LucideSearch, LucideShield, LucideLogOut, LucideUser, LucideBuilding, LucideX, LucideCamera,
+    LucideEye, LucideEyeOff, LucideCheck],
   template: `
     <aside class="sidebar-container">
       <div class="sidebar-header flex items-center gap-3">
@@ -25,9 +27,7 @@ import {
       </div>
 
       <div class="px-4 pt-3 pb-1">
-        <span class="role-badge">
-          {{ roleLabel }}
-        </span>
+        <span class="role-banner">Espace {{ roleLabel }}</span>
       </div>
 
       <nav class="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
@@ -49,6 +49,12 @@ import {
           Documents
         </a>
 
+        <a routerLink="/reclamations" routerLinkActive="active-link"
+           class="nav-link">
+          <svg lucideFileText class="w-4 h-4 shrink-0"></svg>
+          Réclamations
+        </a>
+
         <div *ngIf="isAdmin" class="pt-4 pb-2 px-3">
           <p class="admin-section-title">Administration</p>
           <div class="space-y-1">
@@ -68,6 +74,7 @@ import {
 
       <div class="sidebar-footer">
         <div class="sidebar-divider"></div>
+        <div class="role-footer">{{ roleLabel }}</div>
         <div class="user-info flex items-center gap-3">
           <button (click)="openProfile()" class="user-avatar-btn">
             <img *ngIf="profile?.photoUrl; else avatarIcon" [src]="apiUrl + profile?.photoUrl" alt="User" class="user-avatar-img">
@@ -77,7 +84,7 @@ import {
           </button>
           <div class="min-w-0">
             <p class="user-name truncate">{{ userName }}</p>
-            <p class="user-matricule">{{ profile?.matricule || profile?.email }}</p>
+            <p class="user-email truncate">{{ profile?.email }}</p>
           </div>
         </div>
 
@@ -115,33 +122,93 @@ import {
             <p *ngIf="photoError" class="text-xs text-red-500 mt-2">{{ photoError }}</p>
           </div>
 
-          <!-- Form -->
-          <div class="profile-form">
-            <div class="form-group">
-              <label>Prénom</label>
-              <input [(ngModel)]="editFirstName" type="text" class="form-input">
+          <!-- Info -->
+          <div class="profile-info">
+            <div class="info-row">
+              <span class="info-label">Email</span>
+              <span class="info-value">{{ profile?.email }}</span>
             </div>
-            <div class="form-group">
-              <label>Nom</label>
-              <input [(ngModel)]="editLastName" type="text" class="form-input">
+            <div class="info-row">
+              <span class="info-label">Matricule</span>
+              <span class="info-value">{{ profile?.matricule || '—' }}</span>
             </div>
-            <div class="form-group">
-              <label>Email</label>
-              <input [(ngModel)]="editEmail" type="email" class="form-input">
+            <div class="info-row">
+              <span class="info-label">Rôle</span>
+              <span class="info-value">{{ roleLabel }}</span>
             </div>
-            <div class="form-group">
-              <label>Matricule</label>
-              <input [value]="profile?.matricule || '—'" type="text" class="form-input bg-gray-50" readonly disabled>
+          </div>
+
+          <!-- Email change request -->
+          <div class="email-change-section">
+            <p class="section-title">Changer d'email</p>
+            <p class="section-desc">Saisissez le nouvel email souhaité. Une demande sera envoyée à l'administrateur.</p>
+            <input [(ngModel)]="newEmail" type="email" placeholder="Nouvel email" class="form-input">
+            <div class="flex items-center gap-2 mt-2">
+              <button (click)="sendEmailChangeRequest()" [disabled]="!newEmail || sendingRequest" class="request-btn">
+                {{ sendingRequest ? 'Envoi...' : 'Envoyer la demande' }}
+              </button>
             </div>
-            <p *ngIf="saveError" class="text-xs text-red-500">{{ saveError }}</p>
-            <p *ngIf="saveSuccess" class="text-xs text-green-600">Profil mis à jour avec succès</p>
+            <p *ngIf="requestSuccess" class="text-xs text-green-600 mt-2">Demande envoyée avec succès</p>
+            <p *ngIf="requestError" class="text-xs text-red-500 mt-2">{{ requestError }}</p>
+          </div>
+
+          <!-- Password change -->
+          <div class="password-change-section">
+            <p class="section-title">Changer le mot de passe</p>
+            <div class="relative">
+              <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="newPassword" placeholder="Nouveau mot de passe" class="form-input pr-9">
+              <button type="button" (click)="showPassword = !showPassword" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1">
+                <svg *ngIf="!showPassword" lucideEye class="w-4 h-4"></svg>
+                <svg *ngIf="showPassword" lucideEyeOff class="w-4 h-4"></svg>
+              </button>
+            </div>
+            <div class="relative mt-2">
+              <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="confirmPassword" placeholder="Confirmer le mot de passe" class="form-input pr-9">
+            </div>
+            <div class="flex items-center gap-2 mt-2">
+              <button (click)="changePassword()" [disabled]="isPasswordChangeDisabled()" class="request-btn">
+                {{ passwordChanging ? 'Mise à jour...' : 'Changer le mot de passe' }}
+              </button>
+            </div>
+            <p *ngIf="passwordSuccess" class="text-xs text-green-600 mt-2">Mot de passe mis à jour avec succès</p>
+            <p *ngIf="passwordError" class="text-xs text-red-500 mt-2">{{ passwordError }}</p>
           </div>
         </div>
 
         <div class="profile-popup-footer">
-          <button (click)="showProfile = false" class="cancel-btn">Annuler</button>
-          <button (click)="saveProfile()" [disabled]="saving" class="save-btn">
-            {{ saving ? 'Enregistrement...' : 'Enregistrer' }}
+          <button (click)="showProfile = false" class="cancel-btn">Fermer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reclamation Confirmation Popup -->
+    <div *ngIf="pendingRec" class="reclamation-overlay">
+      <div class="reclamation-popup" (click)="$event.stopPropagation()">
+        <div class="reclamation-popup-header">
+          <h3 *ngIf="pendingRec.status === 'APPROVED' && pendingRec.newValue">Demande approuvée</h3>
+          <h3 *ngIf="pendingRec.status === 'APPROVED' && !pendingRec.newValue">Demande approuvée</h3>
+          <h3 *ngIf="pendingRec.status === 'REJECTED'">Demande refusée</h3>
+          <div class="status-icon" [class.bg-green-100]="pendingRec.status === 'APPROVED'" [class.bg-red-100]="pendingRec.status === 'REJECTED'">
+            <svg *ngIf="pendingRec.status === 'APPROVED'" lucideCheck class="w-5 h-5 text-green-600"></svg>
+            <svg *ngIf="pendingRec.status === 'REJECTED'" lucideX class="w-5 h-5 text-red-600"></svg>
+          </div>
+        </div>
+        <div class="reclamation-popup-body">
+          <div *ngIf="pendingRec.status === 'APPROVED' && pendingRec.newValue" class="text-center">
+            <p class="rec-message">Votre demande de changement d'email a été <strong>approuvée</strong>.</p>
+            <p class="rec-new-email">Nouvel email : <span class="email-highlight">{{ pendingRec.newValue }}</span></p>
+            <p class="rec-logout-notice">Vous allez être déconnecté. Veuillez vous reconnecter avec vos nouveaux identifiants.</p>
+          </div>
+          <div *ngIf="pendingRec.status === 'APPROVED' && !pendingRec.newValue" class="text-center">
+            <p class="rec-message">Votre demande "{{ pendingRec.title }}" a été <strong>approuvée</strong>.</p>
+          </div>
+          <div *ngIf="pendingRec.status === 'REJECTED'" class="text-center">
+            <p class="rec-message">Votre demande "{{ pendingRec.title }}" a été <strong>refusée</strong>.</p>
+          </div>
+        </div>
+        <div class="reclamation-popup-footer">
+          <button (click)="confirmReclamation()" class="rec-confirm-btn">
+            {{ pendingRec.status === 'APPROVED' && pendingRec.newValue ? 'Appliquer et se déconnecter' : 'OK' }}
           </button>
         </div>
       </div>
@@ -187,13 +254,15 @@ import {
       object-fit: contain;
     }
 
-    .role-badge {
+    .role-banner {
+      display: block;
       font-size: 0.75rem;
-      padding: 0.125rem 0.5rem;
+      padding: 0.25rem 0.75rem;
       border-radius: 9999px;
       background-color: #152040;
-      color: rgba(255, 255, 255, 0.8);
-      font-weight: 500;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 600;
+      text-align: center;
     }
 
     .nav-link {
@@ -258,12 +327,18 @@ import {
       margin-bottom: 0.125rem;
       color: rgba(255, 255, 255, 0.95);
     }
-    .user-matricule {
+    .user-email {
       font-size: 0.6875rem;
       color: rgba(255, 255, 255, 0.55);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .role-footer {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.85);
+      padding: 0 0.5rem 0.5rem 0.5rem;
     }
     .sidebar-divider {
       height: 1px;
@@ -333,6 +408,8 @@ import {
     .close-btn:hover { color: #374151; }
     .profile-popup-body {
       padding: 1.5rem;
+      overflow-y: auto;
+      max-height: 60vh;
     }
     .profile-photo-section {
       display: flex;
@@ -368,24 +445,48 @@ import {
       cursor: pointer;
     }
     .camera-btn:hover { background: #2563eb; }
-    .profile-form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+    .profile-info {
+      margin-bottom: 1rem;
     }
-    .form-group {
+    .info-row {
       display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f3f4f6;
     }
-    .form-group label {
+    .info-label {
       font-size: 0.75rem;
       font-weight: 600;
       color: #6b7280;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
+    .info-value {
+      font-size: 0.875rem;
+      color: #111827;
+    }
+    .email-change-section {
+      border-top: 1px solid #e5e7eb;
+      padding-top: 1rem;
+    }
+    .password-change-section {
+      border-top: 1px solid #e5e7eb;
+      padding-top: 1rem;
+      margin-top: 1rem;
+    }
+    .section-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #111827;
+      margin: 0 0 0.25rem 0;
+    }
+    .section-desc {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin: 0 0 0.75rem 0;
+    }
     .form-input {
+      width: 100%;
       padding: 0.5rem 0.75rem;
       border: 1px solid #d1d5db;
       border-radius: 0.5rem;
@@ -393,11 +494,24 @@ import {
       color: #111827;
       outline: none;
       transition: border-color 0.2s;
+      box-sizing: border-box;
     }
     .form-input:focus {
       border-color: #3b82f6;
-      ring: 2px solid #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
     }
+    .request-btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      background: #3b82f6;
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .request-btn:hover { background: #2563eb; }
+    .request-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .profile-popup-footer {
       display: flex;
       justify-content: flex-end;
@@ -429,9 +543,97 @@ import {
     }
     .save-btn:hover { background: #2563eb; }
     .save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Reclamation popup */
+    .reclamation-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1100;
+    }
+    .reclamation-popup {
+      background: white;
+      border-radius: 1rem;
+      width: 100%;
+      max-width: 440px;
+      margin: 1rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+    .reclamation-popup-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .reclamation-popup-header h3 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #111827;
+      margin: 0;
+    }
+    .status-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .reclamation-popup-body {
+      padding: 1.5rem;
+    }
+    .rec-message {
+      font-size: 0.9375rem;
+      color: #374151;
+      margin: 0 0 0.75rem 0;
+      line-height: 1.5;
+    }
+    .rec-new-email {
+      font-size: 0.8125rem;
+      color: #6b7280;
+      margin: 0 0 0.75rem 0;
+    }
+    .email-highlight {
+      font-weight: 700;
+      color: #1d4ed8;
+      background: #eff6ff;
+      padding: 0.125rem 0.5rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+    }
+    .rec-logout-notice {
+      font-size: 0.75rem;
+      color: #dc2626;
+      margin: 0;
+      font-weight: 500;
+    }
+    .reclamation-popup-footer {
+      display: flex;
+      justify-content: center;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #e5e7eb;
+      background: #f9fafb;
+    }
+    .rec-confirm-btn {
+      padding: 0.625rem 1.5rem;
+      border: none;
+      border-radius: 0.5rem;
+      background: #2563eb;
+      color: white;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .rec-confirm-btn:hover { background: #1d4ed8; }
   `]
 })
-export class Sidebar implements OnInit {
+export class Sidebar implements OnInit, OnDestroy {
   @Input() userEmail = '';
   apiUrl = environment.apiUrl;
 
@@ -445,16 +647,22 @@ export class Sidebar implements OnInit {
   profile: any = null;
 
   showProfile = false;
-  editFirstName = '';
-  editLastName = '';
-  editEmail = '';
-  saving = false;
-  saveError = '';
-  saveSuccess = false;
+  newEmail = '';
+  sendingRequest = false;
+  requestError = '';
+  requestSuccess = false;
   photoUploading = false;
   photoError = '';
+  newPassword = '';
+  confirmPassword = '';
+  passwordChanging = false;
+  passwordError = '';
+  passwordSuccess = false;
+  showPassword = false;
+  pendingRec: any = null;
+  recPollTimer: any = null;
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     const update = () => {
@@ -476,6 +684,56 @@ export class Sidebar implements OnInit {
       update();
       if (this.authService.profile()) clearInterval(interval);
     }, 500);
+    this.startReclamationPolling();
+  }
+
+  ngOnDestroy() {
+    if (this.recPollTimer) clearInterval(this.recPollTimer);
+  }
+
+  private startReclamationPolling() {
+    this.checkReclamations();
+    this.recPollTimer = setInterval(() => this.checkReclamations(), 30000);
+  }
+
+  private async checkReclamations() {
+    if (this.pendingRec) return;
+    try {
+      const list = await this.authService.getMyReclamations();
+      const unacknowledged = list.find((r: any) =>
+        !r.acknowledged && (r.status === 'APPROVED' || r.status === 'REJECTED')
+      );
+      if (unacknowledged) {
+        this.pendingRec = unacknowledged;
+        this.cdr.detectChanges();
+      }
+    } catch (_) {}
+  }
+
+  async confirmReclamation() {
+    if (!this.pendingRec) return;
+    const rec = this.pendingRec;
+    if (rec.status === 'APPROVED' && rec.newValue) {
+      try {
+        await this.authService.applyEmailChange(rec.id);
+      } catch (e: any) {
+        console.error('Email change apply failed', e);
+      }
+      this.pendingRec = null;
+      this.cdr.detectChanges();
+      setTimeout(async () => {
+        try {
+          await this.authService.signOut();
+        } catch (_) {}
+        window.location.href = '/auth/login';
+      }, 2000);
+    } else {
+      try {
+        await this.authService.acknowledgeReclamation(rec.id);
+      } catch (_) {}
+      this.pendingRec = null;
+      this.cdr.detectChanges();
+    }
   }
 
   private getRoleLabel(roles: string[]): string {
@@ -491,39 +749,39 @@ export class Sidebar implements OnInit {
   }
 
   openProfile() {
-    const p = this.authService.profile();
-    if (p) {
-      this.editFirstName = p.firstName;
-      this.editLastName = p.lastName;
-      this.editEmail = p.email;
-      this.saveError = '';
-      this.saveSuccess = false;
-      this.showProfile = true;
-    }
+    this.newEmail = '';
+    this.requestError = '';
+    this.requestSuccess = false;
+    this.newPassword = '';
+    this.confirmPassword = '';
+    this.passwordError = '';
+    this.passwordSuccess = false;
+    this.showPassword = false;
+    this.showProfile = true;
   }
 
-  async saveProfile() {
-    this.saving = true;
-    this.saveError = '';
-    this.saveSuccess = false;
+  async sendEmailChangeRequest() {
+    if (!this.newEmail) return;
+    this.sendingRequest = true;
+    this.requestError = '';
+    this.requestSuccess = false;
+    this.cdr.detectChanges();
     try {
-      await this.authService.updateProfile({
-        firstName: this.editFirstName,
-        lastName: this.editLastName,
-        email: this.editEmail
-      });
-      this.saveSuccess = true;
-      // Update local state
-      const p = this.authService.profile();
-      if (p) {
-        this.userName = `${p.firstName} ${p.lastName}`;
-        this.userEmail = p.email;
-      }
-      setTimeout(() => { this.saveSuccess = false; }, 3000);
+      const title = 'Demande de changement d\'email : ' + this.authService.profile()?.email + ' → ' + this.newEmail;
+      await this.authService.createReclamation(title, undefined, this.newEmail);
+      this.requestSuccess = true;
+      this.newEmail = '';
+      this.cdr.detectChanges();
+      setTimeout(() => {
+        this.requestSuccess = false;
+        this.cdr.detectChanges();
+      }, 4000);
     } catch (e: any) {
-      this.saveError = e?.error?.message || e?.message || 'Erreur lors de la mise à jour';
+      this.requestError = e?.error?.message || e?.message || 'Erreur lors de l\'envoi de la demande';
+      this.cdr.detectChanges();
     } finally {
-      this.saving = false;
+      this.sendingRequest = false;
+      this.cdr.detectChanges();
     }
   }
 
@@ -540,5 +798,40 @@ export class Sidebar implements OnInit {
     } finally {
       this.photoUploading = false;
     }
+  }
+
+  async changePassword() {
+    if (this.newPassword !== this.confirmPassword) {
+      this.passwordError = 'Les mots de passe ne correspondent pas';
+      return;
+    }
+    if (this.newPassword.length < 6) {
+      this.passwordError = 'Le mot de passe doit contenir au moins 6 caractères';
+      return;
+    }
+    this.passwordChanging = true;
+    this.passwordError = '';
+    this.passwordSuccess = false;
+    this.cdr.detectChanges();
+    try {
+      await this.authService.updatePassword(this.newPassword);
+      this.passwordSuccess = true;
+      this.passwordError = '';
+      this.cdr.detectChanges();
+      setTimeout(() => {
+        this.passwordSuccess = false;
+        this.cdr.detectChanges();
+      }, 4000);
+    } catch (e: any) {
+      this.passwordError = e?.message || 'Erreur lors du changement de mot de passe';
+      this.cdr.detectChanges();
+    } finally {
+      this.passwordChanging = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  isPasswordChangeDisabled(): boolean {
+    return !this.newPassword || !this.confirmPassword || this.passwordChanging;
   }
 }
