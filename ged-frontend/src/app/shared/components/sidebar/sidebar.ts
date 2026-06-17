@@ -50,9 +50,10 @@ import {
         </a>
 
         <a routerLink="/reclamations" routerLinkActive="active-link"
-           class="nav-link">
+           class="nav-link" style="position: relative;">
           <svg lucideFileText class="w-4 h-4 shrink-0"></svg>
           Réclamations
+          <span *ngIf="recBadgeCount > 0" class="rec-badge">{{ recBadgeCount }}</span>
         </a>
 
         <div *ngIf="isAdmin" class="pt-4 pb-2 px-3">
@@ -204,6 +205,10 @@ import {
           </div>
           <div *ngIf="pendingRec.status === 'REJECTED'" class="text-center">
             <p class="rec-message">Votre demande "{{ pendingRec.title }}" a été <strong>refusée</strong>.</p>
+            <p *ngIf="rejectionLabel(pendingRec.rejectionReason)" class="rec-reject-reason">
+              Motif : {{ rejectionLabel(pendingRec.rejectionReason) }}
+              <span *ngIf="pendingRec.rejectionComment"> — {{ pendingRec.rejectionComment }}</span>
+            </p>
           </div>
         </div>
         <div class="reclamation-popup-footer">
@@ -631,6 +636,35 @@ import {
       transition: background 0.2s;
     }
     .rec-confirm-btn:hover { background: #1d4ed8; }
+
+    .rec-reject-reason {
+      margin-top: 0.5rem;
+      font-size: 0.8125rem;
+      color: #dc2626;
+      background: #fef2f2;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      line-height: 1.4;
+    }
+
+    .rec-badge {
+      position: absolute;
+      right: 0.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #ef4444;
+      color: white;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      min-width: 1.25rem;
+      height: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      padding: 0 0.25rem;
+      line-height: 1;
+    }
   `]
 })
 export class Sidebar implements OnInit, OnDestroy {
@@ -660,6 +694,7 @@ export class Sidebar implements OnInit, OnDestroy {
   passwordSuccess = false;
   showPassword = false;
   pendingRec: any = null;
+  recBadgeCount = 0;
   recPollTimer: any = null;
 
   constructor(private authService: AuthService, private cdr: ChangeDetectorRef) {}
@@ -708,6 +743,13 @@ export class Sidebar implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     } catch (_) {}
+    if (this.isAdmin || this.isManager) {
+      try {
+        const all = await this.authService.getReclamations();
+        this.recBadgeCount = all.filter((r: any) => r.status === 'PENDING').length;
+        this.cdr.detectChanges();
+      } catch (_) {}
+    }
   }
 
   async confirmReclamation() {
@@ -744,6 +786,17 @@ export class Sidebar implements OnInit, OnDestroy {
     return '';
   }
 
+  rejectionLabel(reason: string): string {
+    switch (reason) {
+      case 'HORS_PERIMETRE': return 'Hors périmètre';
+      case 'INFOS_INSUFFISANTES': return 'Informations insuffisantes';
+      case 'DEJA_TRAITEE': return 'Réclamation déjà traitée';
+      case 'NON_JUSTIFIEE': return 'Non justifiée';
+      case 'AUTRE': return 'Autre';
+      default: return '';
+    }
+  }
+
   logout() {
     this.authService.signOut();
   }
@@ -768,7 +821,7 @@ export class Sidebar implements OnInit, OnDestroy {
     this.cdr.detectChanges();
     try {
       const title = 'Demande de changement d\'email : ' + this.authService.profile()?.email + ' → ' + this.newEmail;
-      await this.authService.createReclamation(title, undefined, this.newEmail);
+      await this.authService.createReclamation(title, undefined, this.newEmail, 'HAUTE');
       this.requestSuccess = true;
       this.newEmail = '';
       this.cdr.detectChanges();

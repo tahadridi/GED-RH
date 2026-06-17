@@ -132,10 +132,10 @@ export class AuthService {
     return profile;
   }
 
-  async createReclamation(title: string, message?: string, newValue?: string): Promise<any> {
+  async createReclamation(title: string, message?: string, newValue?: string, priority?: string): Promise<any> {
     const token = await this.getToken();
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' });
-    return firstValueFrom(this.http.post(`${environment.apiUrl}/reclamations`, { title, message, newValue }, { headers }));
+    return firstValueFrom(this.http.post(`${environment.apiUrl}/reclamations`, { title, message, newValue, priority }, { headers }));
   }
 
   async updatePassword(newPassword: string): Promise<void> {
@@ -162,16 +162,22 @@ export class AuthService {
     return firstValueFrom(this.http.get<any[]>(`${environment.apiUrl}/reclamations/team`, { headers }));
   }
 
+  async getReclamationStatsByDepartment(): Promise<any[]> {
+    const token = await this.getToken();
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    return firstValueFrom(this.http.get<any[]>(`${environment.apiUrl}/reclamations/stats/by-department`, { headers }));
+  }
+
   async approveReclamation(id: string): Promise<any> {
     const token = await this.getToken();
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     return firstValueFrom(this.http.put(`${environment.apiUrl}/reclamations/${id}/approve`, {}, { headers }));
   }
 
-  async rejectReclamation(id: string): Promise<any> {
+  async rejectReclamation(id: string, reason?: string, comment?: string): Promise<any> {
     const token = await this.getToken();
-    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    return firstValueFrom(this.http.put(`${environment.apiUrl}/reclamations/${id}/reject`, {}, { headers }));
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' });
+    return firstValueFrom(this.http.put(`${environment.apiUrl}/reclamations/${id}/reject`, { reason, comment }, { headers }));
   }
 
   async applyEmailChange(id: string): Promise<any> {

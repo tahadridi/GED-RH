@@ -1,5 +1,6 @@
 package GED.ged_backend.domain.entity;
 
+import GED.ged_backend.domain.enums.ReclamationPriority;
 import GED.ged_backend.domain.enums.ReclamationStatus;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -53,6 +54,25 @@ public class Reclamation {
 
     @Column(nullable = false)
     private boolean acknowledged = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private ReclamationPriority priority = ReclamationPriority.MOYENNE;
+
+    @Column(length = 255)
+    private String rejectionReason;
+
+    @Column(columnDefinition = "TEXT")
+    private String rejectionComment;
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+
+    public String getRejectionComment() { return rejectionComment; }
+    public void setRejectionComment(String rejectionComment) { this.rejectionComment = rejectionComment; }
+
+    public ReclamationPriority getPriority() { return priority; }
+    public void setPriority(ReclamationPriority priority) { this.priority = priority; }
 
     public boolean isAcknowledged() { return acknowledged; }
     public void setAcknowledged(boolean acknowledged) { this.acknowledged = acknowledged; }
