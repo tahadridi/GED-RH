@@ -94,6 +94,11 @@ public class EmployeeDocument {
 		return employee != null ? employee.getEmail() : null;
 	}
 
+	@com.fasterxml.jackson.annotation.JsonProperty("employeeHasPhoto")
+	public boolean isEmployeeHasPhoto() {
+		return employee != null && employee.getPhotoPath() != null && !employee.getPhotoPath().isBlank();
+	}
+
 	public String getDocumentReference() {
 		return documentReference;
 	}

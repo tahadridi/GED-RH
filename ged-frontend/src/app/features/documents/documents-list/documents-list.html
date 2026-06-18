@@ -46,9 +46,15 @@
       <button (click)="toggleGroup(group.employeeId)"
         class="w-full flex items-center justify-between px-5 py-3 bg-gray-50 hover:bg-gray-100 transition-colors border-b border-gray-100">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 bg-blue-900 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
-            {{ (group.employeeFirstName || '?').charAt(0) }}{{ (group.employeeLastName || '?').charAt(0) }}
+          <div *ngIf="group.employeeHasPhoto; else noPhoto" class="w-9 h-9 rounded-full overflow-hidden shrink-0">
+            <img [src]="apiUrl + '/employees/' + group.employeeId + '/photo/content'" alt="Photo"
+              class="w-full h-full object-cover">
           </div>
+          <ng-template #noPhoto>
+            <div class="w-9 h-9 bg-blue-900 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
+              {{ (group.employeeFirstName || '?').charAt(0) }}{{ (group.employeeLastName || '?').charAt(0) }}
+            </div>
+          </ng-template>
           <div class="text-left">
             <p class="font-semibold text-gray-900">{{ group.employeeFirstName || '' }} {{ group.employeeLastName || '' }}</p>
             <p class="text-xs text-gray-500">{{ group.employeeMatricule || '—' }} — {{ group.documents.length }} document(s)</p>

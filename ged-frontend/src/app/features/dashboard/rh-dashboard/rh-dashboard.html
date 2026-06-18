@@ -72,6 +72,35 @@
         </div>
       </div>
     </div>
+
+    <!-- Card 4: Stockage -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <p class="text-sm text-gray-500">Stockage</p>
+          <p class="text-3xl font-bold text-gray-900 mt-1">{{ storageUsed }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">sur {{ storageTotal }}</p>
+        </div>
+        <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
+          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12a8 8 0 11-16 0 8 8 0 0116 0z" />
+          </svg>
+        </div>
+      </div>
+      <div class="w-full bg-gray-100 rounded-full h-2.5">
+        <div class="h-2.5 rounded-full transition-all duration-500" [style.width.%]="storagePercentage"
+          [ngClass]="{
+            'bg-green-500': storagePercentage < 60,
+            'bg-yellow-500': storagePercentage >= 60 && storagePercentage < 85,
+            'bg-red-500': storagePercentage >= 85
+          }"></div>
+      </div>
+      <div class="flex justify-between text-xs text-gray-500 mt-2">
+        <span>{{ storageFree }} libres</span>
+        <span>{{ storagePercentage }}% utilisé</span>
+      </div>
+    </div>
   </div>
 
   <!-- Main Grid: Recent Documents & Distribution -->
@@ -97,9 +126,15 @@
           <button (click)="toggleRecentGroup(group.employeeId)"
             class="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors">
             <div class="flex items-center gap-3">
-              <div class="w-8 h-8 bg-blue-900 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
-                {{ (group.employeeFirstName || '?').charAt(0) }}{{ (group.employeeLastName || '?').charAt(0) }}
+              <div *ngIf="group.employeeHasPhoto; else noPhoto" class="w-8 h-8 rounded-full overflow-hidden shrink-0">
+                <img [src]="apiUrl + '/employees/' + group.employeeId + '/photo/content'" alt="Photo"
+                  class="w-full h-full object-cover">
               </div>
+              <ng-template #noPhoto>
+                <div class="w-8 h-8 bg-blue-900 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
+                  {{ (group.employeeFirstName || '?').charAt(0) }}{{ (group.employeeLastName || '?').charAt(0) }}
+                </div>
+              </ng-template>
               <div class="text-left">
                 <p class="font-semibold text-gray-900 text-sm">{{ group.employeeFirstName || '' }} {{ group.employeeLastName || '' }}</p>
                 <p class="text-xs text-gray-500">{{ group.employeeMatricule || '—' }} — {{ group.documents.length }} document(s)</p>

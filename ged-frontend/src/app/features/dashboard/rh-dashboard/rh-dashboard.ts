@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { DocumentService, OcrPreviewResult } from '../../../core/services/document.service';
 import { EmployeeService } from '../../../core/services/employee.service';
+import { ApiService } from '../../../core/services/api.service';
 import { Employee } from '../../../core/models/employee.model';
 import { DocumentType } from '../../../core/models/user.model';
 import { environment } from '../../../../environments/environment';
@@ -24,6 +25,7 @@ interface DocumentItem {
   employeeFirstName: string;
   employeeLastName: string;
   employeeMatricule: string;
+  employeeHasPhoto: boolean;
   employeeEmail: string;
   employeeId: string;
   type: DocumentType;
@@ -35,6 +37,7 @@ interface EmployeeGroup {
   employeeFirstName: string;
   employeeLastName: string;
   employeeMatricule: string;
+  employeeHasPhoto: boolean;
   documents: DocumentItem[];
 }
 
@@ -82,6 +85,7 @@ export class RhDashboard implements OnInit {
           employeeFirstName: doc.employeeFirstName,
           employeeLastName: doc.employeeLastName,
           employeeMatricule: doc.employeeMatricule,
+          employeeHasPhoto: doc.employeeHasPhoto,
           documents: []
         });
       }
@@ -160,6 +164,21 @@ export class RhDashboard implements OnInit {
     return this.allDocuments().filter(d => d.author === currentUser).length;
   });
 
+  // Storage stats
+  storageBytes = signal(0);
+  storageObjectCount = signal(0);
+  diskTotal = signal(0);
+  diskFree = signal(0);
+
+  get storageUsed(): string { return formatBytes(this.storageBytes()); }
+  get storageFree(): string { return formatBytes(this.diskFree()); }
+  get storageTotal(): string { return formatBytes(this.diskTotal()); }
+  get storagePercentage(): number {
+    const total = this.diskTotal();
+    if (total === 0) return 0;
+    return Math.min(100, +(this.storageBytes() / total * 100).toFixed(1));
+  }
+
   // Helper for template
   Math = Math;
 
@@ -177,7 +196,8 @@ export class RhDashboard implements OnInit {
   constructor(
     private authService: AuthService,
     private documentService: DocumentService,
-    private employeeService: EmployeeService
+    private employeeService: EmployeeService,
+    private apiService: ApiService
   ) {}
 
   async ngOnInit() {
@@ -205,6 +225,7 @@ export class RhDashboard implements OnInit {
         employeeFirstName: doc.employeeFirstName || '',
         employeeLastName: doc.employeeLastName || '',
         employeeMatricule: doc.employeeMatricule || '',
+        employeeHasPhoto: doc.employeeHasPhoto || false,
         employeeEmail: doc.employeeEmail || '',
         employeeId: doc.employeeId,
         type: doc.type,
@@ -232,6 +253,23 @@ export class RhDashboard implements OnInit {
       this.loading.set(false);
       this.recentDocsLoading.set(false);
       this.distributionLoading.set(false);
+    }
+
+    await this.refreshStorageStats();
+  }
+
+  async refreshStorageStats() {
+    try {
+      const [stats, disk] = await Promise.all([
+        this.apiService.get<{ totalSize: number; objectCount: number }>('/storage/stats'),
+        this.apiService.get<{ totalSpace: number; usedSpace: number; freeSpace: number }>('/storage/disk')
+      ]);
+      this.storageBytes.set(stats.totalSize);
+      this.storageObjectCount.set(stats.objectCount);
+      this.diskTotal.set(disk.totalSpace);
+      this.diskFree.set(disk.freeSpace);
+    } catch (e) {
+      console.error('Failed to load storage stats', e);
     }
   }
 
@@ -349,12 +387,14 @@ export class RhDashboard implements OnInit {
         employeeFirstName: doc.employeeFirstName || '',
         employeeLastName: doc.employeeLastName || '',
         employeeMatricule: doc.employeeMatricule || '',
+        employeeHasPhoto: doc.employeeHasPhoto || false,
         employeeEmail: doc.employeeEmail || '',
         employeeId: doc.employeeId,
         type: doc.type,
         createdAt: new Date(doc.createdAt)
       }));
       this.recentDocuments.set(recent);
+      this.expandAllRecentGroups();
 
       const typeCounts = new Map<string, number>();
       docs.forEach((doc: any) => {
@@ -372,4 +412,12 @@ export class RhDashboard implements OnInit {
       console.error('Refresh failed', err);
     }
   }
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KiB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }

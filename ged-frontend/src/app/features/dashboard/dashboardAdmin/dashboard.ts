@@ -6,6 +6,7 @@ import { DocumentService } from '../../../core/services/document.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiService } from '../../../core/services/api.service';
 import { Router } from '@angular/router';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-dashboard',
@@ -15,6 +16,7 @@ import { Router } from '@angular/router';
   styles: ``
 })
 export class Dashboard implements OnInit {
+  apiUrl = environment.apiUrl;
   // Signals
   totalEmployees = signal(0);
   totalDocuments = signal(0);
@@ -27,9 +29,14 @@ export class Dashboard implements OnInit {
   storageObjectCount = signal(0);
   diskTotal = signal(0);
   diskFree = signal(0);
+  reclamations = signal<any[]>([]);
+  loadingReclamations = signal(false);
+
+  pendingReclamations = computed(() => this.reclamations().filter(r => r.status === 'PENDING'));
+  recentPendingReclamations = computed(() => this.pendingReclamations().slice(0, 3));
 
   recentGroups = computed(() => {
-    const map = new Map<string, { employeeId: string; employeeFirstName: string; employeeLastName: string; employeeMatricule: string; documents: any[] }>();
+    const map = new Map<string, { employeeId: string; employeeFirstName: string; employeeLastName: string; employeeMatricule: string; employeeHasPhoto: boolean; documents: any[] }>();
     for (const doc of this.recentDocuments()) {
       const key = doc.employeeId || 'unknown';
       if (!map.has(key)) {
@@ -38,6 +45,7 @@ export class Dashboard implements OnInit {
           employeeFirstName: doc.employeeFirstName || '',
           employeeLastName: doc.employeeLastName || '',
           employeeMatricule: doc.employeeMatricule || '',
+          employeeHasPhoto: doc.employeeHasPhoto || false,
           documents: []
         });
       }
@@ -170,10 +178,46 @@ export class Dashboard implements OnInit {
     return Math.min(100, +(this.storageBytes() / total * 100).toFixed(1));
   }
 
+  async loadReclamations() {
+    this.loadingReclamations.set(true);
+    try {
+      const all = await this.authService.getReclamations();
+      this.reclamations.set(all);
+    } catch (e) {
+      console.error('Failed to load reclamations', e);
+    } finally {
+      this.loadingReclamations.set(false);
+    }
+  }
+
+  statusLabel(s: string): string {
+    switch (s) {
+      case 'PENDING': return 'En attente';
+      case 'APPROVED': return 'Approuvé';
+      case 'REJECTED': return 'Rejeté';
+      default: return s;
+    }
+  }
+
+  priorityLabel(p: string): string {
+    switch (p) {
+      case 'FAIBLE': return 'Faible';
+      case 'MOYENNE': return 'Moyenne';
+      case 'HAUTE': return 'Haute';
+      case 'CRITIQUE': return 'Critique';
+      default: return p || 'Moyenne';
+    }
+  }
+
+  priorityClass(p: string): string {
+    return 'priority-' + (p || 'moyenne').toLowerCase();
+  }
+
   async ngOnInit() {
     await Promise.all([
       this.refreshData(),
-      this.refreshStorageStats()
+      this.refreshStorageStats(),
+      this.loadReclamations()
     ]);
   }
 

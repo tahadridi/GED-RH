@@ -5,12 +5,14 @@ import { RouterModule } from '@angular/router';
 import { DocumentService } from '../../../core/services/document.service';
 import { EmployeeDocument } from '../../../core/models/document.model';
 import { LucideSearch, LucideFileText, LucideDownload, LucideHistory, LucideX, LucideEye, LucideChevronDown } from '@lucide/angular';
+import { environment } from '../../../../environments/environment';
 
 export interface EmployeeGroup {
   employeeId: string;
   employeeFirstName: string;
   employeeLastName: string;
   employeeMatricule: string;
+  employeeHasPhoto: boolean;
   documents: EmployeeDocument[];
 }
 
@@ -21,6 +23,7 @@ export interface EmployeeGroup {
   templateUrl: './documents-list.html'
 })
 export class DocumentsList implements OnInit {
+  apiUrl = environment.apiUrl;
   documents = signal<EmployeeDocument[]>([]);
   loading = signal(false);
   searchQuery = '';
@@ -52,6 +55,7 @@ export class DocumentsList implements OnInit {
           employeeFirstName: doc.employeeFirstName,
           employeeLastName: doc.employeeLastName,
           employeeMatricule: doc.employeeMatricule,
+          employeeHasPhoto: doc.employeeHasPhoto,
           documents: []
         });
       }

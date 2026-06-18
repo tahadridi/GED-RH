@@ -4,6 +4,7 @@ export interface EmployeeDocument {
   employeeFirstName: string;
   employeeLastName: string;
   employeeMatricule: string;
+  employeeHasPhoto: boolean;
   documentReference: string;
   name: string;
   type: string;
