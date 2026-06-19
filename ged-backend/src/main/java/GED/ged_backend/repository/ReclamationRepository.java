@@ -11,6 +11,6 @@ public interface ReclamationRepository extends JpaRepository<Reclamation, UUID> 
     List<Reclamation> findAllByOrderByCreatedAtDesc();
     List<Reclamation> findByEmployee_IdOrderByCreatedAtDesc(UUID employeeId);
 
-    @Query("SELECT r FROM Reclamation r WHERE r.employee.manager.id = :managerId ORDER BY r.createdAt DESC")
-    List<Reclamation> findByEmployeeManagerIdOrderByCreatedAtDesc(@Param("managerId") UUID managerId);
+    @Query("SELECT r FROM Reclamation r JOIN r.employee e JOIN e.employeeProfile ep WHERE ep.manager.id = :managerEmployeeId ORDER BY r.createdAt DESC")
+    List<Reclamation> findTeamReclamations(@Param("managerEmployeeId") UUID managerEmployeeId);
 }

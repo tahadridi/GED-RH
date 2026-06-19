@@ -55,7 +55,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/me").permitAll()
                 .requestMatchers("/api/organization/**").permitAll()
                 .requestMatchers("/api/employees/*/photo/content").permitAll()
-                .requestMatchers("/api/admin/**").hasRole("ADMINISTRATOR")
+                .requestMatchers("/ws-native/**").permitAll()
+                .requestMatchers("/api/admin/**").hasAnyRole("ADMINISTRATOR", "RH")
                 .anyRequest().authenticated()
             );
 

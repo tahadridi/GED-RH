@@ -24,37 +24,55 @@ export class AuthService {
   private supabase: SupabaseClient;
   private _user = signal<User | null>(null);
   private _profile = signal<UserProfile | null>(null);
+  private _initPromise: Promise<void>;
+
+  private _initResolved = false;
 
   constructor(private router: Router, private http: HttpClient) {
     this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey);
 
-    this.supabase.auth.getSession().then(({ data: { session } }) => {
-      this._user.set(session?.user ?? null);
-      if (session?.user) this.loadProfile(session.access_token);
+    // Wait for the first auth event (session restored or login)
+    this._initPromise = new Promise<void>(resolve => {
+      this._initResolve = resolve;
     });
 
-    this.supabase.auth.onAuthStateChange((_event, session) => {
+    this.supabase.auth.onAuthStateChange(async (_event, session) => {
       this._user.set(session?.user ?? null);
       if (session?.user) {
-        this.loadProfile(session.access_token);
+        await this.loadProfile(session.access_token);
       } else {
         this._profile.set(null);
       }
+
+      // Resolve on the first event (INITIAL_SESSION or SIGNED_IN)
+      if (!this._initResolved) {
+        this._initResolved = true;
+        this._initResolve();
+      }
+
       if (_event === 'SIGNED_OUT') {
         this.router.navigate(['/auth/login']);
       }
     });
   }
 
-  private loadProfile(token: string): void {
+  private _initResolve: () => void = () => {};
+
+  /** Wait for session restore + profile load */
+  async ready(): Promise<void> {
+    await this._initPromise;
+  }
+
+  private async loadProfile(token: string): Promise<void> {
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    firstValueFrom(
-      this.http.get<UserProfile>(`${environment.apiUrl}/auth/me`, { headers })
-    ).then(profile => {
+    try {
+      const profile = await firstValueFrom(
+        this.http.get<UserProfile>(`${environment.apiUrl}/auth/me`, { headers })
+      );
       this._profile.set(profile);
-    }).catch(() => {
+    } catch {
       this._profile.set(null);
-    });
+    }
   }
 
   get user() { return this._user; }
@@ -80,17 +98,13 @@ export class AuthService {
 
   /** Wait for profile to load then redirect based on role */
   async redirectAfterLogin(): Promise<void> {
-    // Wait up to 3 seconds for profile to load
-    for (let i = 0; i < 30; i++) {
-      const p = this._profile();
-      if (p) {
-        this.router.navigate([this.getDashboardRoute(p.roles)]);
-        return;
-      }
-      await new Promise(resolve => setTimeout(resolve, 100));
+    await this.ready();
+    const p = this._profile();
+    if (p) {
+      this.router.navigate([this.getDashboardRoute(p.roles)]);
+    } else {
+      this.router.navigate(['/dashboard']);
     }
-    // Fallback if profile didn't load
-    this.router.navigate(['/dashboard']);
   }
 
   getDashboardRoute(roles: SystemRole[]): string {

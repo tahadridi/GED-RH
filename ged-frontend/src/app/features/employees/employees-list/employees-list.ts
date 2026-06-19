@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { UserService } from '../../../core/services/user.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Employee, EmployeeStatus } from '../../../core/models/employee.model';
 import { EmployeeForm } from '../employee-form/employee-form';
 import { environment } from '../../../../environments/environment';
@@ -72,8 +73,13 @@ export class EmployeesList implements OnInit {
 
   constructor(
     private employeeService: EmployeeService,
-    private userService: UserService
+    private userService: UserService,
+    private authService: AuthService
   ) {}
+
+  get canManageEmployees(): boolean {
+    return this.authService.isAdmin() || this.authService.isRH();
+  }
 
   async ngOnInit() {
     await Promise.all([this.loadEmployees(), this.loadUsers()]);

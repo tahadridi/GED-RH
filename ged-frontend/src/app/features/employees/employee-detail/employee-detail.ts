@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -11,9 +11,12 @@ import { EmployeeDocument } from '../../../core/models/document.model';
 import { DocumentType } from '../../../core/models/user.model';
 import { EmployeeForm } from '../employee-form/employee-form';
 import {
-  LucideArrowLeft, LucideUpload, LucideDownload, LucideFileText,
-  LucidePencil, LucideTrash2, LucideHistory, LucideX, LucideScanText,
-  LucideCheck, LucideEye
+  LucideUpload, LucideDownload, LucideFileText,
+  LucideTrash2, LucideHistory, LucideX, LucideScanText,
+  LucidePencil, LucideChevronDown, LucideChevronRight,
+  LucideCheck, LucideEye, LucideSearch,
+  LucideMail, LucidePhone, LucideBuilding, LucideBriefcase,
+  LucideCalendar, LucideUser
 } from '@lucide/angular';
 
 @Component({
@@ -21,9 +24,12 @@ import {
   standalone: true,
   imports: [
     CommonModule, RouterModule, FormsModule, EmployeeForm,
-    LucideArrowLeft, LucideUpload, LucideDownload, LucideFileText,
+    LucideUpload, LucideDownload, LucideFileText,
     LucidePencil, LucideTrash2, LucideHistory, LucideX, LucideScanText,
-    LucideCheck, LucideEye
+    LucideChevronDown, LucideChevronRight,
+    LucideCheck, LucideEye, LucideSearch,
+    LucideMail, LucidePhone, LucideBuilding, LucideBriefcase,
+    LucideCalendar, LucideUser
   ],
   templateUrl: './employee-detail.html'
 })
@@ -53,6 +59,10 @@ export class EmployeeDetail implements OnInit {
   saving = signal(false);
   saveError = signal('');
 
+  // Document search & groups
+  docSearchQuery = '';
+  expandedDocTypes = signal<Set<string>>(new Set());
+
   docTypes: DocumentType[] = [
     'PERSONAL_FILE', 'EMPLOYMENT_CONTRACT', 'PAYSLIP', 'LEAVE_REQUEST',
     'EVALUATION', 'TRAINING', 'ADMINISTRATIVE', 'OTHER'
@@ -64,12 +74,98 @@ export class EmployeeDetail implements OnInit {
     ADMINISTRATIVE: 'Administratif', OTHER: 'Autre'
   };
 
+  typeColors: Record<string, string> = {
+    PERSONAL_FILE: 'bg-blue-800 text-white',
+    EMPLOYMENT_CONTRACT: 'bg-blue-800 text-white',
+    PAYSLIP: 'bg-blue-800 text-white',
+    LEAVE_REQUEST: 'bg-blue-800 text-white',
+    EVALUATION: 'bg-blue-800 text-white',
+    TRAINING: 'bg-blue-800 text-white',
+    ADMINISTRATIVE: 'bg-blue-800 text-white',
+    OTHER: 'bg-blue-600 text-white'
+  };
+
+  typeIconColors: Record<string, string> = {
+    PERSONAL_FILE: 'text-blue-800',
+    EMPLOYMENT_CONTRACT: 'text-blue-800',
+    PAYSLIP: 'text-blue-800',
+    LEAVE_REQUEST: 'text-blue-800',
+    EVALUATION: 'text-blue-800',
+    TRAINING: 'text-blue-800',
+    ADMINISTRATIVE: 'text-blue-800',
+    OTHER: 'text-blue-600'
+  };
+
+  typeIconBgs: Record<string, string> = {
+    PERSONAL_FILE: 'bg-blue-50',
+    EMPLOYMENT_CONTRACT: 'bg-blue-50',
+    PAYSLIP: 'bg-blue-50',
+    LEAVE_REQUEST: 'bg-blue-50',
+    EVALUATION: 'bg-blue-50',
+    TRAINING: 'bg-blue-50',
+    ADMINISTRATIVE: 'bg-blue-50',
+    OTHER: 'bg-blue-50'
+  };
+
+  docGroups = computed(() => {
+    const groups = new Map<string, EmployeeDocument[]>();
+    for (const doc of this.documents()) {
+      const type = doc.type || 'OTHER';
+      if (!groups.has(type)) groups.set(type, []);
+      groups.get(type)!.push(doc);
+    }
+    return Array.from(groups.entries())
+      .map(([type, docs]) => ({ type, label: this.docTypeLabels[type] || type, docs }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  });
+
+  filteredDocGroups = computed(() => {
+    if (!this.docSearchQuery.trim()) return this.docGroups();
+    const q = this.docSearchQuery.toLowerCase().trim();
+    return this.docGroups()
+      .map(g => ({ ...g, docs: g.docs.filter(d => d.name.toLowerCase().includes(q)) }))
+      .filter(g => g.docs.length > 0);
+  });
+
+  statusLabel(s: string | undefined): string {
+    const m: Record<string, string> = { ACTIVE: 'Actif', INACTIVE: 'Inactif', ON_LEAVE: 'En congé', TERMINATED: 'Terminé' };
+    return m[s ?? ''] ?? s ?? '—';
+  }
+
+  statusClass(s: string | undefined): string {
+    const m: Record<string, string> = {
+      ACTIVE: 'bg-green-100 text-green-700 border-green-200',
+      INACTIVE: 'bg-gray-100 text-gray-600 border-gray-200',
+      ON_LEAVE: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+      TERMINATED: 'bg-red-100 text-red-600 border-red-200'
+    };
+    return m[s ?? ''] ?? 'bg-gray-100 text-gray-600';
+  }
+
+  get lastActivityDate(): string {
+    if (this.documents().length === 0) return '—';
+    const dates = this.documents()
+      .map(d => d.createdAt ? new Date(d.createdAt).getTime() : 0)
+      .filter(t => t > 0)
+      .sort((a, b) => b - a);
+    if (dates.length === 0) return '—';
+    return new Date(dates[0]).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
   constructor(
     private route: ActivatedRoute,
     private employeeService: EmployeeService,
     private documentService: DocumentService,
     private authService: AuthService
   ) {}
+
+  get canManageDocs(): boolean {
+    return this.authService.isAdmin() || this.authService.isRH();
+  }
+
+  get canManageEmployees(): boolean {
+    return this.authService.isAdmin() || this.authService.isRH();
+  }
 
   async ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id')!;
@@ -85,9 +181,22 @@ export class EmployeeDetail implements OnInit {
       ]);
       this.employee.set(emp);
       this.documents.set(docs);
+      this.expandAllDocTypes();
     } finally {
       this.loading.set(false);
     }
+  }
+
+  expandAllDocTypes() {
+    const set = new Set(this.docGroups().map(g => g.type));
+    this.expandedDocTypes.set(set);
+  }
+
+  toggleDocType(type: string) {
+    const set = new Set(this.expandedDocTypes());
+    if (set.has(type)) set.delete(type);
+    else set.add(type);
+    this.expandedDocTypes.set(set);
   }
 
   openUploadModal() {
@@ -100,7 +209,6 @@ export class EmployeeDetail implements OnInit {
     this.ocrError.set('');
     this.saveError.set('');
 
-    // Filter doc types by RH responsibilities (admin sees all)
     const isAdmin = this.authService.isAdmin();
     const responsibilities = this.authService.getRhResponsibilities();
     if (!isAdmin && responsibilities.length > 0) {
@@ -216,9 +324,7 @@ export class EmployeeDetail implements OnInit {
     if (!confirm(`Supprimer "${doc.name}" ?`)) return;
     try {
       await this.documentService.delete(doc.id);
-      // Remove from local list immediately so UI updates without waiting for reload
       this.documents.set(this.documents().filter(d => d.id !== doc.id));
-      // Then reload from server to ensure consistency
       await this.load(this.employee()!.id);
     } catch (e: any) {
       alert(e?.error?.message ?? 'Erreur lors de la suppression');

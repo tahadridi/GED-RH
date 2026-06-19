@@ -1,6 +1,7 @@
 package GED.ged_backend.controller;
 
 import GED.ged_backend.config.SupabaseAdminClient;
+import GED.ged_backend.domain.entity.Employee;
 import GED.ged_backend.domain.entity.Reclamation;
 import GED.ged_backend.domain.entity.SystemUser;
 import GED.ged_backend.domain.enums.ReclamationPriority;
@@ -10,6 +11,7 @@ import GED.ged_backend.repository.EmployeeRepository;
 import GED.ged_backend.repository.ReclamationRepository;
 import GED.ged_backend.repository.SystemUserRepository;
 import GED.ged_backend.service.AccessControlService;
+import GED.ged_backend.service.ReclamationWebSocketService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -30,13 +32,15 @@ public class ReclamationController {
     private final EmployeeRepository employeeRepository;
     private final AccessControlService accessControlService;
     private final ObjectProvider<SupabaseAdminClient> supabaseAdminClientProvider;
+    private final ReclamationWebSocketService webSocketService;
 
-    public ReclamationController(ReclamationRepository reclamationRepository, SystemUserRepository systemUserRepository, EmployeeRepository employeeRepository, AccessControlService accessControlService, ObjectProvider<SupabaseAdminClient> supabaseAdminClientProvider) {
+    public ReclamationController(ReclamationRepository reclamationRepository, SystemUserRepository systemUserRepository, EmployeeRepository employeeRepository, AccessControlService accessControlService, ObjectProvider<SupabaseAdminClient> supabaseAdminClientProvider, ReclamationWebSocketService webSocketService) {
         this.reclamationRepository = reclamationRepository;
         this.systemUserRepository = systemUserRepository;
         this.employeeRepository = employeeRepository;
         this.accessControlService = accessControlService;
         this.supabaseAdminClientProvider = supabaseAdminClientProvider;
+        this.webSocketService = webSocketService;
     }
 
     @PostMapping
@@ -59,6 +63,16 @@ public class ReclamationController {
         }
         reclamationRepository.save(r);
         reclamationRepository.flush();
+
+        Map<String, String> notification = Map.of(
+            "id", r.getId().toString(),
+            "status", r.getStatus().name()
+        );
+        if (user.getManager() != null) {
+            webSocketService.notifyReclamationUpdate(user.getManager().getId().toString(), notification);
+        }
+        webSocketService.notifyReclamationUpdateAdmin(notification);
+
         return ReclamationResponse.from(r);
     }
 
@@ -83,7 +97,11 @@ public class ReclamationController {
         if (!user.getRoles().contains(SystemRole.MANAGER)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
-        return reclamationRepository.findByEmployeeManagerIdOrderByCreatedAtDesc(user.getId())
+        Employee empProfile = user.getEmployeeProfile();
+        if (empProfile == null) {
+            return List.of();
+        }
+        return reclamationRepository.findTeamReclamations(empProfile.getId())
                 .stream()
                 .filter(r -> r.getNewValue() == null || r.getNewValue().isBlank())
                 .map(ReclamationResponse::from).toList();
@@ -92,10 +110,13 @@ public class ReclamationController {
     @GetMapping
     @Transactional(readOnly = true)
     public List<ReclamationResponse> listAll() {
-        SystemUser current = accessControlService.getCurrentUser();
-        if (current == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-        SystemUser user = systemUserRepository.findById(current.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        SystemUser user = accessControlService.getCurrentUser();
+        if (user == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if (user.getRoles().contains(SystemRole.DIRECTION_GENERALE)) {
+            return reclamationRepository.findAllByOrderByCreatedAtDesc()
+                    .stream()
+                    .map(ReclamationResponse::from).toList();
+        }
         // Admin sees: email-change reclamations + reclamations from users with no manager
         if (user.getRoles().contains(SystemRole.ADMINISTRATOR)) {
             return reclamationRepository.findAllByOrderByCreatedAtDesc()
@@ -105,7 +126,9 @@ public class ReclamationController {
                     .map(ReclamationResponse::from).toList();
         }
         if (user.getRoles().contains(SystemRole.MANAGER)) {
-            var team = reclamationRepository.findByEmployeeManagerIdOrderByCreatedAtDesc(user.getId())
+            var team = (user.getEmployeeProfile() != null
+                    ? reclamationRepository.findTeamReclamations(user.getEmployeeProfile().getId())
+                    : List.<Reclamation>of())
                     .stream()
                     .filter(r -> r.getNewValue() == null || r.getNewValue().isBlank())
                     .toList();
@@ -147,6 +170,17 @@ public class ReclamationController {
         r.setProcessedAt(LocalDateTime.now());
         r.setProcessedBy(user);
         reclamationRepository.save(r);
+
+        Map<String, String> notification = Map.of(
+            "id", r.getId().toString(),
+            "status", r.getStatus().name()
+        );
+        webSocketService.notifyReclamationUpdate(emp.getId().toString(), notification);
+        if (emp.getManager() != null) {
+            webSocketService.notifyReclamationUpdate(emp.getManager().getId().toString(), notification);
+        }
+        webSocketService.notifyReclamationUpdateAdmin(notification);
+
         return ReclamationResponse.from(r);
     }
 
@@ -258,6 +292,17 @@ public class ReclamationController {
             r.setRejectionComment(req.comment());
         }
         reclamationRepository.save(r);
+
+        Map<String, String> notification = Map.of(
+            "id", r.getId().toString(),
+            "status", r.getStatus().name()
+        );
+        webSocketService.notifyReclamationUpdate(emp.getId().toString(), notification);
+        if (emp.getManager() != null) {
+            webSocketService.notifyReclamationUpdate(emp.getManager().getId().toString(), notification);
+        }
+        webSocketService.notifyReclamationUpdateAdmin(notification);
+
         return ReclamationResponse.from(r);
     }
 
@@ -268,7 +313,7 @@ public class ReclamationController {
         if (current == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         SystemUser user = systemUserRepository.findById(current.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-        if (!user.getRoles().contains(SystemRole.ADMINISTRATOR)) {
+        if (!user.getRoles().contains(SystemRole.ADMINISTRATOR) && !user.getRoles().contains(SystemRole.DIRECTION_GENERALE)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         List<Reclamation> all = reclamationRepository.findAllByOrderByCreatedAtDesc();

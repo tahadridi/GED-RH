@@ -3,6 +3,7 @@ package GED.ged_backend.controller;
 import GED.ged_backend.domain.entity.DocumentVersion;
 import GED.ged_backend.domain.entity.EmployeeDocument;
 import GED.ged_backend.domain.enums.DocumentType;
+import GED.ged_backend.domain.enums.SystemRole;
 import GED.ged_backend.service.DocumentService;
 import GED.ged_backend.service.AccessControlService;
 import GED.ged_backend.service.StorageService;
@@ -13,11 +14,13 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/documents")
@@ -36,6 +39,11 @@ public class DocumentController {
     /** Step 1: upload to temp storage + OCR */
     @PostMapping(value = "/ocr-preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public OcrPreviewResponse ocrPreview(@RequestPart("file") MultipartFile file) throws Exception {
+        SystemUser actor = accessControlService.getCurrentUser();
+        if (actor == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if (!actor.getRoles().contains(SystemRole.ADMINISTRATOR) && !actor.getRoles().contains(SystemRole.RH)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
         DocumentService.OcrPreviewResult result = documentService.ocrPreview(
                 file.getInputStream(), file.getContentType(), file.getOriginalFilename());
         return new OcrPreviewResponse(result.tempKey(), result.ocrText(), result.originalFilename());
@@ -45,6 +53,10 @@ public class DocumentController {
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public EmployeeDocument createFromPreview(@RequestBody CreateFromPreviewRequest req) {
         SystemUser actor = accessControlService.getCurrentUser();
+        if (actor == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if (!accessControlService.canManageDocument(actor, req.type)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
         return documentService.createFromPreview(req.toCommand(), actor);
     }
 
@@ -53,6 +65,11 @@ public class DocumentController {
     public EmployeeDocument create(
             @RequestPart("data") CreateDocumentRequest req,
             @RequestPart("file") MultipartFile file) throws Exception {
+        SystemUser actor = accessControlService.getCurrentUser();
+        if (actor == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if (!accessControlService.canManageDocument(actor, req.type)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
         return documentService.createDocument(
                 new DocumentService.CreateDocumentCommand(
                         req.employeeId, req.documentReference, req.name, req.type, req.author, null),
@@ -76,6 +93,11 @@ public class DocumentController {
             @PathVariable UUID id,
             @RequestParam("uploadedBy") String uploadedBy,
             @RequestPart("file") MultipartFile file) throws Exception {
+        SystemUser actor = accessControlService.getCurrentUser();
+        if (actor == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if (!accessControlService.canManageDocument(actor, id)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
         return documentService.addVersion(id, uploadedBy, file.getInputStream(), file.getContentType(), file.getOriginalFilename());
     }
 
@@ -160,12 +182,22 @@ public class DocumentController {
 
     @PutMapping("/{id}")
     public EmployeeDocument update(@PathVariable UUID id, @RequestBody UpdateDocumentRequest req) {
+        SystemUser actor = accessControlService.getCurrentUser();
+        if (actor == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if (!accessControlService.canManageDocument(actor, id)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
         return documentService.updateDocument(id,
                 new DocumentService.UpdateDocumentCommand(req.name, req.author, req.storagePath));
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable UUID id) {
+        SystemUser actor = accessControlService.getCurrentUser();
+        if (actor == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if (!accessControlService.canManageDocument(actor, id)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
         documentService.deleteDocument(id);
     }
 

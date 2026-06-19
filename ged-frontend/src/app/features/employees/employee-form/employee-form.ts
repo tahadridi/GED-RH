@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { OrganizationService, Department } from '../../../core/services/organization.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Employee, EmployeeStatus } from '../../../core/models/employee.model';
 import { LucideX, LucideSearch, LucideCheck, LucideChevronDown, LucideChevronRight, LucideCamera } from '@lucide/angular';
 
@@ -52,8 +53,11 @@ export class EmployeeForm implements OnInit {
 
   constructor(
     private employeeService: EmployeeService,
-    private organizationService: OrganizationService
+    private organizationService: OrganizationService,
+    private authService: AuthService
   ) {}
+
+  get isAdmin(): boolean { return this.authService.isAdmin(); }
 
   async ngOnInit() {
     // Non-blocking load

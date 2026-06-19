@@ -31,16 +31,18 @@ public class OCRService {
     public String extractText(InputStream inputStream, String originalFilename) {
         Path tempFile = null;
         try {
-            // Preserve extension so Tesseract can determine image format
-            String suffix = ".tmp";
-            if (originalFilename != null) {
-                String lower = originalFilename.toLowerCase();
-                if (lower.endsWith(".pdf")) suffix = ".pdf";
-                else if (lower.endsWith(".png")) suffix = ".png";
-                else if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) suffix = ".jpg";
-            }
-            tempFile = Files.createTempFile("ocr_", suffix);
+            tempFile = Files.createTempFile("ocr_", ".tmp");
             Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+
+            // Use ImageIO.read() which detects format from content, not extension.
+            // This avoids the "Bad PNG signature" error when extension (e.g. .png)
+            // does not match the actual file content (e.g. JPEG photo).
+            BufferedImage image = ImageIO.read(tempFile.toFile());
+            if (image != null) {
+                return extractText(image);
+            }
+
+            // Fallback for PDF or other formats ImageIO cannot handle
             return extractText(tempFile.toFile());
         } catch (IOException e) {
             throw new RuntimeException("Error creating temp file for OCR", e);

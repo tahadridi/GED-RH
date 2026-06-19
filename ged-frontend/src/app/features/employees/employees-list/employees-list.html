@@ -1,7 +1,7 @@
 <div class="p-8">
   <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-bold text-gray-900">Employés</h1>
-    <button (click)="openCreate()"
+    <button *ngIf="canManageEmployees" (click)="openCreate()"
       class="flex items-center gap-2 px-4 py-2 bg-blue-800 text-white rounded-lg hover:bg-blue-900 text-sm font-medium transition-colors">
       <svg lucideUserPlus class="w-4 h-4"></svg>
       Nouvel employé
@@ -178,11 +178,11 @@
                   class="p-1.5 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors" title="Dossier">
                   <svg lucideFolderOpen class="w-4 h-4"></svg>
                 </a>
-                <button (click)="openEdit(emp)"
+                <button *ngIf="canManageEmployees" (click)="openEdit(emp)"
                   class="p-1.5 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors" title="Modifier">
                   <svg lucidePencil class="w-4 h-4"></svg>
                 </button>
-                <button (click)="deactivate(emp.id)"
+                <button *ngIf="canManageEmployees" (click)="deactivate(emp.id)"
                   class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Désactiver">
                   <svg lucideTrash2 class="w-4 h-4"></svg>
                 </button>

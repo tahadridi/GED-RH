@@ -1,47 +1,212 @@
-<div class="p-8">
-  <div class="mb-6">
+<div class="p-6 bg-gray-50 min-h-screen">
+  <div class="mb-8">
     <h1 class="text-2xl font-bold text-gray-900">Tableau de Bord Manager</h1>
-    <p class="text-sm text-gray-500 mt-1">Bienvenue, {{ userName }} — consultation de votre équipe uniquement</p>
+    <p class="text-sm text-gray-500 mt-1">Bienvenue, {{ userName }} — gestion de votre équipe</p>
   </div>
 
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6 flex items-center gap-4">
-    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-      <svg lucideUsers class="w-6 h-6 text-indigo-600"></svg>
-    </div>
-    <div>
-      <p class="text-sm text-gray-500">Membres de votre équipe</p>
-      <p class="text-3xl font-bold text-gray-900">{{ team().length }}</p>
-    </div>
-  </div>
+  <div *ngIf="loading()" class="text-center py-12 text-gray-400 text-sm">Chargement...</div>
 
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-    <div class="p-4 border-b border-gray-100">
-      <h2 class="font-semibold text-gray-800">Mon équipe</h2>
-    </div>
-    <div *ngIf="loading()" class="p-8 text-center text-gray-400 text-sm">Chargement...</div>
-    <div *ngIf="!loading() && team().length === 0" class="p-8 text-center text-gray-400 text-sm">
-      Aucun employé dans votre équipe.
-    </div>
-    <div class="divide-y divide-gray-50">
-      <div *ngFor="let emp of team()" class="p-4 flex items-center justify-between hover:bg-gray-50">
-        <div>
-          <p class="text-sm font-medium text-gray-900">{{ emp.firstName }} {{ emp.lastName }}</p>
-          <p class="text-xs text-gray-400">{{ emp.matricule }} · {{ emp.department }} · {{ emp.position }}</p>
+  <ng-container *ngIf="!loading()">
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-500">Équipe</p>
+            <p class="text-3xl font-bold text-gray-900 mt-1">{{ team().length }}</p>
+            <p class="text-xs text-gray-500 mt-2">Membres</p>
+          </div>
+          <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center">
+            <svg lucideUsers class="w-6 h-6 text-indigo-600"></svg>
+          </div>
         </div>
-        <div class="flex items-center gap-3">
-          <span class="px-2 py-0.5 text-xs rounded-full"
-            [ngClass]="{
-              'bg-green-100 text-green-700': emp.status === 'ACTIVE',
-              'bg-gray-100 text-gray-500': emp.status === 'INACTIVE',
-              'bg-yellow-100 text-yellow-700': emp.status === 'ON_LEAVE'
-            }">{{ statusLabel(emp.status) }}</span>
-          <a [routerLink]="['/employees', emp.id]"
-            class="flex items-center gap-1 text-xs text-blue-600 hover:underline font-medium">
-            <svg lucideFolderOpen class="w-3.5 h-3.5"></svg>
-            Dossier
-          </a>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-500">Réclamations en attente</p>
+            <p class="text-3xl font-bold text-amber-600 mt-1">{{ pendingReclamations().length }}</p>
+            <p class="text-xs text-gray-500 mt-2">{{ reclamations().length }} totale(s)</p>
+          </div>
+          <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center">
+            <svg lucideAlertCircle class="w-6 h-6 text-amber-600"></svg>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-500">Approuvées</p>
+            <p class="text-3xl font-bold text-emerald-600 mt-1">{{ approvedReclamations().length }}</p>
+          </div>
+          <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
+            <svg lucideCheckCircle class="w-6 h-6 text-emerald-600"></svg>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-500">Rejetées</p>
+            <p class="text-3xl font-bold text-red-600 mt-1">{{ rejectedReclamations().length }}</p>
+          </div>
+          <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center">
+            <svg lucideXCircle class="w-6 h-6 text-red-600"></svg>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+
+    <!-- Main Grid: Pending Reclamations + Recent Documents -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <!-- Pending Reclamations -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-5 border-b border-gray-100 flex justify-between items-center">
+          <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Réclamations en attente
+          </h2>
+          <a routerLink="/reclamations" class="text-blue-600 text-sm font-medium hover:underline">Voir tout</a>
+        </div>
+        <div *ngIf="pendingReclamations().length === 0" class="p-8 text-center text-gray-400 text-sm">
+          Aucune réclamation en attente.
+        </div>
+        <div *ngIf="pendingReclamations().length > 0" class="divide-y divide-gray-50">
+          <div *ngFor="let r of pendingReclamations()" class="p-4 flex items-start gap-3 hover:bg-gray-50">
+            <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+              <svg lucideAlertCircle class="w-4 h-4 text-amber-600"></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-900">{{ r.title }}</p>
+              <p class="text-xs text-gray-400 mt-0.5">{{ r.employeeFirstName }} {{ r.employeeLastName }} · {{ formatDate(r.createdAt) }}</p>
+            </div>
+            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full shrink-0"
+              [ngClass]="{
+                'bg-gray-100 text-gray-600': r.priority === 'FAIBLE',
+                'bg-amber-100 text-amber-700': r.priority === 'MOYENNE',
+                'bg-orange-100 text-orange-700': r.priority === 'HAUTE',
+                'bg-red-100 text-red-700': r.priority === 'CRITIQUE'
+              }">{{ priorityLabel(r.priority) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Documents -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-5 border-b border-gray-100 flex justify-between items-center">
+          <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.293.707l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Documents récents
+          </h2>
+          <a routerLink="/documents/list" class="text-blue-600 text-sm font-medium hover:underline">Voir tout</a>
+        </div>
+        <div *ngIf="recentGroups().length === 0" class="p-12 text-center">
+          <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.293.707l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h3 class="text-gray-600 font-medium mb-2">Aucun document</h3>
+          <p class="text-gray-400 text-sm">Aucun document récent dans votre équipe.</p>
+        </div>
+        <div *ngIf="recentGroups().length > 0" class="space-y-3 p-3">
+          <div *ngFor="let group of recentGroups()" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <button (click)="toggleDocGroup(group.employeeId)"
+              class="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors">
+              <div class="flex items-center gap-3">
+                <div *ngIf="!group.employeeHasPhoto" class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
+                  <img src="/UserIcon.png" alt="User" class="w-4 h-4 object-contain">
+                </div>
+                <img *ngIf="group.employeeHasPhoto" [src]="apiUrl + '/employees/' + group.employeeId + '/photo/content'" alt="Photo"
+                  class="w-8 h-8 rounded-full object-cover border border-gray-200 shrink-0">
+                <div class="text-left">
+                  <p class="font-semibold text-gray-900 text-sm">{{ group.employeeFirstName }} {{ group.employeeLastName }}</p>
+                  <p class="text-xs text-gray-500">{{ group.employeeMatricule || '—' }} — {{ group.documents.length }} document(s)</p>
+                </div>
+              </div>
+              <svg [class.rotate-180]="expandedDocGroups().has(group.employeeId)"
+                class="w-4 h-4 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <div *ngIf="expandedDocGroups().has(group.employeeId)" class="divide-y divide-gray-50">
+              <div *ngFor="let doc of group.documents" (click)="openDocument(doc)"
+                class="p-3 flex items-center justify-between hover:bg-blue-50 transition-colors group cursor-pointer">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.293.707l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-gray-900 truncate">{{ doc.name }}</p>
+                    <p class="text-xs text-gray-400">{{ documentTypeLabel(doc.type) }} · {{ formatDate(doc.uploadDate || doc.createdAt) }}</p>
+                  </div>
+                </div>
+                <span class="px-2 py-1 text-xs rounded-full shrink-0" [ngClass]="{
+                  'bg-green-100 text-green-700': doc.status === 'validé',
+                  'bg-yellow-100 text-yellow-700': doc.status === 'en attente',
+                  'bg-gray-100 text-gray-700': doc.status === 'brouillon'
+                }">{{ doc.status }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions + Team Members -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Quick Actions -->
+      
+
+      <!-- Team Members -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-5 border-b border-gray-100 flex justify-between items-center">
+          <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            Mon équipe
+          </h2>
+          <a routerLink="/employees" class="text-blue-600 text-sm font-medium hover:underline">Voir tout</a>
+        </div>
+        <div *ngIf="team().length === 0" class="p-8 text-center text-gray-400 text-sm">
+          Aucun employé dans votre équipe.
+        </div>
+        <div *ngIf="team().length > 0" class="divide-y divide-gray-50">
+          <div *ngFor="let emp of team()" class="p-4 flex items-center justify-between hover:bg-gray-50">
+            <div class="flex items-center gap-3">
+              <div *ngIf="!emp.photoUrl" class="w-9 h-9 rounded-full bg-white flex items-center justify-center border border-gray-200 shrink-0">
+                <img src="/UserIcon.png" alt="User" class="w-5 h-5 object-contain">
+              </div>
+              <img *ngIf="emp.photoUrl" [src]="apiUrl + '/employees/' + emp.id + '/photo/content'" alt="Photo"
+                class="w-9 h-9 rounded-full object-cover border border-gray-200 shrink-0">
+              <div>
+                <p class="text-sm font-medium text-gray-900">{{ emp.firstName }} {{ emp.lastName }}</p>
+                <p class="text-xs text-gray-400">{{ emp.matricule }} · {{ emp.department }} · {{ emp.position }}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+              <span class="px-2 py-0.5 text-xs rounded-full"
+                [ngClass]="{
+                  'bg-green-100 text-green-700': emp.status === 'ACTIVE',
+                  'bg-gray-100 text-gray-500': emp.status === 'INACTIVE',
+                  'bg-yellow-100 text-yellow-700': emp.status === 'ON_LEAVE'
+                }">{{ statusLabel(emp.status) }}</span>
+              <a [routerLink]="['/employees', emp.id]"
+                class="flex items-center gap-1 text-xs text-blue-600 hover:underline font-medium">
+                <svg lucideFolderOpen class="w-3.5 h-3.5"></svg>
+                Dossier
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
 </div>

@@ -175,6 +175,7 @@
       <!-- Roles -->
       <div>
         <label class="block text-xs font-medium text-gray-700 mb-2">Rôles *</label>
+        <p *ngIf="isAdminUser" class="text-[10px] text-gray-400 -mt-1 mb-2">Sélection unique — choisissez un seul rôle.</p>
         <div class="grid grid-cols-2 gap-2">
           <button *ngFor="let r of allRoles" (click)="toggleRole(r)" type="button"
             [class]="hasRole(r) ? 'bg-blue-800 text-white border-blue-800' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'"

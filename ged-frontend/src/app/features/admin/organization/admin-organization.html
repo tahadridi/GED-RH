@@ -1,12 +1,12 @@
 <div class="p-8">
   <div class="mb-8">
-    <h1 class="text-2xl font-bold text-blue-900">Départements</h1>
-    <p class="text-sm text-gray-500 mt-1">Gérez les départements, leurs préfixes de matricule et leurs postes.</p>
+    <h1 class="text-2xl font-bold text-black-900">Départements</h1>
+    <p class="text-sm text-gray-500 mt-1">{{ readonly() ? 'Consultez' : 'Gérez' }} les départements,   et leurs postes.</p>
   </div>
 
   <div class="space-y-8">
     <!-- Add Department Form -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <div *ngIf="!readonly()" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       <h2 class="text-sm font-bold text-black-800 uppercase tracking-wider mb-4">Nouveau Département</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
@@ -41,7 +41,7 @@
               <p class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Préfixe : {{ dept.matriculePrefix }}</p>
             </div>
           </div>
-          <button (click)="deleteDepartment(dept.id)" class="p-1.5 text-gray-400 hover:text-red-600 transition-colors">
+          <button *ngIf="!readonly()" (click)="deleteDepartment(dept.id)" class="p-1.5 text-gray-400 hover:text-red-600 transition-colors">
             <svg lucideTrash2 class="w-4 h-4"></svg>
           </button>
         </div>
@@ -49,14 +49,14 @@
         <div class="p-4 flex-1 space-y-3">
           <div class="flex items-center justify-between mb-2">
             <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Postes</h4>
-            <button (click)="selectedDeptId = (selectedDeptId === dept.id ? null : dept.id)" 
+            <button *ngIf="!readonly()" (click)="selectedDeptId = (selectedDeptId === dept.id ? null : dept.id)" 
               class="text-[10px] font-bold text-blue-800 hover:text-blue-900 uppercase">
               + Ajouter un poste
             </button>
           </div>
 
           <!-- Add Position Form (Inline) -->
-          <div *ngIf="selectedDeptId === dept.id" class="flex gap-2 p-2 bg-blue-50 rounded-lg border border-blue-100 mb-3 animate-in fade-in slide-in-from-top-1">
+          <div *ngIf="!readonly() && selectedDeptId === dept.id" class="flex gap-2 p-2 bg-blue-50 rounded-lg border border-blue-100 mb-3 animate-in fade-in slide-in-from-top-1">
             <input [(ngModel)]="newPosTitle" placeholder="Intitulé du poste"
               class="flex-1 px-2 py-1.5 border border-blue-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-800">
             <button (click)="addPosition(dept.id)" [disabled]="!newPosTitle"
@@ -71,7 +71,7 @@
                 <svg lucideBriefcase class="w-3 h-3 text-gray-400"></svg>
                 <span class="text-sm text-gray-700">{{ pos.title }}</span>
               </div>
-              <button (click)="deletePosition(pos.id)" 
+              <button *ngIf="!readonly()" (click)="deletePosition(pos.id)" 
                 class="p-1 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
                 <svg lucideTrash2 class="w-3.5 h-3.5"></svg>
               </button>

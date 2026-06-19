@@ -2,6 +2,7 @@ import { Component, Input, OnInit, OnDestroy, ChangeDetectorRef } from '@angular
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { WebSocketService } from '../../../core/services/websocket.service';
 import { environment } from '../../../../environments/environment';
 import { FormsModule } from '@angular/forms';
 import {
@@ -49,12 +50,23 @@ import {
           Documents
         </a>
 
-        <a routerLink="/reclamations" routerLinkActive="active-link"
+        <a *ngIf="!isDG" routerLink="/reclamations" routerLinkActive="active-link"
            class="nav-link" style="position: relative;">
           <svg lucideFileText class="w-4 h-4 shrink-0"></svg>
           Réclamations
           <span *ngIf="recBadgeCount > 0" class="rec-badge">{{ recBadgeCount }}</span>
         </a>
+
+        <div *ngIf="isDG" class="pt-4 pb-2 px-3">
+          <p class="admin-section-title">Organisation</p>
+          <div class="space-y-1">
+            <a routerLink="/admin/organization" routerLinkActive="active-link"
+               class="nav-link">
+              <svg lucideBuilding class="w-4 h-4 shrink-0"></svg>
+              Departements
+            </a>
+          </div>
+        </div>
 
         <div *ngIf="isAdmin" class="pt-4 pb-2 px-3">
           <p class="admin-section-title">Administration</p>
@@ -702,33 +714,40 @@ export class Sidebar implements OnInit, OnDestroy {
   recBadgeCount = 0;
   recPollTimer: any = null;
 
-  constructor(private authService: AuthService, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private authService: AuthService,
+    private webSocketService: WebSocketService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
-  ngOnInit() {
-    const update = () => {
-      const p = this.authService.profile();
-      if (p) {
-        this.profile = p;
-        this.isAdmin = p.roles.includes('ADMINISTRATOR');
-        this.isRH = p.roles.includes('RH');
-        this.isManager = p.roles.includes('MANAGER');
-        this.isDG = p.roles.includes('DIRECTION_GENERALE');
-        this.dashboardRoute = this.authService.getDashboardRoute(p.roles);
-        this.roleLabel = this.getRoleLabel(p.roles);
-        this.userEmail = p.email;
-        this.userName = `${p.firstName} ${p.lastName}`;
+  async ngOnInit() {
+    await this.authService.ready();
+    const p = this.authService.profile();
+    if (p) {
+      this.profile = p;
+      this.isAdmin = p.roles.includes('ADMINISTRATOR');
+      this.isRH = p.roles.includes('RH');
+      this.isManager = p.roles.includes('MANAGER');
+      this.isDG = p.roles.includes('DIRECTION_GENERALE');
+      this.dashboardRoute = this.authService.getDashboardRoute(p.roles);
+      this.roleLabel = this.getRoleLabel(p.roles);
+      this.userEmail = p.email;
+      this.userName = `${p.firstName} ${p.lastName}`;
+
+      const token = await this.authService.getToken();
+      if (token) {
+        this.webSocketService.connect(token, p.id, p.roles);
+        this.webSocketService.onReclamationUpdate(() => {
+          this.checkReclamations();
+        });
       }
-    };
-    update();
-    const interval = setInterval(() => {
-      update();
-      if (this.authService.profile()) clearInterval(interval);
-    }, 500);
+    }
     this.startReclamationPolling();
   }
 
   ngOnDestroy() {
     if (this.recPollTimer) clearInterval(this.recPollTimer);
+    this.webSocketService.disconnect();
   }
 
   private startReclamationPolling() {

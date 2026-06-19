@@ -1,7 +1,8 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
+import { WebSocketService } from '../../core/services/websocket.service';
 import { LucideSend, LucideCheck, LucideX, LucideRefreshCw } from '@lucide/angular';
 
 @Component({
@@ -329,7 +330,7 @@ import { LucideSend, LucideCheck, LucideX, LucideRefreshCw } from '@lucide/angul
     .btn-reject-submit:disabled { opacity: 0.5; cursor: not-allowed; }
   `]
 })
-export class UserReclamations implements OnInit {
+export class UserReclamations implements OnInit, OnDestroy {
   title = '';
   message = '';
   priority = 'MOYENNE';
@@ -364,9 +365,13 @@ export class UserReclamations implements OnInit {
     { value: 'AUTRE', label: 'Autre' },
   ];
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private webSocketService: WebSocketService
+  ) {}
 
   async ngOnInit() {
+    await this.authService.ready();
     const p = this.authService.profile();
     this.isAdmin = p?.roles?.includes('ADMINISTRATOR') ?? false;
     this.isManager = p?.roles?.includes('MANAGER') ?? false;
@@ -375,6 +380,23 @@ export class UserReclamations implements OnInit {
       this.loadDeptStats();
     } else if (this.isManager) {
       this.loadTeam();
+    }
+    try {
+      this.myReclamations.set(await this.authService.getMyReclamations());
+    } catch (_) {}
+
+    this.webSocketService.onReclamationUpdate(() => {
+      this.refreshData();
+    });
+  }
+
+  ngOnDestroy() {}
+
+  private async refreshData() {
+    if (this.isAdmin) {
+      await Promise.all([this.loadAll(), this.loadDeptStats()]);
+    } else if (this.isManager) {
+      await this.loadTeam();
     }
     try {
       this.myReclamations.set(await this.authService.getMyReclamations());

@@ -214,6 +214,7 @@ export class Dashboard implements OnInit {
   }
 
   async ngOnInit() {
+    await this.authService.ready();
     await Promise.all([
       this.refreshData(),
       this.refreshStorageStats(),

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../../core/services/user.service';
 import { EmployeeService } from '../../../core/services/employee.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { SystemUser, SystemRole } from '../../../core/models/user.model';
 import { Employee } from '../../../core/models/employee.model';
 import { DocTypeService, DocType } from '../../../core/services/doc-type.service';
@@ -73,7 +74,8 @@ export class AdminUsers implements OnInit {
   constructor(
     private userService: UserService,
     private employeeService: EmployeeService,
-    private docTypeService: DocTypeService
+    private docTypeService: DocTypeService,
+    private authService: AuthService
   ) {}
 
   async ngOnInit() {
@@ -172,10 +174,20 @@ export class AdminUsers implements OnInit {
     this.showForm.set(true);
   }
 
+  get isAdminUser(): boolean {
+    return this.authService.isAdmin();
+  }
+
   toggleRole(role: SystemRole) {
-    const idx = this.form.roles.indexOf(role);
-    if (idx >= 0) this.form.roles.splice(idx, 1);
-    else this.form.roles.push(role);
+    if (this.isAdminUser) {
+      // Admin: single role selection only
+      this.form.roles = this.form.roles.includes(role) ? [] : [role];
+    } else {
+      // RH: multiple role selection allowed
+      const idx = this.form.roles.indexOf(role);
+      if (idx >= 0) this.form.roles.splice(idx, 1);
+      else this.form.roles.push(role);
+    }
   }
 
   toggleDocType(name: string) {

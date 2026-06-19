@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OrganizationService, Department, JobPosition } from '../../../core/services/organization.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { LucideTrash2, LucideBuilding, LucideBriefcase } from '@lucide/angular';
 
 @Component({
@@ -13,6 +14,7 @@ import { LucideTrash2, LucideBuilding, LucideBriefcase } from '@lucide/angular';
 export class AdminOrganization implements OnInit {
   departments = signal<Department[]>([]);
   loading = signal(false);
+  readonly = signal(true);
 
   newDept = { name: '', matriculePrefix: '', description: '' };
   
@@ -20,9 +22,15 @@ export class AdminOrganization implements OnInit {
   selectedDeptId: string | null = null;
   newPosTitle = '';
 
-  constructor(private organizationService: OrganizationService) {}
+  constructor(
+    private organizationService: OrganizationService,
+    private authService: AuthService
+  ) {}
 
   async ngOnInit() {
+    await this.authService.ready();
+    const p = this.authService.profile();
+    this.readonly.set(!p?.roles.includes('ADMINISTRATOR'));
     await this.load();
   }
 

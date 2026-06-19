@@ -201,6 +201,7 @@ export class RhDashboard implements OnInit {
   ) {}
 
   async ngOnInit() {
+    await this.authService.ready();
     this.responsibilities.set(this.authService.getRhResponsibilities());
     if (this.responsibilities().length > 0) {
       this.uploadType = this.responsibilities()[0];
