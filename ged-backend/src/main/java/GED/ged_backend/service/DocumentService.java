@@ -11,12 +11,16 @@ import GED.ged_backend.repository.DocumentSpecifications;
 import java.util.List;
 import java.util.UUID;
 import java.io.InputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DocumentService {
+
+    private static final Logger log = LoggerFactory.getLogger(DocumentService.class);
 
     private final EmployeeDocumentRepository documentRepository;
     private final DocumentVersionRepository versionRepository;
@@ -42,7 +46,8 @@ public class DocumentService {
     @Async
     public void processOcrAsync(UUID documentId, UUID versionId, String storagePath) {
         try (InputStream is = storageService.downloadFile(storagePath)) {
-            String extractedText = ocrService.extractText(is);
+            String ext = storagePath.contains(".") ? storagePath.substring(storagePath.lastIndexOf('.')) : ".tmp";
+            String extractedText = ocrService.extractText(is, "file" + ext);
             
             // Update Database with extracted text
             updateOcrText(documentId, versionId, extractedText);
@@ -53,7 +58,7 @@ public class DocumentService {
                 elasticsearchService.indexDocument(doc);
             }
         } catch (Exception e) {
-            System.err.println("Async OCR failed for document " + documentId + ": " + e.getMessage());
+            log.error("Async OCR failed for document {}", documentId, e);
         }
     }
 
@@ -79,7 +84,7 @@ public class DocumentService {
         try (InputStream is = storageService.downloadFile(tempKey)) {
             extractedText = ocrService.extractText(is, originalFilename);
         } catch (Exception e) {
-            System.err.println("OCR preview failed: " + e.getMessage());
+            log.error("OCR preview failed", e);
         }
         return new OcrPreviewResult(tempKey, extractedText, originalFilename);
     }

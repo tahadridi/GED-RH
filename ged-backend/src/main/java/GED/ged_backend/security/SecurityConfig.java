@@ -56,6 +56,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/organization/**").permitAll()
                 .requestMatchers("/api/employees/*/photo/content").permitAll()
                 .requestMatchers("/ws-native/**").permitAll()
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
+                .requestMatchers("/v3/api-docs/**").permitAll()
                 .requestMatchers("/api/admin/**").hasAnyRole("ADMINISTRATOR", "RH")
                 .anyRequest().authenticated()
             );

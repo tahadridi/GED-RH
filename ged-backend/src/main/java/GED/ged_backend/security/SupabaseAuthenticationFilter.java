@@ -65,8 +65,14 @@ public class SupabaseAuthenticationFilter extends OncePerRequestFilter {
                             
                             SecurityContextHolder.getContext().setAuthentication(authentication);
                             System.out.println("[AUTH] Successfully synchronized security context for: " + email + " with authorities: " + authorities);
+                        } else {
+                            System.out.println("[AUTH] User found but INACTIVE: " + email);
                         }
+                    } else {
+                        System.out.println("[AUTH] No local system_user found for email: " + email);
                     }
+                } else {
+                    System.out.println("[AUTH] JWT has no 'email' claim");
                 }
             } catch (ParseException | BadJWTException e) {
                 System.err.println("[AUTH] Invalid token: " + e.getMessage());
