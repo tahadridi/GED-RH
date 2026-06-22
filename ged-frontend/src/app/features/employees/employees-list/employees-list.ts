@@ -5,12 +5,16 @@ import { FormsModule } from '@angular/forms';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { OrganizationService } from '../../../core/services/organization.service';
 import { Employee, EmployeeStatus } from '../../../core/models/employee.model';
+import { Page } from '../../../core/models/page.model';
 import { EmployeeForm } from '../employee-form/employee-form';
 import { environment } from '../../../../environments/environment';
 import {
   LucideUserPlus, LucidePencil, LucideTrash2, LucideSearch,
-  LucideFolderOpen, LucideChevronUp, LucideChevronDown, LucideFilter
+  LucideFolderOpen, LucideChevronUp, LucideChevronDown, LucideFilter,
+  LucideChevronLeft, LucideChevronRight, LucideMail, LucidePhone,
+  LucideChevronsUpDown
 } from '@lucide/angular';
 
 type SortField = 'matricule' | 'firstName' | 'department' | 'status' | 'hireDate';
@@ -21,15 +25,15 @@ type SortField = 'matricule' | 'firstName' | 'department' | 'status' | 'hireDate
   imports: [
     CommonModule, RouterModule, FormsModule, EmployeeForm,
     LucideUserPlus, LucidePencil, LucideTrash2, LucideSearch,
-    LucideFolderOpen, LucideChevronUp, LucideChevronDown, LucideFilter
+    LucideFolderOpen, LucideChevronUp, LucideChevronDown, LucideFilter,
+    LucideChevronLeft, LucideChevronRight, LucideMail, LucidePhone
   ],
   templateUrl: './employees-list.html'
 })
 export class EmployeesList implements OnInit {
   apiUrl = environment.apiUrl;
-  employees = signal<Employee[]>([]);
-  filtered = signal<Employee[]>([]);
-  users = signal<Record<string, string>>({}); // id -> name mapping
+  page = signal<Page<Employee>>({ content: [], totalElements: 0, totalPages: 0, size: 10, number: 0, first: true, last: true, empty: true });
+  users = signal<Record<string, string>>({});
 
   searchQuery = '';
   filterDepartment = '';
@@ -41,23 +45,18 @@ export class EmployeesList implements OnInit {
   showForm = signal(false);
   editingEmployee = signal<Employee | null>(null);
 
+  currentPage = signal(1);
+
   departments: string[] = [];
   statuses: EmployeeStatus[] = ['ACTIVE', 'INACTIVE', 'ON_LEAVE', 'TERMINATED'];
   statusLabels: Record<string, string> = {
     ACTIVE: 'Actif', INACTIVE: 'Inactif', ON_LEAVE: 'En congé', TERMINATED: 'Terminé'
   };
 
-  // Pagination
-  currentPage = signal(1);
-  itemsPerPage = 10;
-
-  // Computed pagination values
-  totalPages = computed(() => Math.ceil(this.filtered().length / this.itemsPerPage));
-  paginatedEmployees = computed(() => {
-    const start = (this.currentPage() - 1) * this.itemsPerPage;
-    const end = start + this.itemsPerPage;
-    return this.filtered().slice(start, end);
-  });
+  // Computed from page
+  totalPages = computed(() => this.page().totalPages);
+  employees = computed(() => this.page().content);
+  totalElements = computed(() => this.page().totalElements);
   visiblePages = computed(() => {
     const total = this.totalPages();
     const current = this.currentPage();
@@ -74,7 +73,8 @@ export class EmployeesList implements OnInit {
   constructor(
     private employeeService: EmployeeService,
     private userService: UserService,
-    private authService: AuthService
+    private authService: AuthService,
+    private orgService: OrganizationService
   ) {}
 
   get canManageEmployees(): boolean {
@@ -82,7 +82,7 @@ export class EmployeesList implements OnInit {
   }
 
   async ngOnInit() {
-    await Promise.all([this.loadEmployees(), this.loadUsers()]);
+    await Promise.all([this.loadEmployees(), this.loadUsers(), this.loadDepartments()]);
   }
 
   async loadUsers() {
@@ -94,55 +94,35 @@ export class EmployeesList implements OnInit {
     } catch { this.users.set({}); }
   }
 
+  async loadDepartments() {
+    try {
+      const depts = await this.orgService.listDepartments();
+      this.departments = depts.map(d => d.name).filter(Boolean).sort();
+    } catch {}
+  }
+
   async loadEmployees() {
     this.loading.set(true);
     try {
-      const list = await this.employeeService.list();
-      this.employees.set(list);
-      this.departments = [...new Set(list.map(e => e.department).filter(Boolean))].sort();
-      this.applyFilter();
+      const params: Record<string, string> = {
+        page: String(this.currentPage() - 1),
+        size: '10',
+        sort: this.sortField + ',' + this.sortDir
+      };
+      if (this.searchQuery) params['search'] = this.searchQuery;
+      if (this.filterDepartment) params['department'] = this.filterDepartment;
+      if (this.filterStatus) params['status'] = this.filterStatus;
+
+      const result = await this.employeeService.listPaginated(params);
+      this.page.set(result);
     } finally {
       this.loading.set(false);
     }
   }
 
   applyFilter() {
-    const q = this.searchQuery.toLowerCase();
-    const userMap = this.users();
-    let result = this.employees().filter(e => {
-      const managerName = e.managerId ? (userMap[e.managerId] || '').toLowerCase() : '';
-      const matchSearch = !q ||
-        e.firstName.toLowerCase().includes(q) ||
-        e.lastName.toLowerCase().includes(q) ||
-        e.matricule.toLowerCase().includes(q) ||
-        e.email.toLowerCase().includes(q) ||
-        (e.department ?? '').toLowerCase().includes(q) ||
-        (e.position ?? '').toLowerCase().includes(q) ||
-        managerName.includes(q);
-
-      const matchDept = !this.filterDepartment || e.department === this.filterDepartment;
-      const matchStatus = !this.filterStatus || e.status === this.filterStatus;
-
-      return matchSearch && matchDept && matchStatus;
-    });
-
-    // Sort
-    result = [...result].sort((a, b) => {
-      let valA = '';
-      let valB = '';
-      if (this.sortField === 'firstName') { valA = `${a.firstName} ${a.lastName}`; valB = `${b.firstName} ${b.lastName}`; }
-      else if (this.sortField === 'matricule') { valA = a.matricule; valB = b.matricule; }
-      else if (this.sortField === 'department') { valA = a.department ?? ''; valB = b.department ?? ''; }
-      else if (this.sortField === 'status') { valA = a.status; valB = b.status; }
-      else if (this.sortField === 'hireDate') { valA = a.hireDate ?? ''; valB = b.hireDate ?? ''; }
-
-      const cmp = valA.localeCompare(valB);
-      return this.sortDir === 'asc' ? cmp : -cmp;
-    });
-
-    this.filtered.set(result);
-    // Reset to first page when filters/sort change
     this.currentPage.set(1);
+    this.loadEmployees();
   }
 
   sortBy(field: SortField) {
@@ -193,10 +173,10 @@ export class EmployeesList implements OnInit {
     return m[s] ?? '';
   }
 
-  // Pagination methods
   goToPage(page: number) {
     if (page < 1 || page > this.totalPages()) return;
     this.currentPage.set(page);
+    this.loadEmployees();
   }
 
   nextPage() {

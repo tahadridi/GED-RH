@@ -1,13 +1,18 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { Employee, CreateEmployeeRequest, UpdateEmployeeRequest } from '../models/employee.model';
+import { Page } from '../models/page.model';
 
 @Injectable({ providedIn: 'root' })
 export class EmployeeService {
   constructor(private api: ApiService) {}
 
-  list(): Promise<Employee[]> {
-    return this.api.get<Employee[]>('/employees');
+  list(params?: Record<string, string>): Promise<Employee[]> {
+    return this.api.get<Page<Employee>>('/employees', params).then(p => p.content);
+  }
+
+  listPaginated(params: Record<string, string>): Promise<Page<Employee>> {
+    return this.api.get<Page<Employee>>('/employees', params);
   }
 
   get(id: string): Promise<Employee> {

@@ -13,6 +13,10 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,6 +30,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -47,11 +52,14 @@ public class EmployeeController {
 
     @GetMapping
     @Transactional(readOnly = true)
-    public Set<EmployeeResponse> list() {
+    public Page<EmployeeResponse> list(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) EmployeeStatus status,
+            @PageableDefault(size = Integer.MAX_VALUE, sort = "matricule", direction = Sort.Direction.ASC) Pageable pageable) {
         SystemUser actor = accessControlService.getCurrentUser();
-        return employeeService.listEmployees(actor).stream()
-                .map(EmployeeResponse::from)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+        Page<Employee> page = employeeService.listEmployeesPaginated(actor, search, department, status, pageable);
+        return page.map(EmployeeResponse::fromList);
     }
 
     @GetMapping("/{id}")
@@ -172,6 +180,17 @@ public class EmployeeController {
                     e.getManager() == null ? null : e.getManager().getId(),
                     e.getManager() == null ? null : e.getManager().getFirstName() + " " + e.getManager().getLastName(),
                     e.getDirectReports().stream().map(Employee::getId).collect(Collectors.toSet()),
+                    e.getPhotoPath() != null ? "/api/employees/" + e.getId() + "/photo/content" : null);
+        }
+
+        public static EmployeeResponse fromList(Employee e) {
+            return new EmployeeResponse(
+                    e.getId(), e.getMatricule(), e.getFirstName(), e.getLastName(), e.getEmail(),
+                    e.getPhoneNumber(), e.getAddress(),
+                    e.getDepartment(), e.getPosition(), e.getHireDate(), e.getStatus(),
+                    e.getManager() == null ? null : e.getManager().getId(),
+                    e.getManager() == null ? null : e.getManager().getFirstName() + " " + e.getManager().getLastName(),
+                    Set.of(),
                     e.getPhotoPath() != null ? "/api/employees/" + e.getId() + "/photo/content" : null);
         }
     }

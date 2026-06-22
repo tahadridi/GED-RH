@@ -9,6 +9,9 @@ import java.io.InputStream;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -121,6 +124,14 @@ public class EmployeeService {
     @Transactional(readOnly = true)
     public Set<Employee> listEmployees() {
         return new LinkedHashSet<>(employeeRepository.findAll());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Employee> listEmployeesPaginated(SystemUser actor, String search, String department, EmployeeStatus status, Pageable pageable) {
+        Specification<Employee> spec = Specification
+            .where(EmployeeSpecifications.withSecurityFilter(actor))
+            .and(EmployeeSpecifications.withFilters(search, department, status));
+        return employeeRepository.findAll(spec, pageable);
     }
 
     public void deactivateEmployee(UUID id) {

@@ -47,18 +47,18 @@
 
   <!-- Count and pagination info -->
   <div class="flex items-center justify-between mb-4">
-    <p class="text-xs text-gray-400">{{ paginatedEmployees().length }} / {{ filtered().length }} employé(s) affiché(s)</p>
+    <p class="text-xs text-gray-400">{{ employees().length }} / {{ totalElements() }} employé(s) affiché(s)</p>
     <p class="text-xs text-gray-400">Page {{ currentPage() }} / {{ totalPages() }}</p>
   </div>
 
   <!-- Modern Table -->
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
     <div *ngIf="loading()" class="p-12 text-center text-gray-400 text-sm">Chargement...</div>
-    <div *ngIf="!loading() && filtered().length === 0" class="p-12 text-center text-gray-400 text-sm">
+    <div *ngIf="!loading() && page().empty" class="p-12 text-center text-gray-400 text-sm">
       Aucun employé trouvé.
     </div>
 
-    <div *ngIf="!loading() && filtered().length > 0" class="overflow-x-auto">
+    <div *ngIf="!loading() && !page().empty" class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead>
           <tr class="bg-gray-50 border-b border-gray-200">
@@ -101,7 +101,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
-          <tr *ngFor="let emp of paginatedEmployees()" class="hover:bg-gray-50/70 transition-colors duration-150 group">
+          <tr *ngFor="let emp of employees()" class="hover:bg-gray-50/70 transition-colors duration-150 group">
             <!-- Matricule -->
             <td class="px-5 py-3.5 font-mono text-xs font-medium text-gray-500">{{ emp.matricule }}</td>
 
@@ -195,7 +195,7 @@
   </div>
 
   <!-- Pagination (previous/next + numbered pages) -->
-  <div *ngIf="!loading() && filtered().length > 0" class="flex items-center justify-between mt-5">
+  <div *ngIf="!loading() && !page().empty" class="flex items-center justify-between mt-5">
     <div class="text-xs text-gray-500">
       Page {{ currentPage() }} sur {{ totalPages() }}
     </div>
