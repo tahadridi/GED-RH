@@ -7,9 +7,16 @@ import GED.ged_backend.domain.enums.SystemRole;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 
 public class EmployeeSpecifications {
+
+    private static EmployeeRepository employeeRepository;
+
+    public static void setEmployeeRepository(EmployeeRepository repo) {
+        employeeRepository = repo;
+    }
 
     public static Specification<Employee> withSecurityFilter(SystemUser actor) {
         return (root, query, cb) -> {
@@ -23,7 +30,11 @@ public class EmployeeSpecifications {
 
             if (actor.getRoles().contains(SystemRole.MANAGER)) {
                 if (actor.getEmployeeProfile() != null) {
-                    return cb.equal(root.get("manager").get("id"), actor.getEmployeeProfile().getId());
+                    UUID actorId = actor.getEmployeeProfile().getId();
+                    // See own profile + all transitive descendants
+                    List<UUID> descendantIds = employeeRepository.findAllDescendantIds(actorId);
+                    descendantIds.add(actorId);
+                    return root.get("id").in(descendantIds);
                 }
             }
 

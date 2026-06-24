@@ -68,6 +68,10 @@ export const routes: Routes = [
         path: 'admin/announcements',
         loadComponent: () => import('./features/admin/announcements/admin-announcements').then(m => m.AdminAnnouncements)
       },
+      {
+        path: 'admin/organigramme',
+        loadComponent: () => import('./features/admin/organigramme/admin-organigramme').then(m => m.AdminOrganigramme)
+      },
     ]
   },
   { path: '**', redirectTo: 'auth/login' }

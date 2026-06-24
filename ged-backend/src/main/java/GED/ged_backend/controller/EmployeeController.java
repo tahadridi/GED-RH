@@ -13,7 +13,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -79,6 +81,53 @@ public class EmployeeController {
         }
         return EmployeeResponse.from(e);
     }
+
+    @GetMapping("/hierarchy")
+    @Transactional(readOnly = true)
+    @Operation(summary = "Organigramme", description = "Retourne l'arbre hierarchique complet de l'entreprise.")
+    public List<EmployeeTreeNode> getHierarchy() {
+        List<Employee> all = employeeService.getAllEmployees();
+        // Build children map
+        java.util.Map<UUID, List<Employee>> childrenByManagerId = new java.util.HashMap<>();
+        for (Employee e : all) {
+            if (e.getManager() != null) {
+                UUID mid = e.getManager().getId();
+                childrenByManagerId.computeIfAbsent(mid, k -> new ArrayList<>()).add(e);
+            }
+        }
+        // Build tree starting from top-level managers (no manager)
+        List<EmployeeTreeNode> roots = new ArrayList<>();
+        for (Employee e : all) {
+            if (e.getManager() == null) {
+                roots.add(buildNode(e, childrenByManagerId));
+            }
+        }
+        return roots;
+    }
+
+    private EmployeeTreeNode buildNode(Employee e, java.util.Map<UUID, List<Employee>> childrenByManagerId) {
+        List<EmployeeTreeNode> children = new ArrayList<>();
+        List<Employee> directReports = childrenByManagerId.get(e.getId());
+        if (directReports != null) {
+            for (Employee child : directReports) {
+                children.add(buildNode(child, childrenByManagerId));
+            }
+        }
+        return new EmployeeTreeNode(e.getId(), e.getFirstName(), e.getLastName(), e.getMatricule(),
+                e.getPosition(), e.getDepartment(), e.getPhotoPath() != null ? "/employees/" + e.getId() + "/photo/content" : null,
+                children);
+    }
+
+    @Schema(description = "Noeud de l'organigramme")
+    public record EmployeeTreeNode(
+            @Schema(description = "ID") UUID id,
+            @Schema(description = "Prenom") String firstName,
+            @Schema(description = "Nom") String lastName,
+            @Schema(description = "Matricule") String matricule,
+            @Schema(description = "Poste") String position,
+            @Schema(description = "Departement") String department,
+            @Schema(description = "URL de la photo") String photoUrl,
+            @Schema(description = "Subalternes") List<EmployeeTreeNode> children) {}
 
     @PostMapping
     @Transactional

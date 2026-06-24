@@ -3,6 +3,17 @@ import { ApiService } from './api.service';
 import { Employee, CreateEmployeeRequest, UpdateEmployeeRequest } from '../models/employee.model';
 import { Page } from '../models/page.model';
 
+export interface EmployeeTreeNode {
+  id: string;
+  firstName: string;
+  lastName: string;
+  matricule: string;
+  position: string;
+  department: string;
+  photoUrl: string | null;
+  children: EmployeeTreeNode[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class EmployeeService {
   constructor(private api: ApiService) {}
@@ -17,6 +28,10 @@ export class EmployeeService {
 
   get(id: string): Promise<Employee> {
     return this.api.get<Employee>(`/employees/${id}`);
+  }
+
+  getHierarchy(): Promise<EmployeeTreeNode[]> {
+    return this.api.get<EmployeeTreeNode[]>('/employees/hierarchy');
   }
 
   create(req: CreateEmployeeRequest): Promise<Employee> {

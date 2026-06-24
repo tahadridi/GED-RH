@@ -106,12 +106,23 @@ public class AccessControlService {
         if (hasRole(actor, SystemRole.MANAGER)) {
             if (actor.getEmployeeProfile() != null) {
                 if (actor.getEmployeeProfile().getId().equals(employee.getId())) return true;
-                if (employee.getManager() != null &&
-                        actor.getEmployeeProfile().getId().equals(employee.getManager().getId())) return true;
+                // Check transitive manager chain: walk up from employee to find actor
+                if (isManagerInChain(employee, actor.getEmployeeProfile())) return true;
             }
         }
         if (hasRole(actor, SystemRole.RH)) {
             return true;
+        }
+        return false;
+    }
+
+    private boolean isManagerInChain(Employee target, Employee potentialManager) {
+        Employee current = target.getManager();
+        while (current != null) {
+            if (current.getId().equals(potentialManager.getId())) return true;
+            // Fetch next manager (Lazy might need reload)
+            if (current.getManager() == null) break;
+            current = current.getManager();
         }
         return false;
     }
@@ -125,9 +136,8 @@ public class AccessControlService {
             if (actor.getEmployeeProfile() == null) return false;
             // Can view own documents
             if (document.getEmployee().getId().equals(actor.getEmployeeProfile().getId())) return true;
-            // Can view direct reports' documents
-            return document.getEmployee().getManager() != null
-                    && actor.getEmployeeProfile().getId().equals(document.getEmployee().getManager().getId());
+            // Can view transitive subordinates' documents
+            return isManagerInChain(document.getEmployee(), actor.getEmployeeProfile());
         }
         if (hasRole(actor, SystemRole.RH)) {
             Set<DocumentType> responsibilities = actor.getRhResponsibilities();

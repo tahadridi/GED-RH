@@ -8,7 +8,7 @@ import { FormsModule } from '@angular/forms';
 import {
   LucideLayoutDashboard, LucideFileText,
   LucideSearch, LucideShield, LucideLogOut, LucideUser, LucideBuilding, LucideX, LucideCamera,
-  LucideEye, LucideEyeOff, LucideCheck, LucideMegaphone
+  LucideEye, LucideEyeOff, LucideCheck, LucideMegaphone, LucideGitBranch
 } from '@lucide/angular';
 
 @Component({
@@ -17,7 +17,7 @@ import {
   imports: [CommonModule, RouterModule, FormsModule,
     LucideLayoutDashboard, LucideFileText,
     LucideSearch, LucideShield, LucideLogOut, LucideUser, LucideBuilding, LucideX, LucideCamera,
-    LucideEye, LucideEyeOff, LucideCheck, LucideMegaphone],
+    LucideEye, LucideEyeOff, LucideCheck, LucideMegaphone, LucideGitBranch],
   template: `
     <aside class="sidebar-container">
       <div class="sidebar-header flex items-center gap-3">
@@ -70,6 +70,11 @@ import {
               <svg lucideMegaphone class="w-4 h-4 shrink-0"></svg>
               Annonces
             </a>
+            <a routerLink="/admin/organigramme" routerLinkActive="active-link"
+               class="nav-link">
+              <svg lucideGitBranch class="w-4 h-4 shrink-0"></svg>
+              Organigramme
+            </a>
           </div>
         </div>
 
@@ -95,6 +100,11 @@ import {
                class="nav-link">
               <svg lucideMegaphone class="w-4 h-4 shrink-0"></svg>
               Annonces
+            </a>
+            <a routerLink="/admin/organigramme" routerLinkActive="active-link"
+               class="nav-link">
+              <svg lucideGitBranch class="w-4 h-4 shrink-0"></svg>
+              Organigramme
             </a>
           </div>
         </div>
@@ -250,6 +260,26 @@ import {
     :host {
       display: block;
       height: 100%;
+    }
+
+    /* Custom scrollbar for dark sidebar */
+    :host ::-webkit-scrollbar {
+      width: 5px;
+    }
+    :host ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    :host ::-webkit-scrollbar-thumb {
+      background: #203060;
+      border-radius: 9999px;
+    }
+    :host ::-webkit-scrollbar-thumb:hover {
+      background: #304878;
+    }
+    /* Firefox */
+    :host {
+      scrollbar-width: thin;
+      scrollbar-color: #203060 transparent;
     }
 
     .sidebar-container {

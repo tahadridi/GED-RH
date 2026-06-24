@@ -7,6 +7,7 @@ import GED.ged_backend.repository.EmployeeRepository;
 import GED.ged_backend.repository.EmployeeSpecifications;
 import java.io.InputStream;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -132,6 +133,18 @@ public class EmployeeService {
             .where(EmployeeSpecifications.withSecurityFilter(actor))
             .and(EmployeeSpecifications.withFilters(search, department, status));
         return employeeRepository.findAll(spec, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Employee> getAllEmployees() {
+        return employeeRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Employee> getTopLevelManagers() {
+        return employeeRepository.findAll().stream()
+                .filter(e -> e.getManager() == null)
+                .toList();
     }
 
     public void deactivateEmployee(UUID id) {
