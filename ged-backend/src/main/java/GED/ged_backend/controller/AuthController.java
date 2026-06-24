@@ -7,6 +7,9 @@ import GED.ged_backend.domain.enums.SystemRole;
 import GED.ged_backend.repository.SystemUserRepository;
 import GED.ged_backend.service.AccessControlService;
 import GED.ged_backend.service.StorageService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +34,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Authentification", description = "Connexion, profil, photo, mot de passe")
 public class AuthController {
 
     private final AccessControlService accessControlService;
@@ -46,6 +50,7 @@ public class AuthController {
     }
 
     @GetMapping("/me")
+    @Operation(summary = "Profil de l'utilisateur connecte")
     public ProfileResponse me() {
         SystemUser user = accessControlService.getCurrentUser();
         if (user == null) {
@@ -56,6 +61,7 @@ public class AuthController {
 
     @PutMapping("/profile")
     @Transactional
+    @Operation(summary = "Modifier le profil")
     public ProfileResponse updateProfile(@RequestBody UpdateProfileRequest req) {
         SystemUser user = accessControlService.getCurrentUser();
         if (user == null) throw new UnauthorizedException();
@@ -68,6 +74,7 @@ public class AuthController {
 
     @PostMapping(value = "/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
+    @Operation(summary = "Uploader une photo de profil")
     public ProfileResponse uploadPhoto(@RequestPart("file") MultipartFile file) throws Exception {
         SystemUser user = accessControlService.getCurrentUser();
         if (user == null) throw new UnauthorizedException();
@@ -85,6 +92,7 @@ public class AuthController {
     }
 
     @GetMapping("/photo/content")
+    @Operation(summary = "Telecharger la photo de profil")
     public ResponseEntity<InputStreamResource> getPhoto() {
         SystemUser user = accessControlService.getCurrentUser();
         if (user == null || user.getPhotoPath() == null) {
@@ -97,17 +105,18 @@ public class AuthController {
                 .body(new InputStreamResource(is));
     }
 
+    @Schema(description = "Profil de l'utilisateur connecte")
     public record ProfileResponse(
-            UUID id,
-            String email,
-            String firstName,
-            String lastName,
-            Set<SystemRole> roles,
-            Set<DocumentType> rhResponsibilities,
-            boolean active,
-            UUID employeeId,
-            String matricule,
-            String photoUrl) {
+            @Schema(description = "ID unique") UUID id,
+            @Schema(description = "Email", example = "admin@ged.com") String email,
+            @Schema(description = "Prenom") String firstName,
+            @Schema(description = "Nom") String lastName,
+            @Schema(description = "Roles") Set<SystemRole> roles,
+            @Schema(description = "Types de documents dont le RH est responsable") Set<DocumentType> rhResponsibilities,
+            @Schema(description = "Compte actif ?") boolean active,
+            @Schema(description = "ID du profil employe associe") UUID employeeId,
+            @Schema(description = "Matricule") String matricule,
+            @Schema(description = "URL de la photo") String photoUrl) {
 
         public static ProfileResponse from(SystemUser user) {
             UUID empId = user.getEmployeeProfile() != null ? user.getEmployeeProfile().getId() : null;
@@ -135,6 +144,7 @@ public class AuthController {
     private static class UnauthorizedException extends RuntimeException {}
 
     @PostMapping("/password")
+    @Operation(summary = "Changer le mot de passe", description = "Met a jour le mot de passe via Supabase Auth.")
     public void changePassword(@RequestBody ChangePasswordRequest req) {
         SystemUser user = accessControlService.getCurrentUser();
         if (user == null) throw new UnauthorizedException();

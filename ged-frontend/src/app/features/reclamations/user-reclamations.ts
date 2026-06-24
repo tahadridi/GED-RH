@@ -13,6 +13,9 @@ import { LucideSend, LucideCheck, LucideX, LucideRefreshCw } from '@lucide/angul
     <div class="page">
       <h2>Réclamations</h2>
 
+      <!-- Gradient divider -->
+      <div class="mb-6 h-px bg-gradient-to-r from-blue-400 via-purple-400 to-transparent"></div>
+
       <!-- Submit form (hidden for admin) -->
       <div *ngIf="!isAdmin" class="card">
         <h3>Nouvelle réclamation</h3>

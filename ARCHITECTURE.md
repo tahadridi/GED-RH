@@ -308,7 +308,7 @@ Les permissions sont centralisées dans `AccessControlService.java` :
 | Supprimer un employé | ADMIN, RH |
 | Upload document | ADMIN, RH |
 | Voir documents employé | ADMIN, RH, DG (tous), MANAGER (son équipe) |
-| Gérer réclamations | RH, MANAGER (son équipe) |
+| Gérer réclamations | RH, MANAGER (son équipe),ADMIN |
 | Administration | ADMIN |
 
 ### 6.2 Sécurité au niveau lignes (Row-Level Security)

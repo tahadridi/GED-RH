@@ -5,6 +5,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { DocumentService } from '../../../core/services/document.service';
 import { ApiService } from '../../../core/services/api.service';
+import { AnnouncementService } from '../../../core/services/announcement.service';
 import { environment } from '../../../../environments/environment';
 import { LucideUsers, LucideFileText, LucideAlertCircle } from '@lucide/angular';
 
@@ -23,6 +24,7 @@ export class DgDashboard implements OnInit {
   recentDocuments = signal<any[]>([]);
   loading = signal(true);
   expandedRecentGroups = signal<Set<string>>(new Set());
+  announcements = signal<any[]>([]);
 
 
   totalActiveEmployees = computed(() => this.allEmployees().filter(e => e.status === 'ACTIVE').length);
@@ -138,7 +140,8 @@ export class DgDashboard implements OnInit {
     private authService: AuthService,
     private employeeService: EmployeeService,
     private documentService: DocumentService,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private announcementService: AnnouncementService
   ) {}
 
   get userName() {
@@ -176,6 +179,13 @@ export class DgDashboard implements OnInit {
       this.reclamations.set(reclas || []);
     } catch (e) {
       console.warn('Reclamations not available for DG', e);
+    }
+
+    // Load announcements
+    try {
+      this.announcements.set(await this.announcementService.list());
+    } catch (e) {
+      console.warn('Announcements not available', e);
     }
 
     this.loading.set(false);

@@ -6,6 +6,10 @@ import GED.ged_backend.service.EmployeeService;
 import GED.ged_backend.service.AccessControlService;
 import GED.ged_backend.service.StorageService;
 import GED.ged_backend.domain.entity.SystemUser;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDate;
@@ -38,6 +42,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/employees")
+@Tag(name = "Employes", description = "Gestion des employes — CRUD, photo, affectation hierarchique")
 public class EmployeeController {
 
     private final EmployeeService employeeService;
@@ -52,11 +57,12 @@ public class EmployeeController {
 
     @GetMapping
     @Transactional(readOnly = true)
+    @Operation(summary = "Lister les employes", description = "Retourne une liste paginee d'employes avec filtres (recherche, departement, statut). Les admins/RH voient tout, les managers voient leur equipe, les employes ne voient qu'eux-memes.")
     public Page<EmployeeResponse> list(
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) String department,
-            @RequestParam(required = false) EmployeeStatus status,
-            @PageableDefault(size = Integer.MAX_VALUE, sort = "matricule", direction = Sort.Direction.ASC) Pageable pageable) {
+            @Parameter(description = "Recherche textuelle (nom, prenom, matricule)") @RequestParam(required = false) String search,
+            @Parameter(description = "Filtrer par departement") @RequestParam(required = false) String department,
+            @Parameter(description = "Filtrer par statut (ACTIVE, INACTIVE, ON_LEAVE, TERMINATED)") @RequestParam(required = false) EmployeeStatus status,
+            @Parameter(description = "Pagination : page, size, sort (ex: sort=matricule,asc)") @PageableDefault(size = Integer.MAX_VALUE, sort = "matricule", direction = Sort.Direction.ASC) Pageable pageable) {
         SystemUser actor = accessControlService.getCurrentUser();
         Page<Employee> page = employeeService.listEmployeesPaginated(actor, search, department, status, pageable);
         return page.map(EmployeeResponse::fromList);
@@ -64,7 +70,8 @@ public class EmployeeController {
 
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
-    public EmployeeResponse get(@PathVariable UUID id) {
+    @Operation(summary = "Obtenir un employe par ID")
+    public EmployeeResponse get(@Parameter(description = "ID de l'employe") @PathVariable UUID id) {
         SystemUser actor = accessControlService.getCurrentUser();
         Employee e = employeeService.getEmployee(id);
         if (!accessControlService.canViewEmployee(actor, e)) {
@@ -75,6 +82,7 @@ public class EmployeeController {
 
     @PostMapping
     @Transactional
+    @Operation(summary = "Creer un employe")
     public EmployeeResponse create(@RequestBody CreateEmployeeRequest req) {
         Employee e = employeeService.createEmployee(new EmployeeService.CreateEmployeeCommand(
                 req.matricule, req.firstName, req.lastName, req.email,
@@ -85,7 +93,8 @@ public class EmployeeController {
 
     @PutMapping("/{id}")
     @Transactional
-    public EmployeeResponse update(@PathVariable UUID id, @RequestBody UpdateEmployeeRequest req) {
+    @Operation(summary = "Modifier un employe")
+    public EmployeeResponse update(@Parameter(description = "ID de l'employe") @PathVariable UUID id, @RequestBody UpdateEmployeeRequest req) {
         Employee e = employeeService.updateEmployee(id, new EmployeeService.UpdateEmployeeCommand(
                 req.firstName, req.lastName, req.email, req.phoneNumber, req.address,
                 req.department, req.position, req.hireDate, req.status, req.managerId));
@@ -93,7 +102,8 @@ public class EmployeeController {
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable UUID id) {
+    @Operation(summary = "Supprimer un employe")
+    public void delete(@Parameter(description = "ID de l'employe") @PathVariable UUID id) {
         employeeService.deleteEmployee(id);
     }
 
@@ -128,49 +138,52 @@ public class EmployeeController {
                 .body(new InputStreamResource(storageService.downloadFile(e.getPhotoPath())));
     }
 
+    @Schema(description = "Requete de creation d'un employe")
     public static class CreateEmployeeRequest {
-        public String matricule;
-        @NotBlank public String firstName;
-        @NotBlank public String lastName;
-        @Email public String email;
-        public String phoneNumber;
-        public String address;
-        public String department;
-        public String position;
-        public LocalDate hireDate;
-        public EmployeeStatus status;
-        public UUID managerId;
+        @Schema(description = "Matricule (laissez vide pour auto-generation)", example = "RH-001") public String matricule;
+        @NotBlank @Schema(description = "Prenom", example = "Ahmed") public String firstName;
+        @NotBlank @Schema(description = "Nom", example = "Ben Ali") public String lastName;
+        @Email @Schema(description = "Email", example = "ahmed.benali@ged.com") public String email;
+        @Schema(description = "Telephone", example = "+216 99 999 999") public String phoneNumber;
+        @Schema(description = "Adresse") public String address;
+        @Schema(description = "Departement", example = "Ressources Humaines") public String department;
+        @Schema(description = "Poste", example = "Chef RH") public String position;
+        @Schema(description = "Date d'embauche", example = "2024-01-15") public LocalDate hireDate;
+        @Schema(description = "Statut", example = "ACTIVE") public EmployeeStatus status;
+        @Schema(description = "ID du manager") public UUID managerId;
     }
 
+    @Schema(description = "Requete de mise a jour d'un employe")
     public static class UpdateEmployeeRequest {
-        @NotBlank public String firstName;
-        @NotBlank public String lastName;
-        @Email public String email;
-        public String phoneNumber;
-        public String address;
-        public String department;
-        public String position;
-        public LocalDate hireDate;
-        public EmployeeStatus status;
-        public UUID managerId;
+        @NotBlank @Schema(description = "Prenom", example = "Ahmed") public String firstName;
+        @NotBlank @Schema(description = "Nom", example = "Ben Ali") public String lastName;
+        @Email @Schema(description = "Email", example = "ahmed.benali@ged.com") public String email;
+        @Schema(description = "Telephone", example = "+216 99 999 999") public String phoneNumber;
+        @Schema(description = "Adresse") public String address;
+        @Schema(description = "Departement", example = "Ressources Humaines") public String department;
+        @Schema(description = "Poste", example = "Chef RH") public String position;
+        @Schema(description = "Date d'embauche", example = "2024-01-15") public LocalDate hireDate;
+        @Schema(description = "Statut", example = "ACTIVE") public EmployeeStatus status;
+        @Schema(description = "ID du manager") public UUID managerId;
     }
 
+    @Schema(description = "Reponse contenant les details d'un employe")
     public record EmployeeResponse(
-            UUID id,
-            String matricule,
-            String firstName,
-            String lastName,
-            String email,
-            String phoneNumber,
-            String address,
-            String department,
-            String position,
-            LocalDate hireDate,
-            EmployeeStatus status,
-            UUID managerId,
-            String managerName,
-            Set<UUID> directReportIds,
-            String photoUrl) {
+            @Schema(description = "ID unique") UUID id,
+            @Schema(description = "Matricule", example = "RH-001") String matricule,
+            @Schema(description = "Prenom", example = "Ahmed") String firstName,
+            @Schema(description = "Nom", example = "Ben Ali") String lastName,
+            @Schema(description = "Email", example = "ahmed.benali@ged.com") String email,
+            @Schema(description = "Telephone", example = "+216 99 999 999") String phoneNumber,
+            @Schema(description = "Adresse") String address,
+            @Schema(description = "Departement", example = "Ressources Humaines") String department,
+            @Schema(description = "Poste", example = "Chef RH") String position,
+            @Schema(description = "Date d'embauche") LocalDate hireDate,
+            @Schema(description = "Statut", example = "ACTIVE") EmployeeStatus status,
+            @Schema(description = "ID du manager") UUID managerId,
+            @Schema(description = "Nom du manager") String managerName,
+            @Schema(description = "IDs des subalternes directs") Set<UUID> directReportIds,
+            @Schema(description = "URL de la photo") String photoUrl) {
 
         public static EmployeeResponse from(Employee e) {
             return new EmployeeResponse(

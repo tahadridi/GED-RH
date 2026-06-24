@@ -6,6 +6,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { DocumentService, OcrPreviewResult } from '../../../core/services/document.service';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { ApiService } from '../../../core/services/api.service';
+import { AnnouncementService } from '../../../core/services/announcement.service';
 import { Employee } from '../../../core/models/employee.model';
 import { DocumentType } from '../../../core/models/user.model';
 import { environment } from '../../../../environments/environment';
@@ -167,6 +168,7 @@ export class RhDashboard implements OnInit {
   // Storage stats
   storageBytes = signal(0);
   storageObjectCount = signal(0);
+  announcements = signal<any[]>([]);
   diskTotal = signal(0);
   diskFree = signal(0);
 
@@ -197,11 +199,18 @@ export class RhDashboard implements OnInit {
     private authService: AuthService,
     private documentService: DocumentService,
     private employeeService: EmployeeService,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private announcementService: AnnouncementService
   ) {}
 
   async ngOnInit() {
     await this.authService.ready();
+    // Load announcements
+    try {
+      this.announcements.set(await this.announcementService.list());
+    } catch (e) {
+      console.warn('Announcements not available', e);
+    }
     this.responsibilities.set(this.authService.getRhResponsibilities());
     if (this.responsibilities().length > 0) {
       this.uploadType = this.responsibilities()[0];

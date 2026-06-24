@@ -8,6 +8,10 @@ import GED.ged_backend.service.DocumentService;
 import GED.ged_backend.service.AccessControlService;
 import GED.ged_backend.service.StorageService;
 import GED.ged_backend.domain.entity.SystemUser;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
@@ -24,6 +28,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/documents")
+@Tag(name = "Documents", description = "Gestion des documents — upload, OCR, versions, telechargement")
 public class DocumentController {
 
     private final DocumentService documentService;
@@ -36,8 +41,8 @@ public class DocumentController {
         this.storageService = storageService;
     }
 
-    /** Step 1: upload to temp storage + OCR */
     @PostMapping(value = "/ocr-preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Preview OCR", description = "Etape 1 : upload temporaire + extraction OCR. Retourne le texte extrait pour verification avant enregistrement.")
     public OcrPreviewResponse ocrPreview(@RequestPart("file") MultipartFile file) throws Exception {
         SystemUser actor = accessControlService.getCurrentUser();
         if (actor == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -49,8 +54,8 @@ public class DocumentController {
         return new OcrPreviewResponse(result.tempKey(), result.ocrText(), result.originalFilename());
     }
 
-    /** Step 2: save with reviewed metadata */
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Creer un document (post-OCR)", description = "Etape 2 : enregistre le document avec le texte OCR verifie par l'utilisateur.")
     public EmployeeDocument createFromPreview(@RequestBody CreateFromPreviewRequest req) {
         SystemUser actor = accessControlService.getCurrentUser();
         if (actor == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -60,8 +65,8 @@ public class DocumentController {
         return documentService.createFromPreview(req.toCommand(), actor);
     }
 
-    /** Legacy multipart upload */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload direct (legacy)", description = "Upload + enregistrement en une etape (sans preview OCR).")
     public EmployeeDocument create(
             @RequestPart("data") CreateDocumentRequest req,
             @RequestPart("file") MultipartFile file) throws Exception {
@@ -77,7 +82,8 @@ public class DocumentController {
     }
 
     @GetMapping("/{id}/content")
-    public ResponseEntity<InputStreamResource> download(@PathVariable UUID id) {
+    @Operation(summary = "Telecharger un document")
+    public ResponseEntity<InputStreamResource> download(@Parameter(description = "ID du document") @PathVariable UUID id) {
         EmployeeDocument doc = documentService.getDocument(id);
         String ext = detectExtension(doc.getStoragePath());
         MediaType mediaType = resolveMediaType(doc.getStoragePath());
@@ -89,9 +95,10 @@ public class DocumentController {
     }
 
     @PostMapping(value = "/{id}/versions", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Ajouter une version")
     public DocumentVersion addVersion(
-            @PathVariable UUID id,
-            @RequestParam("uploadedBy") String uploadedBy,
+            @Parameter(description = "ID du document") @PathVariable UUID id,
+            @Parameter(description = "Nom de la personne qui uploade") @RequestParam("uploadedBy") String uploadedBy,
             @RequestPart("file") MultipartFile file) throws Exception {
         SystemUser actor = accessControlService.getCurrentUser();
         if (actor == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -102,7 +109,8 @@ public class DocumentController {
     }
 
     @GetMapping("/versions/{versionId}/content")
-    public ResponseEntity<InputStreamResource> downloadVersion(@PathVariable UUID versionId) {
+    @Operation(summary = "Telecharger une version")
+    public ResponseEntity<InputStreamResource> downloadVersion(@Parameter(description = "ID de la version") @PathVariable UUID versionId) {
         DocumentVersion v = documentService.getVersion(versionId);
         String ext = detectExtension(v.getStoragePath());
         MediaType mediaType = resolveMediaType(v.getStoragePath());
@@ -137,17 +145,19 @@ public class DocumentController {
     }
 
     @GetMapping("/{id}")
-    public EmployeeDocument get(@PathVariable UUID id) {
+    @Operation(summary = "Obtenir un document par ID")
+    public EmployeeDocument get(@Parameter(description = "ID du document") @PathVariable UUID id) {
         return documentService.getDocument(id);
     }
 
     @GetMapping("/search")
     @Transactional(readOnly = true)
+    @Operation(summary = "Rechercher des documents", description = "Recherche multi-criteres : texte, type, employe, departement.")
     public List<EmployeeDocument> search(
-            @RequestParam(required = false) String q,
-            @RequestParam(required = false) DocumentType type,
-            @RequestParam(required = false) UUID employeeId,
-            @RequestParam(required = false) String department) {
+            @Parameter(description = "Recherche textuelle (nom du document, reference)") @RequestParam(required = false) String q,
+            @Parameter(description = "Filtrer par type de document") @RequestParam(required = false) DocumentType type,
+            @Parameter(description = "Filtrer par employe") @RequestParam(required = false) UUID employeeId,
+            @Parameter(description = "Filtrer par departement") @RequestParam(required = false) String department) {
         SystemUser actor = accessControlService.getCurrentUser();
         DocumentService.SearchCriteria criteria = new DocumentService.SearchCriteria(q, type, employeeId, department, null, null);
         return documentService.searchDocuments(criteria, actor);
@@ -155,7 +165,8 @@ public class DocumentController {
 
     @GetMapping("/employee/{employeeId}")
     @Transactional(readOnly = true)
-    public List<EmployeeDocument> listByEmployee(@PathVariable UUID employeeId) {
+    @Operation(summary = "Lister les documents d'un employe")
+    public List<EmployeeDocument> listByEmployee(@Parameter(description = "ID de l'employe") @PathVariable UUID employeeId) {
         SystemUser actor = accessControlService.getCurrentUser();
         return documentService.searchDocuments(
                 new DocumentService.SearchCriteria(null, null, employeeId, null, null, null), actor);
@@ -163,7 +174,8 @@ public class DocumentController {
 
     @GetMapping("/type/{type}")
     @Transactional(readOnly = true)
-    public List<EmployeeDocument> listByType(@PathVariable String type) {
+    @Operation(summary = "Lister les documents par type")
+    public List<EmployeeDocument> listByType(@Parameter(description = "Type de document") @PathVariable String type) {
         SystemUser actor = accessControlService.getCurrentUser();
         return documentService.searchDocuments(
                 new DocumentService.SearchCriteria(null, DocumentType.valueOf(type), null, null, null, null), actor);
@@ -171,17 +183,20 @@ public class DocumentController {
 
     @GetMapping("/{id}/versions")
     @Transactional(readOnly = true)
-    public List<DocumentVersion> versions(@PathVariable UUID id) {
+    @Operation(summary = "Lister les versions d'un document")
+    public List<DocumentVersion> versions(@Parameter(description = "ID du document") @PathVariable UUID id) {
         return documentService.listVersions(id);
     }
 
     @GetMapping("/versions/{versionId}")
-    public DocumentVersion getVersionById(@PathVariable UUID versionId) {
+    @Operation(summary = "Obtenir une version par ID")
+    public DocumentVersion getVersionById(@Parameter(description = "ID de la version") @PathVariable UUID versionId) {
         return documentService.getVersion(versionId);
     }
 
     @PutMapping("/{id}")
-    public EmployeeDocument update(@PathVariable UUID id, @RequestBody UpdateDocumentRequest req) {
+    @Operation(summary = "Modifier les metadonnees d'un document")
+    public EmployeeDocument update(@Parameter(description = "ID du document") @PathVariable UUID id, @RequestBody UpdateDocumentRequest req) {
         SystemUser actor = accessControlService.getCurrentUser();
         if (actor == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         if (!accessControlService.canManageDocument(actor, id)) {
@@ -192,7 +207,8 @@ public class DocumentController {
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable UUID id) {
+    @Operation(summary = "Supprimer un document et ses versions")
+    public void delete(@Parameter(description = "ID du document") @PathVariable UUID id) {
         SystemUser actor = accessControlService.getCurrentUser();
         if (actor == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         if (!accessControlService.canManageDocument(actor, id)) {
@@ -203,31 +219,38 @@ public class DocumentController {
 
     // ---- Request/Response classes ----
 
+    @Schema(description = "Requete de creation de document (upload direct)")
     public static class CreateDocumentRequest {
-        @NotNull public UUID employeeId;
-        @NotBlank public String documentReference;
-        @NotBlank public String name;
-        @NotNull public DocumentType type;
-        public String author;
+        @NotNull @Schema(description = "ID de l'employe") public UUID employeeId;
+        @NotBlank @Schema(description = "Reference du document", example = "DOC-2024-001") public String documentReference;
+        @NotBlank @Schema(description = "Nom du document", example = "Contrat de travail") public String name;
+        @NotNull @Schema(description = "Type de document") public DocumentType type;
+        @Schema(description = "Auteur") public String author;
         public String storagePath;
     }
 
+    @Schema(description = "Requete de mise a jour d'un document")
     public static class UpdateDocumentRequest {
-        public String name;
-        public String author;
+        @Schema(description = "Nouveau nom") public String name;
+        @Schema(description = "Nouvel auteur") public String author;
         public String storagePath;
     }
 
-    public record OcrPreviewResponse(String tempKey, String ocrText, String originalFilename) {}
+    @Schema(description = "Resultat de la preview OCR")
+    public record OcrPreviewResponse(
+            @Schema(description = "Cle temporaire dans le stockage") String tempKey,
+            @Schema(description = "Texte extrait par OCR") String ocrText,
+            @Schema(description = "Nom original du fichier") String originalFilename) {}
 
+    @Schema(description = "Requete de creation de document apres validation OCR")
     public static class CreateFromPreviewRequest {
-        @NotNull public UUID employeeId;
-        @NotBlank public String documentReference;
-        @NotBlank public String name;
-        @NotNull public DocumentType type;
-        public String author;
-        @NotBlank public String tempKey;
-        public String ocrText;
+        @NotNull @Schema(description = "ID de l'employe") public UUID employeeId;
+        @NotBlank @Schema(description = "Reference du document", example = "DOC-2024-001") public String documentReference;
+        @NotBlank @Schema(description = "Nom du document", example = "Contrat de travail") public String name;
+        @NotNull @Schema(description = "Type de document") public DocumentType type;
+        @Schema(description = "Auteur") public String author;
+        @NotBlank @Schema(description = "Cle temporaire retournee par /ocr-preview") public String tempKey;
+        @Schema(description = "Texte OCR corrige par l'utilisateur") public String ocrText;
 
         public DocumentService.CreateFromPreviewCommand toCommand() {
             return new DocumentService.CreateFromPreviewCommand(

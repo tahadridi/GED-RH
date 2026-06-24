@@ -8,7 +8,7 @@ import { FormsModule } from '@angular/forms';
 import {
   LucideLayoutDashboard, LucideFileText,
   LucideSearch, LucideShield, LucideLogOut, LucideUser, LucideBuilding, LucideX, LucideCamera,
-  LucideEye, LucideEyeOff, LucideCheck
+  LucideEye, LucideEyeOff, LucideCheck, LucideMegaphone
 } from '@lucide/angular';
 
 @Component({
@@ -17,7 +17,7 @@ import {
   imports: [CommonModule, RouterModule, FormsModule,
     LucideLayoutDashboard, LucideFileText,
     LucideSearch, LucideShield, LucideLogOut, LucideUser, LucideBuilding, LucideX, LucideCamera,
-    LucideEye, LucideEyeOff, LucideCheck],
+    LucideEye, LucideEyeOff, LucideCheck, LucideMegaphone],
   template: `
     <aside class="sidebar-container">
       <div class="sidebar-header flex items-center gap-3">
@@ -65,6 +65,11 @@ import {
               <svg lucideBuilding class="w-4 h-4 shrink-0"></svg>
               Departements
             </a>
+            <a routerLink="/admin/announcements" routerLinkActive="active-link"
+               class="nav-link">
+              <svg lucideMegaphone class="w-4 h-4 shrink-0"></svg>
+              Annonces
+            </a>
           </div>
         </div>
 
@@ -85,6 +90,11 @@ import {
                class="nav-link">
               <svg lucideFileText class="w-4 h-4 shrink-0"></svg>
               Types de documents
+            </a>
+            <a routerLink="/admin/announcements" routerLinkActive="active-link"
+               class="nav-link">
+              <svg lucideMegaphone class="w-4 h-4 shrink-0"></svg>
+              Annonces
             </a>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { EmployeeService } from '../../../core/services/employee.service';
 import { DocumentService } from '../../../core/services/document.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiService } from '../../../core/services/api.service';
+import { AnnouncementService } from '../../../core/services/announcement.service';
 import { Router } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 
@@ -31,6 +32,7 @@ export class Dashboard implements OnInit {
   diskFree = signal(0);
   reclamations = signal<any[]>([]);
   loadingReclamations = signal(false);
+  announcements = signal<any[]>([]);
 
   pendingReclamations = computed(() => this.reclamations().filter(r => r.status === 'PENDING'));
   recentPendingReclamations = computed(() => this.pendingReclamations().slice(0, 3));
@@ -59,6 +61,7 @@ export class Dashboard implements OnInit {
     private documentService: DocumentService,
     private authService: AuthService,
     private apiService: ApiService,
+    private announcementService: AnnouncementService,
     private router: Router
   ) {}
 
@@ -190,6 +193,16 @@ export class Dashboard implements OnInit {
     }
   }
 
+  async loadAnnouncements() {
+    try {
+      this.announcements.set(await this.announcementService.list());
+    } catch (e) {
+      console.error('Failed to load announcements', e);
+    } finally {
+      this.loadingReclamations.set(false);
+    }
+  }
+
   statusLabel(s: string): string {
     switch (s) {
       case 'PENDING': return 'En attente';
@@ -218,7 +231,8 @@ export class Dashboard implements OnInit {
     await Promise.all([
       this.refreshData(),
       this.refreshStorageStats(),
-      this.loadReclamations()
+      this.loadReclamations(),
+      this.loadAnnouncements()
     ]);
   }
 

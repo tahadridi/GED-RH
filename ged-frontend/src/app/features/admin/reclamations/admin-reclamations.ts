@@ -17,6 +17,9 @@ import { LucideCheck, LucideX, LucideClock, LucideRefreshCw } from '@lucide/angu
         </button>
       </div>
 
+      <!-- Gradient divider -->
+      <div class="mb-6 h-px bg-gradient-to-r from-blue-400 via-purple-400 to-transparent"></div>
+
       <div *ngIf="loading()" class="text-center py-8 text-gray-500">Chargement...</div>
 
       <div *ngIf="!loading() && reclamations().length === 0" class="empty-state">

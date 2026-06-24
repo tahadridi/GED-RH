@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { ApiService } from '../../../core/services/api.service';
+import { AnnouncementService } from '../../../core/services/announcement.service';
 import { DocumentService } from '../../../core/services/document.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
 import { Employee } from '../../../core/models/employee.model';
@@ -24,6 +25,7 @@ export class ManagerDashboard implements OnInit {
   reclamations = signal<any[]>([]);
   recentDocs = signal<any[]>([]);
   expandedDocGroups = signal<Set<string>>(new Set());
+  announcements = signal<any[]>([]);
 
   pendingReclamations = computed(() => this.reclamations().filter(r => r.status === 'PENDING'));
   approvedReclamations = computed(() => this.reclamations().filter(r => r.status === 'APPROVED'));
@@ -52,6 +54,7 @@ export class ManagerDashboard implements OnInit {
     private authService: AuthService,
     private employeeService: EmployeeService,
     private api: ApiService,
+    private announcementService: AnnouncementService,
     private documentService: DocumentService,
     private webSocketService: WebSocketService
   ) {}
@@ -76,7 +79,16 @@ export class ManagerDashboard implements OnInit {
     } finally {
       this.loading.set(false);
     }
+    this.loadAnnouncements();
     this.webSocketService.onReclamationUpdate(() => this.refreshReclamations());
+  }
+
+  private async loadAnnouncements() {
+    try {
+      this.announcements.set(await this.announcementService.list());
+    } catch (e) {
+      console.warn('Announcements not available', e);
+    }
   }
 
   async refreshReclamations() {

@@ -64,6 +64,10 @@ export const routes: Routes = [
         path: 'admin/doc-types',
         loadComponent: () => import('./features/admin/doc-types/admin-doc-types').then(m => m.AdminDocTypes)
       },
+      {
+        path: 'admin/announcements',
+        loadComponent: () => import('./features/admin/announcements/admin-announcements').then(m => m.AdminAnnouncements)
+      },
     ]
   },
   { path: '**', redirectTo: 'auth/login' }

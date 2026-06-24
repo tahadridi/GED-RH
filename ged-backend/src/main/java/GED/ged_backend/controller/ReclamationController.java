@@ -12,6 +12,10 @@ import GED.ged_backend.repository.ReclamationRepository;
 import GED.ged_backend.repository.SystemUserRepository;
 import GED.ged_backend.service.AccessControlService;
 import GED.ged_backend.service.ReclamationWebSocketService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +29,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/reclamations")
+@Tag(name = "Reclamations", description = "Gestion des reclamations — creation, approbation, rejet, changement d'email")
 public class ReclamationController {
 
     private final ReclamationRepository reclamationRepository;
@@ -45,6 +50,7 @@ public class ReclamationController {
 
     @PostMapping
     @Transactional
+    @Operation(summary = "Creer une reclamation")
     public ReclamationResponse create(@RequestBody CreateReclamationRequest req) {
         SystemUser current = accessControlService.getCurrentUser();
         if (current == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -78,6 +84,7 @@ public class ReclamationController {
 
     @GetMapping("/mine")
     @Transactional(readOnly = true)
+    @Operation(summary = "Mes reclamations", description = "Retourne les reclamations de l'utilisateur connecte.")
     public List<ReclamationResponse> listMine() {
         SystemUser current = accessControlService.getCurrentUser();
         if (current == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -89,6 +96,7 @@ public class ReclamationController {
 
     @GetMapping("/team")
     @Transactional(readOnly = true)
+    @Operation(summary = "Reclamations de l'equipe", description = "Retourne les reclamations des employes rattaches au manager connecte.")
     public List<ReclamationResponse> listTeam() {
         SystemUser current = accessControlService.getCurrentUser();
         if (current == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -109,6 +117,7 @@ public class ReclamationController {
 
     @GetMapping
     @Transactional(readOnly = true)
+    @Operation(summary = "Toutes les reclamations", description = "ADMIN : toutes + changements d'email. DG : toutes. MANAGER : equipe + personnelles.")
     public List<ReclamationResponse> listAll() {
         SystemUser user = accessControlService.getCurrentUser();
         if (user == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -143,7 +152,8 @@ public class ReclamationController {
 
     @PutMapping("/{id}/approve")
     @Transactional
-    public ReclamationResponse approve(@PathVariable UUID id) {
+    @Operation(summary = "Approuver une reclamation")
+    public ReclamationResponse approve(@Parameter(description = "ID de la reclamation") @PathVariable UUID id) {
         SystemUser current = accessControlService.getCurrentUser();
         if (current == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         SystemUser user = systemUserRepository.findById(current.getId())
@@ -186,7 +196,8 @@ public class ReclamationController {
 
     @PutMapping("/{id}/apply-email-change")
     @Transactional
-    public ReclamationResponse applyEmailChange(@PathVariable UUID id) {
+    @Operation(summary = "Appliquer un changement d'email", description = "L'employe ou l'admin applique le nouvel email apres approbation.")
+    public ReclamationResponse applyEmailChange(@Parameter(description = "ID de la reclamation") @PathVariable UUID id) {
         SystemUser current = accessControlService.getCurrentUser();
         if (current == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         SystemUser user = systemUserRepository.findById(current.getId())
@@ -238,7 +249,8 @@ public class ReclamationController {
 
     @PutMapping("/{id}/acknowledge")
     @Transactional
-    public ReclamationResponse acknowledge(@PathVariable UUID id) {
+    @Operation(summary = "Accuser reception", description = "Marque la reclamation comme lue par l'employe, son manager ou l'admin.")
+    public ReclamationResponse acknowledge(@Parameter(description = "ID de la reclamation") @PathVariable UUID id) {
         SystemUser current = accessControlService.getCurrentUser();
         if (current == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         SystemUser user = systemUserRepository.findById(current.getId())
@@ -262,7 +274,8 @@ public class ReclamationController {
 
     @PutMapping("/{id}/reject")
     @Transactional
-    public ReclamationResponse reject(@PathVariable UUID id, @RequestBody(required = false) RejectRequest req) {
+    @Operation(summary = "Rejeter une reclamation")
+    public ReclamationResponse reject(@Parameter(description = "ID de la reclamation") @PathVariable UUID id, @RequestBody(required = false) RejectRequest req) {
         SystemUser current = accessControlService.getCurrentUser();
         if (current == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         SystemUser user = systemUserRepository.findById(current.getId())
@@ -308,6 +321,7 @@ public class ReclamationController {
 
     @GetMapping("/stats/by-department")
     @Transactional(readOnly = true)
+    @Operation(summary = "Statistiques par departement", description = "ADMIN/DG : nombre total, en attente, approuve, rejete par departement.")
     public List<DepartmentStats> statsByDepartment() {
         SystemUser current = accessControlService.getCurrentUser();
         if (current == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -336,32 +350,47 @@ public class ReclamationController {
                 .toList();
     }
 
-    public record DepartmentStats(String department, int total, int pending, int approved, int rejected) {}
+    @Schema(description = "Statistiques par departement")
+    public record DepartmentStats(
+            @Schema(description = "Departement") String department,
+            @Schema(description = "Total") int total,
+            @Schema(description = "En attente") int pending,
+            @Schema(description = "Approuve") int approved,
+            @Schema(description = "Rejete") int rejected) {}
 
-    public record CreateReclamationRequest(String title, String message, String newValue, String priority) {}
+    @Schema(description = "Requete de creation de reclamation")
+    public record CreateReclamationRequest(
+            @Schema(description = "Titre", example = "Probleme d'acces") String title,
+            @Schema(description = "Message") String message,
+            @Schema(description = "Nouvel email (pour changement d'email)") String newValue,
+            @Schema(description = "Priorite (FAIBLE, MOYENNE, HAUTE, CRITIQUE)") String priority) {}
 
-    public record RejectRequest(String reason, String comment) {}
+    @Schema(description = "Requete de rejet")
+    public record RejectRequest(
+            @Schema(description = "Motif (HORS_PERIMETRE, INFOS_INSUFFISANTES, etc.)") String reason,
+            @Schema(description = "Commentaire libre") String comment) {}
 
+    @Schema(description = "Reclamation")
     public record ReclamationResponse(
-            UUID id,
-            UUID employeeId,
-            String employeeFirstName,
-            String employeeLastName,
-            String employeeEmail,
-            String employeeMatricule,
-            String employeeManagerId,
-            String employeeManagerName,
-            String title,
-            String message,
-            String newValue,
-            String priority,
-            String status,
-            String rejectionReason,
-            String rejectionComment,
-            String createdAt,
-            String processedAt,
-            String processedByName,
-            boolean acknowledged
+            @Schema(description = "ID") UUID id,
+            @Schema(description = "ID de l'employe") UUID employeeId,
+            @Schema(description = "Prenom de l'employe") String employeeFirstName,
+            @Schema(description = "Nom de l'employe") String employeeLastName,
+            @Schema(description = "Email de l'employe") String employeeEmail,
+            @Schema(description = "Matricule") String employeeMatricule,
+            @Schema(description = "ID du manager") String employeeManagerId,
+            @Schema(description = "Nom du manager") String employeeManagerName,
+            @Schema(description = "Titre") String title,
+            @Schema(description = "Message") String message,
+            @Schema(description = "Nouvel email demande") String newValue,
+            @Schema(description = "Priorite") String priority,
+            @Schema(description = "Statut (PENDING, APPROVED, REJECTED)") String status,
+            @Schema(description = "Motif du rejet") String rejectionReason,
+            @Schema(description = "Commentaire de rejet") String rejectionComment,
+            @Schema(description = "Date de creation") String createdAt,
+            @Schema(description = "Date de traitement") String processedAt,
+            @Schema(description = "Nom du traiteur") String processedByName,
+            @Schema(description = "Accuse de lecture") boolean acknowledged
     ) {
         public static ReclamationResponse from(Reclamation r) {
             SystemUser emp = r.getEmployee();
