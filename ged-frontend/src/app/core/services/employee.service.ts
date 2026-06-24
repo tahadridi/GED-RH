@@ -3,6 +3,12 @@ import { ApiService } from './api.service';
 import { Employee, CreateEmployeeRequest, UpdateEmployeeRequest } from '../models/employee.model';
 import { Page } from '../models/page.model';
 
+export interface OrgContextResponse {
+  manager: EmployeeTreeNode | null;
+  employee: EmployeeTreeNode;
+  reports: EmployeeTreeNode[];
+}
+
 export interface EmployeeTreeNode {
   id: string;
   firstName: string;
@@ -28,6 +34,10 @@ export class EmployeeService {
 
   get(id: string): Promise<Employee> {
     return this.api.get<Employee>(`/employees/${id}`);
+  }
+
+  getOrgContext(id: string): Promise<OrgContextResponse> {
+    return this.api.get<OrgContextResponse>(`/employees/${id}/org-context`);
   }
 
   getHierarchy(): Promise<EmployeeTreeNode[]> {

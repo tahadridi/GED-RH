@@ -129,6 +129,30 @@ public class EmployeeController {
             @Schema(description = "URL de la photo") String photoUrl,
             @Schema(description = "Subalternes") List<EmployeeTreeNode> children) {}
 
+    @GetMapping("/{id}/org-context")
+    @Transactional(readOnly = true)
+    @Operation(summary = "Contexte hierarchique", description = "Retourne le manager, l'employe et ses subalternes directs pour un employe donne.")
+    public OrgContextResponse getOrgContext(@PathVariable UUID id) {
+        var ctx = employeeService.getOrgContext(id);
+        return new OrgContextResponse(
+            ctx.manager() != null ? buildFlatNode(ctx.manager()) : null,
+            buildFlatNode(ctx.employee()),
+            ctx.reports().stream().map(this::buildFlatNode).toList()
+        );
+    }
+
+    private EmployeeTreeNode buildFlatNode(Employee e) {
+        return new EmployeeTreeNode(e.getId(), e.getFirstName(), e.getLastName(), e.getMatricule(),
+                e.getPosition(), e.getDepartment(), e.getPhotoPath() != null ? "/employees/" + e.getId() + "/photo/content" : null,
+                List.of());
+    }
+
+    @Schema(description = "Contexte hierarchique d'un employe")
+    public record OrgContextResponse(
+            @Schema(description = "Manager direct (null si aucun)") EmployeeTreeNode manager,
+            @Schema(description = "L'employe courant") EmployeeTreeNode employee,
+            @Schema(description = "Subalternes directs") List<EmployeeTreeNode> reports) {}
+
     @PostMapping
     @Transactional
     @Operation(summary = "Creer un employe")

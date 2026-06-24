@@ -57,6 +57,12 @@ import {
           <span *ngIf="recBadgeCount > 0" class="rec-badge">{{ recBadgeCount }}</span>
         </a>
 
+        <a *ngIf="isManager && !isDG" routerLink="/dashboard/manager/organigramme" routerLinkActive="active-link"
+           class="nav-link">
+          <svg lucideGitBranch class="w-4 h-4 shrink-0"></svg>
+          Mon organigramme
+        </a>
+
         <div *ngIf="isDG" class="pt-4 pb-2 px-3">
           <p class="admin-section-title">Organisation</p>
           <div class="space-y-1">

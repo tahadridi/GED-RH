@@ -62,7 +62,7 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-gray-500">Équipe</p>
-            <p class="text-3xl font-bold text-gray-900 mt-1">{{ team().length }}</p>
+            <p class="text-3xl font-bold text-gray-900 mt-1">{{ teamFiltered().length }}</p>
             <p class="text-xs text-gray-500 mt-2">Membres</p>
           </div>
           <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center">
@@ -208,10 +208,80 @@
       </div>
     </div>
 
-    <!-- Quick Actions + Team Members -->
+    <!-- Org Chart + Team Members -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <!-- Quick Actions -->
-      
+      <!-- Mini Organigramme -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-5 border-b border-gray-100 flex justify-between items-center">
+          <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+            <svg lucideGitBranch class="w-5 h-5 text-gray-600"></svg>
+            Mon organigramme
+          </h2>
+          <a routerLink="/dashboard/manager/organigramme" class="text-blue-600 text-sm font-medium hover:underline">Voir tout</a>
+        </div>
+        <div *ngIf="orgLoading()" class="p-8 text-center text-gray-400 text-sm">Chargement...</div>
+        <div *ngIf="!orgLoading() && !selfNode()" class="p-8 text-center text-gray-400 text-sm">
+          Impossible de charger l'organigramme.
+        </div>
+        <div *ngIf="!orgLoading() && selfNode() as self" class="p-4 overflow-x-auto">
+          <div class="flex flex-col items-center" style="min-width: max-content;">
+            <!-- Boss node -->
+            <div *ngIf="orgBoss" class="flex flex-col items-center">
+              <div class="org-card org-card-manager" [routerLink]="['/employees', orgBoss.id]">
+                <div class="org-avatar">
+                  <img *ngIf="orgBoss.photoUrl" [src]="apiUrl + orgBoss.photoUrl" alt="" class="w-full h-full object-cover rounded-full">
+                  <span *ngIf="!orgBoss.photoUrl" class="org-initials">{{ orgBoss.firstName[0] }}{{ orgBoss.lastName[0] }}</span>
+                </div>
+                <div class="org-info">
+                  <p class="org-name">{{ orgBoss.firstName }} {{ orgBoss.lastName }}</p>
+                  <p class="org-matricule">{{ orgBoss.matricule }}</p>
+                  <p class="org-position">{{ orgBoss.position }}</p>
+                </div>
+              </div>
+              <div class="org-line-down"></div>
+            </div>
+
+            <!-- Self node -->
+            <div class="flex flex-col items-center">
+              <div class="org-card org-card-self" [routerLink]="['/employees', self.id]">
+                <div class="org-avatar org-avatar-self">
+                  <img *ngIf="self.photoUrl" [src]="apiUrl + self.photoUrl" alt="" class="w-full h-full object-cover rounded-full">
+                  <span *ngIf="!self.photoUrl" class="org-initials">{{ self.firstName[0] }}{{ self.lastName[0] }}</span>
+                </div>
+                <div class="org-info">
+                  <p class="org-name font-bold">{{ self.firstName }} {{ self.lastName }}</p>
+                  <p class="org-matricule">{{ self.matricule }}</p>
+                </div>
+              </div>
+
+              <!-- Reports row -->
+              <div *ngIf="teamFiltered().length > 0" class="flex flex-col items-center">
+                <div class="org-line-down"></div>
+                <div class="flex gap-3" style="padding-left: 4px; padding-right: 4px;">
+                  <div *ngFor="let r of teamFiltered()" class="flex flex-col items-center">
+                    <div class="org-line-up"></div>
+                    <div class="org-card" [routerLink]="['/employees', r.id]">
+                      <div class="org-avatar">
+                        <img *ngIf="r.photoUrl" [src]="apiUrl + '/employees/' + r.id + '/photo/content'" alt="" class="w-full h-full object-cover rounded-full">
+                        <span *ngIf="!r.photoUrl" class="org-initials">{{ r.firstName[0] }}{{ r.lastName[0] }}</span>
+                      </div>
+                      <div class="org-info">
+                        <p class="org-name">{{ r.firstName }} {{ r.lastName }}</p>
+                        <p class="org-matricule">{{ r.matricule }}</p>
+                        <p class="org-position">{{ r.position }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="teamFiltered().length === 0" class="mt-4 text-xs text-gray-400">
+                Aucun membre dans votre équipe.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Team Members -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -224,11 +294,11 @@
           </h2>
           <a routerLink="/employees" class="text-blue-600 text-sm font-medium hover:underline">Voir tout</a>
         </div>
-        <div *ngIf="team().length === 0" class="p-8 text-center text-gray-400 text-sm">
+        <div *ngIf="teamFiltered().length === 0" class="p-8 text-center text-gray-400 text-sm">
           Aucun employé dans votre équipe.
         </div>
-        <div *ngIf="team().length > 0" class="divide-y divide-gray-50">
-          <div *ngFor="let emp of team()" class="p-4 flex items-center justify-between hover:bg-gray-50">
+        <div *ngIf="teamFiltered().length > 0" class="divide-y divide-gray-50">
+          <div *ngFor="let emp of teamFiltered()" class="p-4 flex items-center justify-between hover:bg-gray-50">
             <div class="flex items-center gap-3">
               <div *ngIf="!emp.photoUrl" class="w-9 h-9 rounded-full bg-white flex items-center justify-center border border-gray-200 shrink-0">
                 <img src="/UserIcon.png" alt="User" class="w-5 h-5 object-contain">

@@ -147,6 +147,17 @@ public class EmployeeService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public OrgContext getOrgContext(UUID employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
+        Employee manager = employee.getManager();
+        List<Employee> reports = employeeRepository.findByManagerId(employeeId);
+        return new OrgContext(manager, employee, reports);
+    }
+
+    public record OrgContext(Employee manager, Employee employee, List<Employee> reports) {}
+
     public void deactivateEmployee(UUID id) {
         Employee e = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));

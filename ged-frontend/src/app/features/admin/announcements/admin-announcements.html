@@ -1,7 +1,7 @@
 <div class="p-8">
   <div class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-bold text-black-900">Annonces</h1>
+      <h1 class="text-2xl font-bold text-gray-900">Annonces</h1>
       <p class="text-sm text-gray-500 mt-1">Communiquez avec l'ensemble des collaborateurs.</p>
     </div>
     <button (click)="openCreate()"
@@ -11,7 +11,6 @@
     </button>
   </div>
 
-  <!-- Gradient divider -->
   <div class="mb-6 h-px bg-gradient-to-r from-blue-400 via-purple-400 to-transparent"></div>
 
   <div *ngIf="loading()" class="text-center py-12 text-gray-400 text-sm">Chargement...</div>
@@ -56,11 +55,13 @@
             </div>
           </div>
           <div class="flex items-center gap-1 shrink-0">
-            <button (click)="openEdit(a)" class="text-gray-300 hover:text-blue-500 transition-colors p-1.5 rounded-lg hover:bg-blue-50"
+            <button (click)="openEdit(a)"
+              class="text-gray-300 hover:text-blue-500 transition-colors p-1.5 rounded-lg hover:bg-blue-50"
               title="Modifier">
               <svg lucidePencil class="w-4 h-4"></svg>
             </button>
-            <button (click)="delete(a)" class="text-gray-300 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50"
+            <button (click)="delete(a)"
+              class="text-gray-300 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50"
               title="Supprimer">
               <svg lucideTrash2 class="w-4 h-4"></svg>
             </button>
@@ -71,11 +72,12 @@
   </div>
 </div>
 
-<!-- Create Modal -->
 <div *ngIf="showForm()" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
   <div class="bg-white rounded-xl shadow-xl w-full max-w-lg">
     <div class="flex items-center justify-between p-5 border-b border-gray-100">
-      <h2 class="text-lg font-semibold text-gray-900">{{ isEditing ? 'Modifier l\'annonce' : 'Nouvelle annonce' }}</h2>
+      <h2 class="text-lg font-semibold text-gray-900">
+        {{ isEditing ? "Modifier l'annonce" : 'Nouvelle annonce' }}
+      </h2>
       <button (click)="showForm.set(false)" class="text-gray-400 hover:text-gray-600">
         <svg lucideX class="w-5 h-5"></svg>
       </button>
@@ -108,13 +110,15 @@
       </div>
       <div>
         <label class="block text-xs font-medium text-gray-700 mb-1">Contenu *</label>
-        <textarea [(ngModel)]="form.content" rows="6"
-          placeholder="Écrivez votre annonce ici..."
+        <textarea [(ngModel)]="form.content" rows="6" placeholder="Écrivez votre annonce ici..."
           class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"></textarea>
       </div>
       <div *ngIf="formError()" class="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{{ formError() }}</div>
       <div class="flex justify-end gap-3 pt-2">
-        <button (click)="showForm.set(false)" class="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg">Annuler</button>
+        <button (click)="showForm.set(false)"
+          class="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg">
+          Annuler
+        </button>
         <button (click)="save()" [disabled]="saving()"
           class="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium">
           <svg lucideMegaphone class="w-4 h-4"></svg>

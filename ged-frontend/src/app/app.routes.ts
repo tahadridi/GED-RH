@@ -26,6 +26,10 @@ export const routes: Routes = [
         path: 'dashboard/manager',
         loadComponent: () => import('./features/dashboard/manager-dashboard/manager-dashboard').then(m => m.ManagerDashboard)
       },
+      {
+        path: 'dashboard/manager/organigramme',
+        loadComponent: () => import('./features/dashboard/manager-dashboard/manager-organigramme').then(m => m.ManagerOrganigramme)
+      },
       // Direction Générale dashboard
       {
         path: 'dashboard/dg',
