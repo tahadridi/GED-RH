@@ -9,6 +9,7 @@ import { Employee } from '../../../core/models/employee.model';
 import { environment } from '../../../../environments/environment';
 import { EmployeeDocument } from '../../../core/models/document.model';
 import { DocumentType } from '../../../core/models/user.model';
+import { getErrorMessage } from '../../../core/utils/error.utils';
 import { EmployeeForm } from '../employee-form/employee-form';
 import {
   LucideUpload, LucideDownload, LucideFileText,
@@ -58,6 +59,18 @@ export class EmployeeDetail implements OnInit {
   uploadTempKey = '';
   saving = signal(false);
   saveError = signal('');
+
+  // Version upload wizard — 2-step OCR review
+  showVersionModal = signal(false);
+  versionStep = signal<1 | 2>(1);
+  versionTargetDoc = signal<EmployeeDocument | null>(null);
+  versionFile: File | null = null;
+  analyzingVersionOcr = signal(false);
+  versionOcrError = signal('');
+  versionOcrText = '';
+  versionTempKey = '';
+  savingVersion = signal(false);
+  versionSaveError = signal('');
 
   // Document search & groups
   docSearchQuery = '';
@@ -243,7 +256,7 @@ export class EmployeeDetail implements OnInit {
       this.uploadOcrText = result.ocrText ?? '';
       this.uploadStep.set(2);
     } catch (e: any) {
-      this.ocrError.set(e?.error?.message ?? e?.message ?? 'Erreur lors de l\'analyse OCR');
+      this.ocrError.set(getErrorMessage(e, 'Erreur lors de l\'analyse OCR'));
     } finally {
       this.analyzingOcr.set(false);
     }
@@ -267,29 +280,63 @@ export class EmployeeDetail implements OnInit {
       this.showUploadModal.set(false);
       await this.load(this.employee()!.id);
     } catch (e: any) {
-      this.saveError.set(e?.error?.message ?? 'Erreur lors de l\'enregistrement');
+      this.saveError.set(getErrorMessage(e, 'Erreur lors de l\'enregistrement'));
     } finally {
       this.saving.set(false);
     }
   }
 
-  async updateFileVersion(doc: EmployeeDocument) {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.pdf,.jpg,.jpeg,.png';
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      try {
-        const emp = this.employee();
-        const name = emp ? `${emp.firstName} ${emp.lastName}` : 'inconnu';
-        await this.documentService.addVersion(doc.id, file, name);
-        await this.load(this.employee()!.id);
-      } catch (e: any) {
-        alert(e?.error?.message ?? 'Erreur lors de l\'ajout de la version');
-      }
-    };
-    input.click();
+  openVersionModal(doc: EmployeeDocument) {
+    this.versionTargetDoc.set(doc);
+    this.versionStep.set(1);
+    this.versionFile = null;
+    this.versionOcrText = '';
+    this.versionTempKey = '';
+    this.versionOcrError.set('');
+    this.versionSaveError.set('');
+    this.showVersionModal.set(true);
+  }
+
+  onVersionFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files?.length) {
+      this.versionFile = input.files[0];
+    }
+  }
+
+  async analyzeVersionOcr() {
+    const doc = this.versionTargetDoc();
+    if (!doc || !this.versionFile) return;
+    this.analyzingVersionOcr.set(true);
+    this.versionOcrError.set('');
+    try {
+      const result: OcrPreviewResult = await this.documentService.ocrPreviewVersion(doc.id, this.versionFile);
+      this.versionTempKey = result.tempKey;
+      this.versionOcrText = result.ocrText ?? '';
+      this.versionStep.set(2);
+    } catch (e: any) {
+      this.versionOcrError.set(getErrorMessage(e, 'Erreur lors de l\'analyse OCR'));
+    } finally {
+      this.analyzingVersionOcr.set(false);
+    }
+  }
+
+  async saveVersion() {
+    const doc = this.versionTargetDoc();
+    if (!doc || !this.versionTempKey) return;
+    this.savingVersion.set(true);
+    this.versionSaveError.set('');
+    try {
+      const emp = this.employee();
+      const name = emp ? `${emp.firstName} ${emp.lastName}` : 'inconnu';
+      await this.documentService.saveVersionFromPreview(doc.id, name, this.versionTempKey, this.versionOcrText);
+      this.showVersionModal.set(false);
+      await this.load(this.employee()!.id);
+    } catch (e: any) {
+      this.versionSaveError.set(getErrorMessage(e, 'Erreur lors de l\'enregistrement de la version'));
+    } finally {
+      this.savingVersion.set(false);
+    }
   }
 
   async download(doc: EmployeeDocument) {
@@ -327,7 +374,7 @@ export class EmployeeDetail implements OnInit {
       this.documents.set(this.documents().filter(d => d.id !== doc.id));
       await this.load(this.employee()!.id);
     } catch (e: any) {
-      alert(e?.error?.message ?? 'Erreur lors de la suppression');
+      alert(getErrorMessage(e, 'Erreur lors de la suppression'));
     }
   }
 

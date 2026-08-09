@@ -1,0 +1,74 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: Gestion_Administratif
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD:LOCAL_DEV_CREDENTIALS
+    # Port hôte 5433 pour ne pas entrer en conflit avec un Postgres local sur 5432
+    ports:
+      - "5433:5432"
+    volumes:
+      # Postgres 18+ exige le montage sur /var/lib/postgresql (donnees dans un sous-dossier versionne)
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: LOCAL_DEV_CREDENTIALS
+      MINIO_ROOT_PASSWORD: LOCAL_DEV_CREDENTIALS
+    # Ports hôtes 9002/9003 pour ne pas entrer en conflit avec un MinIO local sur 9000
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+    volumes:
+      - minio-data:/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    restart: unless-stopped
+    # Les cles Supabase viennent du .env existant (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWKS_URL)
+    env_file:
+      - ./ged-backend/.env
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/Gestion_Administratif
+      DB_USERNAME: postgres
+      DB_PASSWORD:LOCAL_DEV_CREDENTIALS
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESS_KEY: LOCAL_DEV_CREDENTIALS
+      MINIO_SECRET_KEY: LOCAL_DEV_CREDENTIALS
+      MINIO_BUCKET: ged-rh
+      TESSDATA_PATH: /usr/share/tesseract-ocr/5/tessdata
+      APP_SECURITY_ALLOWED_ORIGINS: http://localhost:4200,http://localhost:8081
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  postgres-data:
+  minio-data:
+
+# Reseau partage avec docker-compose.frontend.yml
+networks:
+  default:
+    name: ged-net

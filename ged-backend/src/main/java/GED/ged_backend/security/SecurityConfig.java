@@ -39,14 +39,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            ObjectProvider<DefaultJWTProcessor> jwtProcessorProvider) throws Exception {
+            ObjectProvider<DefaultJWTProcessor> jwtProcessorProvider,
+            CorsConfigurationSource corsConfigurationSource) throws Exception {
 
         DefaultJWTProcessor<com.nimbusds.jose.proc.SecurityContext> jwtProcessor =
             (DefaultJWTProcessor<com.nimbusds.jose.proc.SecurityContext>)(DefaultJWTProcessor<?>) jwtProcessorProvider.getIfAvailable();
 
         http
             .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource("http://localhost:4200")))
+            .cors(cors -> cors.configurationSource(corsConfigurationSource))
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth

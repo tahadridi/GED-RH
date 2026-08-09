@@ -167,37 +167,33 @@ public class DocumentService {
     }
 
     @Transactional
-    public DocumentVersion addVersion(UUID documentId, String uploadedBy, InputStream fileStream, String contentType, String originalFilename) {
+    public DocumentVersion addVersion(UUID documentId, String uploadedBy, String tempKey, String ocrText) {
         EmployeeDocument doc = documentRepository.findById(documentId).orElseThrow();
         int next = doc.getCurrentVersion() + 1;
 
-        // Extract extension from the uploaded file
-        String ext = "";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            ext = originalFilename.substring(originalFilename.lastIndexOf("."));
-        }
-
-        // Architecture Step 1: Store Original File
+        // Move temp file (already in MinIO) into the employee's folder
         Employee employee = doc.getEmployee();
-        String fileName = employeeFolder(employee) + UUID.randomUUID().toString() + "_v" + next + "_" + doc.getName() + ext;
-        storageService.uploadFile(fileName, fileStream, contentType);
-        
-        // Architecture Step 3: Metadata Extraction & DB Update
+        String fileName = tempKey.replaceFirst("^temp/", "");
+        String finalKey = employeeFolder(employee) + fileName;
+        storageService.copyFile(tempKey, finalKey);
+        storageService.deleteFile(tempKey);
+
+        // Create version with user-corrected OCR text
         DocumentVersion v = new DocumentVersion();
         v.setDocument(doc);
         v.setVersionNumber(next);
-        v.setStoragePath(fileName);
+        v.setStoragePath(finalKey);
         v.setUploadedBy(uploadedBy);
+        v.setOcrText(ocrText);
         DocumentVersion savedVersion = versionRepository.save(v);
-        
+
         doc.setCurrentVersion(next);
-        doc.setStoragePath(fileName);
+        doc.setStoragePath(finalKey);
+        doc.setOcrText(ocrText);
         doc.setUpdatedAt(java.time.Instant.now());
         documentRepository.save(doc);
-        
-        // Architecture Step 2: Asynchronous OCR Processing
-        processOcrAsync(doc.getId(), savedVersion.getId(), fileName);
-        
+
+        elasticsearchService.indexDocument(doc);
         return savedVersion;
     }
 

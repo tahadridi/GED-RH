@@ -10,6 +10,7 @@ import { AnnouncementService } from '../../../core/services/announcement.service
 import { Employee } from '../../../core/models/employee.model';
 import { DocumentType } from '../../../core/models/user.model';
 import { environment } from '../../../../environments/environment';
+import { getErrorMessage } from '../../../core/utils/error.utils';
 import {
   LucideUpload,
   LucideScanText,
@@ -354,7 +355,7 @@ export class RhDashboard implements OnInit {
       this.uploadOcrText = result.ocrText;
       this.uploadStep.set(2);
     } catch (e: any) {
-      this.ocrError.set(e?.error?.message ?? 'Erreur OCR');
+      this.ocrError.set(getErrorMessage(e, 'Erreur OCR'));
     } finally {
       this.analyzingOcr.set(false);
     }
@@ -377,7 +378,7 @@ export class RhDashboard implements OnInit {
       this.showUpload.set(false);
       await this.refreshData();
     } catch (e: any) {
-      this.saveError.set(e?.error?.message ?? 'Erreur enregistrement');
+      this.saveError.set(getErrorMessage(e, 'Erreur enregistrement'));
     } finally {
       this.saving.set(false);
     }

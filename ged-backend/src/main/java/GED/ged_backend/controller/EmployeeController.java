@@ -77,7 +77,7 @@ public class EmployeeController {
         SystemUser actor = accessControlService.getCurrentUser();
         Employee e = employeeService.getEmployee(id);
         if (!accessControlService.canViewEmployee(actor, e)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé.");
         }
         return EmployeeResponse.from(e);
     }
@@ -196,7 +196,7 @@ public class EmployeeController {
     public ResponseEntity<InputStreamResource> getPhoto(@PathVariable UUID id) {
         Employee e = employeeService.getEmployee(id);
         if (e.getPhotoPath() == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No photo");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Aucune photo disponible.");
         }
         String ext = "";
         String path = e.getPhotoPath();

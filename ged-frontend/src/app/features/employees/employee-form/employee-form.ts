@@ -6,6 +6,7 @@ import { OrganizationService, Department } from '../../../core/services/organiza
 import { AuthService } from '../../../core/services/auth.service';
 import { Employee, EmployeeStatus } from '../../../core/models/employee.model';
 import { LucideX, LucideSearch, LucideCheck, LucideChevronDown, LucideChevronRight, LucideCamera } from '@lucide/angular';
+import { getErrorMessage } from '../../../core/utils/error.utils';
 
 @Component({
   selector: 'app-employee-form',
@@ -220,7 +221,7 @@ export class EmployeeForm implements OnInit {
 
       this.close.emit(true);
     } catch (e: any) {
-      this.error = e?.error?.message ?? 'Une erreur est survenue';
+      this.error = getErrorMessage(e, 'Une erreur est survenue');
     } finally {
       this.saving = false;
     }

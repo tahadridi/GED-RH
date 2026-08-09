@@ -96,7 +96,7 @@ public class AuthController {
     public ResponseEntity<InputStreamResource> getPhoto() {
         SystemUser user = accessControlService.getCurrentUser();
         if (user == null || user.getPhotoPath() == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No photo");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Aucune photo disponible.");
         }
         InputStream is = storageService.downloadFile(user.getPhotoPath());
         return ResponseEntity.ok()
@@ -151,13 +151,13 @@ public class AuthController {
 
         SupabaseAdminClient client = supabaseAdminClientProvider.getIfAvailable();
         if (client == null) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Supabase admin is not enabled");
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "L'administration Supabase n'est pas activée.");
         }
 
         try {
             client.updateUser(user.getAuthUid(), Map.of("password", req.newPassword));
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to update password", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Impossible de mettre à jour le mot de passe.", e);
         }
     }
 

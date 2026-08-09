@@ -10,6 +10,7 @@ import {
   LucideSearch, LucideShield, LucideLogOut, LucideUser, LucideBuilding, LucideX, LucideCamera,
   LucideEye, LucideEyeOff, LucideCheck, LucideMegaphone, LucideGitBranch
 } from '@lucide/angular';
+import { getErrorMessage } from '../../../core/utils/error.utils';
 
 @Component({
   selector: 'app-sidebar',
@@ -69,7 +70,7 @@ import {
             <a routerLink="/admin/organization" routerLinkActive="active-link"
                class="nav-link">
               <svg lucideBuilding class="w-4 h-4 shrink-0"></svg>
-              Departements
+              Départements
             </a>
             <a routerLink="/admin/announcements" routerLinkActive="active-link"
                class="nav-link">
@@ -95,7 +96,7 @@ import {
             <a routerLink="/admin/organization" routerLinkActive="active-link"
                class="nav-link">
               <svg lucideBuilding class="w-4 h-4 shrink-0"></svg>
-              Departements
+              Départements
             </a>
             <a routerLink="/admin/doc-types" routerLinkActive="active-link"
                class="nav-link">
@@ -900,7 +901,7 @@ export class Sidebar implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }, 4000);
     } catch (e: any) {
-      this.requestError = e?.error?.message || e?.message || 'Erreur lors de l\'envoi de la demande';
+      this.requestError = getErrorMessage(e, 'Erreur lors de l\'envoi de la demande');
       this.cdr.detectChanges();
     } finally {
       this.sendingRequest = false;

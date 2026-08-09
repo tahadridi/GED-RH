@@ -186,7 +186,7 @@
                 class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors">
                 <svg lucideEye class="w-4 h-4"></svg>
               </button>
-              <button *ngIf="canManageDocs" (click)="updateFileVersion(doc)" title="Modifier le fichier"
+              <button *ngIf="canManageDocs" (click)="openVersionModal(doc)" title="Ajouter une nouvelle version"
                 class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 8l5-5m0 0l5 5m-5-5v12" />
@@ -311,6 +311,91 @@
             class="flex items-center gap-2 px-4 py-2 text-sm bg-blue-800 text-white rounded-lg hover:bg-blue-900 disabled:opacity-50 font-medium">
             <svg lucideCheck class="w-4 h-4"></svg>
             {{ saving() ? 'Enregistrement...' : 'Enregistrer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Version Upload Modal (2-step OCR wizard) -->
+<div *ngIf="showVersionModal()" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between p-5 border-b border-gray-100">
+      <div>
+        <h2 class="text-lg font-semibold text-gray-900">Ajouter une version</h2>
+        <p class="text-xs text-gray-400 mt-0.5">
+          {{ versionTargetDoc()?.name }} —
+          Étape {{ versionStep() }} sur 2 —
+          {{ versionStep() === 1 ? 'Sélection du fichier' : 'Révision OCR' }}
+        </p>
+      </div>
+      <button (click)="showVersionModal.set(false)" class="text-gray-400 hover:text-gray-600">
+        <svg lucideX class="w-5 h-5"></svg>
+      </button>
+    </div>
+
+    <!-- Step indicators -->
+    <div class="flex items-center px-5 pt-4 gap-2">
+      <div class="flex items-center gap-1.5">
+        <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+          [class]="versionStep() >= 1 ? 'bg-blue-800 text-white' : 'bg-gray-200 text-gray-500'">1</div>
+        <span class="text-xs text-gray-500">Fichier</span>
+      </div>
+      <div class="flex-1 h-px bg-gray-200 mx-1"></div>
+      <div class="flex items-center gap-1.5">
+        <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+          [class]="versionStep() >= 2 ? 'bg-blue-800 text-white' : 'bg-gray-200 text-gray-500'">2</div>
+        <span class="text-xs text-gray-500">Révision OCR</span>
+      </div>
+    </div>
+
+    <!-- STEP 1: File selection -->
+    <div *ngIf="versionStep() === 1" class="p-5 space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Fichier * (PDF, JPG, PNG)</label>
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="onVersionFileSelected($event)"
+          class="w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-800 file:text-sm file:font-medium hover:file:bg-blue-100 cursor-pointer">
+        <p *ngIf="versionFile" class="text-xs text-green-600 mt-1">✓ {{ versionFile.name }}</p>
+      </div>
+      <div *ngIf="versionOcrError()" class="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{{ versionOcrError() }}</div>
+      <div class="flex justify-end gap-3 pt-2">
+        <button (click)="showVersionModal.set(false)" class="px-4 py-2 text-sm text-gray-600">Annuler</button>
+        <button (click)="analyzeVersionOcr()" [disabled]="!versionFile || analyzingVersionOcr()"
+          class="flex items-center gap-2 px-4 py-2 text-sm bg-blue-800 text-white rounded-lg hover:bg-blue-900 disabled:opacity-50 font-medium">
+          <svg lucideScanText class="w-4 h-4"></svg>
+          {{ analyzingVersionOcr() ? 'Analyse en cours...' : 'Analyser avec OCR' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Review OCR text -->
+    <div *ngIf="versionStep() === 2" class="p-5 space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">
+          Texte extrait par OCR
+          <span class="text-gray-400 font-normal ml-1">(modifiable — corrigez si nécessaire)</span>
+        </label>
+        <textarea [(ngModel)]="versionOcrText" rows="8"
+          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 font-mono resize-y"
+          placeholder="Aucun texte extrait (document image non lisible ?)"></textarea>
+      </div>
+
+      <div *ngIf="versionSaveError()" class="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{{ versionSaveError() }}</div>
+
+      <div class="flex justify-between gap-3 pt-2">
+        <button (click)="versionStep.set(1)" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-200 rounded-lg">
+          ← Retour
+        </button>
+        <div class="flex gap-3">
+          <button (click)="showVersionModal.set(false)" class="px-4 py-2 text-sm text-gray-600">Annuler</button>
+          <button (click)="saveVersion()" [disabled]="savingVersion()"
+            class="flex items-center gap-2 px-4 py-2 text-sm bg-blue-800 text-white rounded-lg hover:bg-blue-900 disabled:opacity-50 font-medium">
+            <svg lucideCheck class="w-4 h-4"></svg>
+            {{ savingVersion() ? 'Enregistrement...' : 'Enregistrer la version' }}
           </button>
         </div>
       </div>

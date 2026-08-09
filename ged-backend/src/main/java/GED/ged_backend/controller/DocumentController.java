@@ -94,18 +94,32 @@ public class DocumentController {
                 .body(new InputStreamResource(documentService.getFileContent(id)));
     }
 
-    @PostMapping(value = "/{id}/versions", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Ajouter une version")
-    public DocumentVersion addVersion(
+    @PostMapping(value = "/{id}/versions/ocr-preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Preview OCR version", description = "Etape 1 : upload temporaire + extraction OCR pour une nouvelle version d'un document existant.")
+    public OcrPreviewResponse ocrPreviewVersion(
             @Parameter(description = "ID du document") @PathVariable UUID id,
-            @Parameter(description = "Nom de la personne qui uploade") @RequestParam("uploadedBy") String uploadedBy,
             @RequestPart("file") MultipartFile file) throws Exception {
         SystemUser actor = accessControlService.getCurrentUser();
         if (actor == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         if (!accessControlService.canManageDocument(actor, id)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
-        return documentService.addVersion(id, uploadedBy, file.getInputStream(), file.getContentType(), file.getOriginalFilename());
+        DocumentService.OcrPreviewResult result = documentService.ocrPreview(
+                file.getInputStream(), file.getContentType(), file.getOriginalFilename());
+        return new OcrPreviewResponse(result.tempKey(), result.ocrText(), result.originalFilename());
+    }
+
+    @PostMapping("/{id}/versions")
+    @Operation(summary = "Ajouter une version (post-OCR)")
+    public DocumentVersion addVersion(
+            @Parameter(description = "ID du document") @PathVariable UUID id,
+            @RequestBody AddVersionRequest req) {
+        SystemUser actor = accessControlService.getCurrentUser();
+        if (actor == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if (!accessControlService.canManageDocument(actor, id)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        return documentService.addVersion(id, req.uploadedBy, req.tempKey, req.ocrText);
     }
 
     @GetMapping("/versions/{versionId}/content")
@@ -256,5 +270,12 @@ public class DocumentController {
             return new DocumentService.CreateFromPreviewCommand(
                     employeeId, documentReference, name, type, author, tempKey, ocrText);
         }
+    }
+
+    @Schema(description = "Requete d'ajout de version apres validation OCR")
+    public static class AddVersionRequest {
+        @NotBlank @Schema(description = "Nom de la personne qui uploade") public String uploadedBy;
+        @NotBlank @Schema(description = "Cle temporaire retournee par /{id}/versions/ocr-preview") public String tempKey;
+        @Schema(description = "Texte OCR corrige par l'utilisateur") public String ocrText;
     }
 }

@@ -46,9 +46,21 @@ export class DocumentService {
     return this.api.postFormData<OcrPreviewResult>('/documents/ocr-preview', form);
   }
 
+  /** Step 1 (version): send file for a new version, get OCR text back for review */
+  async ocrPreviewVersion(documentId: string, file: File): Promise<OcrPreviewResult> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.api.postFormData<OcrPreviewResult>(`/documents/${documentId}/versions/ocr-preview`, form);
+  }
+
   /** Step 2: save with user-reviewed metadata (no re-upload) */
   saveFromPreview(req: CreateFromPreviewRequest): Promise<EmployeeDocument> {
     return this.api.post<EmployeeDocument>('/documents', req);
+  }
+
+  /** Step 2 (version): save the new version with the user-reviewed OCR text */
+  saveVersionFromPreview(documentId: string, uploadedBy: string, tempKey: string, ocrText: string): Promise<DocumentVersion> {
+    return this.api.post<DocumentVersion>(`/documents/${documentId}/versions`, { uploadedBy, tempKey, ocrText });
   }
 
   /** Legacy: upload + save in one step (kept for version uploads) */
@@ -58,13 +70,6 @@ export class DocumentService {
     form.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }));
     form.append('file', file);
     return this.api.postFormData<EmployeeDocument>('/documents', form);
-  }
-
-  addVersion(documentId: string, file: File, uploadedBy: string): Promise<DocumentVersion> {
-    const form = new FormData();
-    form.append('file', file);
-    form.append('uploadedBy', uploadedBy);
-    return this.api.postFormDataVersion<DocumentVersion>(`/documents/${documentId}/versions`, form);
   }
 
   listVersions(documentId: string): Promise<DocumentVersion[]> {

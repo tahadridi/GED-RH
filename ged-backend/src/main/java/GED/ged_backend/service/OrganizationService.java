@@ -6,8 +6,10 @@ import GED.ged_backend.repository.DepartmentRepository;
 import GED.ged_backend.repository.JobPositionRepository;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional
@@ -41,7 +43,7 @@ public class OrganizationService {
     // Positions
     public JobPosition createPosition(UUID departmentId, String title) {
         Department dept = departmentRepository.findById(departmentId)
-                .orElseThrow(() -> new RuntimeException("Department not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Département introuvable."));
         JobPosition p = new JobPosition();
         p.setTitle(title);
         p.setDepartment(dept);

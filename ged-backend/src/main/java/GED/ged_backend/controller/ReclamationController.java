@@ -171,10 +171,10 @@ public class ReclamationController {
         }
         // Only admin can approve email-change reclamations
         if (!isAdmin && r.getNewValue() != null && !r.getNewValue().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only admin can approve email changes");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Seul l'administrateur peut approuver les changements d'email.");
         }
         if (r.getStatus() != ReclamationStatus.PENDING) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Reclamation already processed");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cette réclamation a déjà été traitée.");
         }
         r.setStatus(ReclamationStatus.APPROVED);
         r.setProcessedAt(LocalDateTime.now());
@@ -214,13 +214,13 @@ public class ReclamationController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         if (r.getStatus() != ReclamationStatus.APPROVED) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Reclamation is not approved");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La réclamation n'a pas encore été approuvée.");
         }
         if (r.getNewValue() == null || r.getNewValue().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No email change to apply");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Aucun changement d'email à appliquer.");
         }
         if (r.isAcknowledged()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Already applied");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le changement d'email a déjà été appliqué.");
         }
 
         employee.setEmail(r.getNewValue());
@@ -292,10 +292,10 @@ public class ReclamationController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         if (!isAdmin && r.getNewValue() != null && !r.getNewValue().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only admin can reject email changes");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Seul l'administrateur peut rejeter les changements d'email.");
         }
         if (r.getStatus() != ReclamationStatus.PENDING) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Reclamation already processed");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cette réclamation a déjà été traitée.");
         }
         r.setStatus(ReclamationStatus.REJECTED);
         r.setProcessedAt(LocalDateTime.now());

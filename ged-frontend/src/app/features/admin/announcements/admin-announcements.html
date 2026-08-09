@@ -40,10 +40,16 @@
             </p>
             <p class="text-sm text-gray-700 mt-3 whitespace-pre-line">{{ a.content }}</p>
           </div>
-          <button (click)="delete(a)" class="text-gray-400 hover:text-red-600 transition-colors shrink-0 p-1"
-            title="Supprimer">
-            <svg lucideTrash2 class="w-4 h-4"></svg>
-          </button>
+          <div class="flex items-center gap-1 shrink-0">
+            <button (click)="openEdit(a)" class="text-gray-400 hover:text-blue-600 transition-colors p-1"
+              title="Modifier">
+              <svg lucidePencil class="w-4 h-4"></svg>
+            </button>
+            <button (click)="delete(a)" class="text-gray-400 hover:text-red-600 transition-colors p-1"
+              title="Supprimer">
+              <svg lucideTrash2 class="w-4 h-4"></svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -54,7 +60,7 @@
 <div *ngIf="showForm()" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
   <div class="bg-white rounded-xl shadow-xl w-full max-w-lg">
     <div class="flex items-center justify-between p-5 border-b border-gray-100">
-      <h2 class="text-lg font-semibold text-gray-900">Nouvelle annonce</h2>
+      <h2 class="text-lg font-semibold text-gray-900">{{ editingAnnouncement() ? 'Modifier l\'annonce' : 'Nouvelle annonce' }}</h2>
       <button (click)="showForm.set(false)" class="text-gray-400 hover:text-gray-600">
         <svg lucideX class="w-5 h-5"></svg>
       </button>
@@ -84,7 +90,7 @@
         <button (click)="save()" [disabled]="saving()"
           class="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium">
           <svg lucideMegaphone class="w-4 h-4"></svg>
-          {{ saving() ? 'Publication...' : 'Publier' }}
+          {{ saving() ? 'Enregistrement...' : (editingAnnouncement() ? 'Enregistrer' : 'Publier') }}
         </button>
       </div>
     </div>

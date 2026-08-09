@@ -7,6 +7,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { SystemUser, SystemRole } from '../../../core/models/user.model';
 import { Employee } from '../../../core/models/employee.model';
 import { DocTypeService, DocType } from '../../../core/services/doc-type.service';
+import { environment } from '../../../../environments/environment';
+import { getErrorMessage } from '../../../core/utils/error.utils';
 import {
   LucideUserPlus, LucidePencil, LucideUserX, LucideKey,
   LucideX, LucideCheck, LucideTrash2, LucideSearch
@@ -21,6 +23,7 @@ import {
 export class AdminUsers implements OnInit {
   users = signal<SystemUser[]>([]);
   loading = signal(true);
+  apiUrl = environment.apiUrl;
   showForm = signal(false);
   editingUser = signal<SystemUser | null>(null);
   saving = signal(false);
@@ -82,6 +85,16 @@ export class AdminUsers implements OnInit {
     await Promise.all([this.load(), this.loadEmployees(), this.loadDocTypes()]);
   }
 
+  private photoErrors = new Set<string>();
+
+  hasPhotoError(u: SystemUser): boolean {
+    return this.photoErrors.has(u.id);
+  }
+
+  onPhotoError(u: SystemUser) {
+    this.photoErrors.add(u.id);
+  }
+
   get filteredManagers() {
     const q = this.managerSearchQuery.toLowerCase();
     return this.users().filter(u => 
@@ -114,6 +127,7 @@ export class AdminUsers implements OnInit {
     this.loading.set(true);
     try {
       this.users.set(await this.userService.list());
+      this.photoErrors.clear();
     } finally {
       this.loading.set(false);
     }
@@ -231,7 +245,7 @@ export class AdminUsers implements OnInit {
       await this.load();
       await this.loadEmployees();
     } catch (e: any) {
-      this.formError.set(e?.error?.message ?? 'Une erreur est survenue');
+      this.formError.set(getErrorMessage(e, 'Une erreur est survenue'));
     } finally {
       this.saving.set(false);
     }

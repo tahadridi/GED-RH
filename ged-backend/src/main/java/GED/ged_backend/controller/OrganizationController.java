@@ -58,7 +58,7 @@ public class OrganizationController {
     @ResponseStatus(HttpStatus.CREATED)
     public PositionResponse createPosition(@PathVariable UUID deptId, @RequestBody CreatePositionRequest req) {
         Department dept = departmentRepository.findById(deptId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Département introuvable."));
         JobPosition pos = new JobPosition();
         pos.setTitle(req.title());
         pos.setDepartment(dept);

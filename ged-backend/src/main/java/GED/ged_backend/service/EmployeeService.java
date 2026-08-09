@@ -39,7 +39,7 @@ public class EmployeeService {
         }
 
         if (employeeRepository.findByMatricule(matricule).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Matricule already exists: " + matricule);
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Le matricule " + matricule + " existe déjà.");
         }
 
         Employee e = new Employee();
@@ -56,7 +56,7 @@ public class EmployeeService {
 
         if (cmd.managerId() != null) {
             Employee mgr = employeeRepository.findById(cmd.managerId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Manager not found"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Manager introuvable."));
             e.setManager(mgr);
         }
 
@@ -88,7 +88,7 @@ public class EmployeeService {
 
     public Employee updateEmployee(UUID id, UpdateEmployeeCommand cmd) {
         Employee e = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employé introuvable."));
 
         e.setFirstName(cmd.firstName());
         e.setLastName(cmd.lastName());
@@ -102,7 +102,7 @@ public class EmployeeService {
 
         if (cmd.managerId() != null) {
             Employee mgr = employeeRepository.findById(cmd.managerId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Manager not found"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Manager introuvable."));
             e.setManager(mgr);
         } else {
             e.setManager(null);
@@ -114,7 +114,7 @@ public class EmployeeService {
     @Transactional(readOnly = true)
     public Employee getEmployee(UUID id) {
         return employeeRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employé introuvable."));
     }
 
     @Transactional(readOnly = true)
@@ -150,7 +150,7 @@ public class EmployeeService {
     @Transactional(readOnly = true)
     public OrgContext getOrgContext(UUID employeeId) {
         Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employé introuvable."));
         Employee manager = employee.getManager();
         List<Employee> reports = employeeRepository.findByManagerId(employeeId);
         return new OrgContext(manager, employee, reports);
@@ -160,14 +160,14 @@ public class EmployeeService {
 
     public void deactivateEmployee(UUID id) {
         Employee e = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employé introuvable."));
         e.setStatus(EmployeeStatus.INACTIVE);
         employeeRepository.save(e);
     }
 
     public void deleteEmployee(UUID id) {
         Employee e = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employé introuvable."));
         
         // Remove this employee as manager from all subordinates first to avoid FK constraint error
         employeeRepository.findAll().stream()
@@ -182,7 +182,7 @@ public class EmployeeService {
 
     public void assignDirectReports(UUID managerId, Set<UUID> reportIds) {
         Employee manager = managerId == null ? null : employeeRepository.findById(managerId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Manager not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Manager introuvable."));
 
         // Unassign reports that were removed
         if (managerId != null) {
@@ -197,7 +197,7 @@ public class EmployeeService {
         // Assign new reports
         for (UUID reportId : reportIds) {
             Employee report = employeeRepository.findById(reportId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee report not found"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employé introuvable."));
             report.setManager(manager);
             employeeRepository.save(report);
         }
@@ -205,7 +205,7 @@ public class EmployeeService {
 
     public Employee savePhoto(UUID id, InputStream fileStream, String contentType, String originalFilename) {
         Employee e = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employé introuvable."));
 
         // Delete old photo if exists
         if (e.getPhotoPath() != null) {

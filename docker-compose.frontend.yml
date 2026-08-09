@@ -1,0 +1,15 @@
+# A lancer APRES docker-compose.backend.yml (le nginx recupere le backend quand il est pret)
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    restart: unless-stopped
+    # nginx sert l'app sur le port hote 8081 (http://localhost:8081)
+    ports:
+      - "8081:80"
+
+# Reseau partage avec docker-compose.backend.yml
+networks:
+  default:
+    name: ged-net

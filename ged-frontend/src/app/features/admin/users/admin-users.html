@@ -48,8 +48,21 @@
       <tbody class="divide-y divide-gray-50">
         <tr *ngFor="let u of users()" class="hover:bg-gray-50 transition-colors">
           <td class="px-4 py-3">
-            <p class="font-medium text-gray-900">{{ u.firstName }} {{ u.lastName }}</p>
-            <p class="text-xs text-gray-400">{{ u.email }}</p>
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full overflow-hidden border border-gray-200 shrink-0">
+                <img *ngIf="u.employeeProfileId && !hasPhotoError(u)"
+                  [src]="apiUrl + '/employees/' + u.employeeProfileId + '/photo/content'"
+                  class="w-full h-full object-cover" (error)="onPhotoError(u)" alt="">
+                <div *ngIf="!u.employeeProfileId || hasPhotoError(u)"
+                  class="w-full h-full bg-gray-100 flex items-center justify-center">
+                  <img src="/UserIcon.png" alt="User" class="w-5 h-5 object-contain">
+                </div>
+              </div>
+              <div>
+                <p class="font-medium text-gray-900">{{ u.firstName }} {{ u.lastName }}</p>
+                <p class="text-xs text-gray-400">{{ u.email }}</p>
+              </div>
+            </div>
           </td>
           <td class="px-4 py-3">
             <div class="flex flex-wrap gap-1">

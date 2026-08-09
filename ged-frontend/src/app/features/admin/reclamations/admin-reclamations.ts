@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
 import { LucideCheck, LucideX, LucideClock, LucideRefreshCw } from '@lucide/angular';
+import { getErrorMessage } from '../../../core/utils/error.utils';
 
 @Component({
   selector: 'app-admin-reclamations',
@@ -193,7 +194,7 @@ export class AdminReclamations implements OnInit {
     try {
       this.reclamations.set(await this.authService.getReclamations());
     } catch (e: any) {
-      this.error = e?.error?.message || 'Erreur lors du chargement';
+      this.error = getErrorMessage(e, 'Erreur lors du chargement');
     } finally {
       this.loading.set(false);
     }
@@ -208,7 +209,7 @@ export class AdminReclamations implements OnInit {
       await this.authService.approveReclamation(id);
       await this.load();
     } catch (e: any) {
-      this.error = e?.error?.message || 'Erreur';
+      this.error = getErrorMessage(e, 'Erreur');
     }
   }
 
@@ -217,7 +218,7 @@ export class AdminReclamations implements OnInit {
       await this.authService.rejectReclamation(id);
       await this.load();
     } catch (e: any) {
-      this.error = e?.error?.message || 'Erreur';
+      this.error = getErrorMessage(e, 'Erreur');
     }
   }
 

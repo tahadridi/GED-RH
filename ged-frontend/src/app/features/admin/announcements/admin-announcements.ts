@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AnnouncementService, Announcement, AnnouncementPriority } from '../../../core/services/announcement.service';
 import { LucidePlus, LucideTrash2, LucideMegaphone, LucideX, LucideAlertTriangle, LucideInfo, LucideAlertOctagon, LucidePencil } from '@lucide/angular';
+import { getErrorMessage } from '../../../core/utils/error.utils';
 
 @Component({
   selector: 'app-admin-announcements',
@@ -86,7 +87,7 @@ export class AdminAnnouncements implements OnInit {
       this.showForm.set(false);
       await this.load();
     } catch (e: any) {
-      this.formError.set(e?.error?.message ?? 'Erreur lors de la sauvegarde');
+      this.formError.set(getErrorMessage(e, 'Erreur lors de la sauvegarde'));
     } finally {
       this.saving.set(false);
     }

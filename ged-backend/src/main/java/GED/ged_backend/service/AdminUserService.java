@@ -33,7 +33,7 @@ public class AdminUserService {
 
 	public SystemUser createUser(CreateAdminUserCommand command) {
 		if (systemUserRepository.findByEmail(command.email()).isPresent()) {
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "Cet email est déjà utilisé.");
 		}
 
 		SystemUser user = new SystemUser();
@@ -53,7 +53,7 @@ public class AdminUserService {
 
 		// Mandatory link to employee
 		Employee emp = employeeRepository.findById(command.employeeId())
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Employee not found"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Employé introuvable."));
 		emp.setAccount(savedUser);
 		employeeRepository.save(emp);
 
@@ -114,14 +114,14 @@ public class AdminUserService {
 		SystemUser user = findUser(userId);
 		SupabaseAdminClient client = supabaseClientProvider.getIfAvailable();
 		if (client == null) {
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Supabase admin is not enabled");
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "L'administration Supabase n'est pas activée.");
 		}
 
 		String tempPassword = generateTemporaryPassword();
 		try {
 			client.updateUser(user.getAuthUid(), Map.of("password", tempPassword));
 		} catch (Exception exception) {
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to reset Supabase password", exception);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Impossible de réinitialiser le mot de passe.", exception);
 		}
 
 		return Map.of("temporaryPassword", tempPassword);
@@ -151,7 +151,7 @@ public class AdminUserService {
 
 	private SystemUser findUser(UUID userId) {
 		return systemUserRepository.findById(userId)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable."));
 	}
 
 	private String createSupabaseAccountIfPossible(CreateAdminUserCommand command) {
@@ -166,10 +166,10 @@ public class AdminUserService {
 			return id == null ? "supabase-" + UUID.randomUUID() : id.toString();
 		} catch (org.springframework.web.client.HttpClientErrorException e) {
 			System.err.println("[SUPABASE] HTTP error creating user: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
-			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Supabase error: " + e.getStatusCode() + " " + e.getResponseBodyAsString(), e);
+			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Erreur du service d'authentification : " + e.getStatusCode() + " " + e.getResponseBodyAsString(), e);
 		} catch (Exception exception) {
 			System.err.println("[SUPABASE] Exception creating user: " + exception.getMessage());
-			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Unable to create Supabase user", exception);
+			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Impossible de créer l'utilisateur.", exception);
 		}
 	}
 

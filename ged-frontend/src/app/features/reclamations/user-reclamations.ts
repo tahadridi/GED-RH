@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { WebSocketService } from '../../core/services/websocket.service';
 import { LucideSend, LucideCheck, LucideX, LucideRefreshCw } from '@lucide/angular';
+import { getErrorMessage } from '../../core/utils/error.utils';
 
 @Component({
   selector: 'app-user-reclamations',
@@ -423,7 +424,7 @@ export class UserReclamations implements OnInit, OnDestroy {
       } catch (_) {}
       if (this.isAdmin) await this.loadAll();
     } catch (e: any) {
-      this.submitError = e?.error?.message || 'Erreur lors de l\'envoi';
+      this.submitError = getErrorMessage(e, 'Erreur lors de l\'envoi');
     } finally {
       this.submitting = false;
     }
