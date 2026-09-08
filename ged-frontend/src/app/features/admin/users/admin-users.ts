@@ -9,15 +9,17 @@ import { Employee } from '../../../core/models/employee.model';
 import { DocTypeService, DocType } from '../../../core/services/doc-type.service';
 import { environment } from '../../../../environments/environment';
 import { getErrorMessage } from '../../../core/utils/error.utils';
+import { UiService } from '../../../core/services/ui.service';
 import {
   LucideUserPlus, LucidePencil, LucideUserX, LucideKey,
-  LucideX, LucideCheck, LucideTrash2, LucideSearch
+  LucideX, LucideCheck, LucideTrash2, LucideSearch, LucideKeyRound,
+  LucideUsers, LucideUserCheck, LucideUserCog, LucideBuilding2
 } from '@lucide/angular';
 
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideUserPlus, LucidePencil, LucideUserX, LucideKey, LucideX, LucideCheck, LucideTrash2, LucideSearch],
+  imports: [CommonModule, FormsModule, LucideUserPlus, LucidePencil, LucideUserX, LucideKey, LucideX, LucideCheck, LucideTrash2, LucideSearch, LucideKeyRound, LucideUsers, LucideUserCheck, LucideUserCog, LucideBuilding2],
   templateUrl: './admin-users.html'
 })
 export class AdminUsers implements OnInit {
@@ -29,6 +31,10 @@ export class AdminUsers implements OnInit {
   saving = signal(false);
   formError = signal('');
   resetNotif = signal<{ user: string; password: string } | null>(null);
+
+  searchQuery = signal('');
+  filterRole = signal('');
+  filterStatus = signal('');
 
   allRoles: SystemRole[] = ['ADMINISTRATOR', 'DIRECTION_GENERALE', 'MANAGER', 'RH'];
   roleLabels: Record<string, string> = {
@@ -78,7 +84,8 @@ export class AdminUsers implements OnInit {
     private userService: UserService,
     private employeeService: EmployeeService,
     private docTypeService: DocTypeService,
-    private authService: AuthService
+    private authService: AuthService,
+    private ui: UiService
   ) {}
 
   async ngOnInit() {
@@ -121,6 +128,51 @@ export class AdminUsers implements OnInit {
     if (!id) return '—';
     const m = this.users().find(u => u.id === id);
     return m ? `${m.firstName} ${m.lastName}` : 'Inconnu';
+  }
+
+  get totalUsers() {
+    return this.users().length;
+  }
+
+  get activeUsers() {
+    return this.users().filter(u => u.active).length;
+  }
+
+  get managersCount() {
+    return this.users().filter(u => u.roles.includes('MANAGER')).length;
+  }
+
+  get rhCount() {
+    return this.users().filter(u => u.roles.includes('RH')).length;
+  }
+
+  get dgCount() {
+    return this.users().filter(u => u.roles.includes('DIRECTION_GENERALE')).length;
+  }
+
+  get activePct(): number {
+    return this.totalUsers ? Math.round((this.activeUsers / this.totalUsers) * 100) : 0;
+  }
+
+  get filteredUsers(): SystemUser[] {
+    const q = this.searchQuery().toLowerCase().trim();
+    const role = this.filterRole();
+    const status = this.filterStatus();
+    return this.users().filter(u => {
+      const matchQ = !q ||
+        u.firstName.toLowerCase().includes(q) ||
+        u.lastName.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q);
+      const matchRole = !role || u.roles.includes(role as SystemRole);
+      const matchStatus = !status || (status === 'ACTIVE' ? u.active : !u.active);
+      return matchQ && matchRole && matchStatus;
+    });
+  }
+
+  clearFilters() {
+    this.searchQuery.set('');
+    this.filterRole.set('');
+    this.filterStatus.set('');
   }
 
   async load() {
@@ -252,19 +304,33 @@ export class AdminUsers implements OnInit {
   }
 
   async deactivate(u: SystemUser) {
-    if (!confirm(`Désactiver ${u.firstName} ${u.lastName} ?`)) return;
+    if (!(await this.ui.confirm({
+      title: 'Désactiver l\'utilisateur',
+      message: `Voulez-vous vraiment désactiver ${u.firstName} ${u.lastName} ?`,
+      danger: true,
+      confirmLabel: 'Désactiver'
+    }))) return;
     await this.userService.deactivate(u.id);
     await this.load();
   }
 
   async deleteUser(u: SystemUser) {
-    if (!confirm(`Supprimer définitivement ${u.firstName} ${u.lastName} ?\nCette action est irréversible.`)) return;
+    if (!(await this.ui.confirm({
+      title: 'Supprimer définitivement',
+      message: `Voulez-vous vraiment supprimer ${u.firstName} ${u.lastName} ? Cette action est irréversible.`,
+      danger: true,
+      confirmLabel: 'Supprimer'
+    }))) return;
     await this.userService.delete(u.id);
     await this.load();
   }
 
   async resetPassword(u: SystemUser) {
-    if (!confirm(`Réinitialiser le mot de passe de ${u.firstName} ${u.lastName} ?`)) return;
+    if (!(await this.ui.confirm({
+      title: 'Réinitialiser le mot de passe',
+      message: `Réinitialiser le mot de passe de ${u.firstName} ${u.lastName} ?`,
+      confirmLabel: 'Réinitialiser'
+    }))) return;
     const result = await this.userService.resetPassword(u.id);
     if (result?.temporaryPassword) {
       this.resetNotif.set({ user: `${u.firstName} ${u.lastName}`, password: result.temporaryPassword });

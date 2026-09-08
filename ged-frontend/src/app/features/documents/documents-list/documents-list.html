@@ -1,153 +1,293 @@
-<div class="p-8">
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Documents</h1>
+<div class="min-h-screen bg-[#f7f9fc] text-[#17233c] font-[Inter,system-ui,Arial,sans-serif]">
+
+  <!-- Breadcrumb -->
+  <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+    <div class="flex items-center gap-2.5 text-[14px] text-[#9aa5b7]">
+      <span>GED</span>
+      <span>&rsaquo;</span>
+      <b class="font-semibold text-[#66738a]">Documents</b>
+    </div>
   </div>
 
-  <!-- Gradient divider -->
-  <div class="mb-6 h-px bg-gradient-to-r from-blue-400 via-purple-400 to-transparent"></div>
+  <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-6">
 
-  <!-- Filters -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-wrap gap-3 items-end">
-    <div class="flex-1 min-w-48">
-      <label class="block text-xs font-medium text-gray-500 mb-1">Recherche</label>
-      <div class="relative">
-        <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></svg>
-        <input [(ngModel)]="searchQuery" (ngModelChange)="search()" type="text" placeholder="Nom, référence, contenu OCR..."
-          class="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+    <!-- Heading -->
+    <section class="flex justify-between items-end gap-6 flex-wrap pb-7 mb-6" style="border-bottom:1px solid #e7ecf2">
+      <div class="flex items-center gap-4">
+        <div class="w-[50px] h-[50px] rounded-[15px] bg-[#edf4ff] text-[#2563eb] flex items-center justify-center shrink-0 shadow-[inset_0_0_0_1px_rgba(37,99,235,.08)]">
+          <svg lucideFolderOpen class="w-[22px] h-[22px]"></svg>
+        </div>
+        <div>
+          <h1 class="text-[29px] font-extrabold mb-2" style="letter-spacing:-1px">Documents</h1>
+          <p class="text-[14px] text-[#8793a6]">Consultez et gérez les documents numérisés de vos collaborateurs.</p>
+        </div>
       </div>
-    </div>
-    <div class="min-w-48">
-      <label class="block text-xs font-medium text-gray-500 mb-1">Type</label>
-      <select [(ngModel)]="selectedType" (ngModelChange)="search()"
-        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <option value="">Tous les types</option>
-        <option *ngFor="let t of docTypes" [value]="t">{{ docTypeLabels[t] }}</option>
-      </select>
-    </div>
-    <button (click)="search()"
-      class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-      Rechercher
-    </button>
-    <button (click)="clear()"
-      class="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-50 transition-colors">
-      Effacer
-    </button>
-  </div>
+    </section>
 
-  <!-- Loading -->
-  <div *ngIf="loading()" class="p-8 text-center text-gray-400 text-sm">Chargement...</div>
-
-  <!-- Empty -->
-  <div *ngIf="!loading() && documents().length === 0" class="p-8 text-center text-gray-400 text-sm">
-    Aucun document trouvé.
-  </div>
-
-  <!-- Grouped by employee -->
-  <div *ngIf="!loading() && documents().length > 0" class="space-y-4">
-    <div *ngFor="let group of groups()" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <!-- Employee header -->
-      <button (click)="toggleGroup(group.employeeId)"
-        class="w-full flex items-center justify-between px-5 py-3 bg-gray-50 hover:bg-gray-100 transition-colors border-b border-gray-100">
-        <div class="flex items-center gap-3">
-          <div *ngIf="group.employeeHasPhoto; else noPhoto" class="w-9 h-9 rounded-full overflow-hidden shrink-0">
-            <img [src]="apiUrl + '/employees/' + group.employeeId + '/photo/content'" alt="Photo"
-              class="w-full h-full object-cover">
+    <!-- Stats KPI -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[13px] mb-6">
+      <article class="bg-white border border-[#e7ecf2] rounded-[14px] p-[17px] shadow-[0_6px_22px_rgba(19,35,68,.03)]">
+        <div class="flex justify-between">
+          <div>
+            <label class="text-[13px] text-[#748197]">Total documents</label>
+            <h2 class="text-[28px] font-bold mt-1" style="letter-spacing:-.8px">{{ docsStats().total ?? 0 }}</h2>
           </div>
-          <ng-template #noPhoto>
-            <div class="w-9 h-9 bg-blue-900 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
-              {{ (group.employeeFirstName || '?').charAt(0) }}{{ (group.employeeLastName || '?').charAt(0) }}
-            </div>
-          </ng-template>
-          <div class="text-left">
-            <p class="font-semibold text-gray-900">{{ group.employeeFirstName || '' }} {{ group.employeeLastName || '' }}</p>
-            <p class="text-xs text-gray-500">{{ group.employeeMatricule || '—' }} — {{ group.documents.length }} document(s)</p>
+          <div class="w-[37px] h-[37px] rounded-[10px] bg-[#edf4ff] text-[#2563eb] flex items-center justify-center">
+            <svg lucideFiles class="w-4 h-4"></svg>
           </div>
         </div>
-        <svg lucideChevronDown class="w-4 h-4 text-gray-400 transition-transform"
-          [class.rotate-180]="expandedGroups().has(group.employeeId)"></svg>
-      </button>
+        <div class="text-[12px] text-[#a0aabb] mt-2.5">Tous types confondus</div>
+      </article>
 
-      <!-- Documents table -->
-      <div *ngIf="expandedGroups().has(group.employeeId)" class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-white border-b border-gray-100">
-            <tr>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Document</th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Référence</th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Version</th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
-              <th class="text-right px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-50">
-            <tr *ngFor="let doc of group.documents" class="hover:bg-gray-50 transition-colors">
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
-                    <svg lucideFileText class="w-4 h-4 text-blue-500"></svg>
+      <article class="bg-white border border-[#e7ecf2] rounded-[14px] p-[17px] shadow-[0_6px_22px_rgba(19,35,68,.03)]">
+        <div class="flex justify-between">
+          <div>
+            <label class="text-[13px] text-[#748197]">Ce mois-ci</label>
+            <h2 class="text-[28px] font-bold mt-1" style="letter-spacing:-.8px">{{ docsStats().thisMonth ?? 0 }}</h2>
+          </div>
+          <div class="w-[37px] h-[37px] rounded-[10px] bg-[#eaf8ef] text-[#16a34a] flex items-center justify-center">
+            <svg lucideClock class="w-4 h-4"></svg>
+          </div>
+        </div>
+        <div class="text-[12px] text-[#a0aabb] mt-2.5">Documents archivés</div>
+      </article>
+
+      <article class="bg-white border border-[#e7ecf2] rounded-[14px] p-[17px] shadow-[0_6px_22px_rgba(19,35,68,.03)]">
+        <div class="flex justify-between">
+          <div>
+            <label class="text-[13px] text-[#748197]">Employés avec documents</label>
+            <h2 class="text-[28px] font-bold mt-1" style="letter-spacing:-.8px">{{ employeesWithDocs() }}</h2>
+          </div>
+          <div class="w-[37px] h-[37px] rounded-[10px] bg-[#f2edff] text-[#7c3aed] flex items-center justify-center">
+            <svg lucideUsers class="w-4 h-4"></svg>
+          </div>
+        </div>
+        <div class="text-[12px] text-[#a0aabb] mt-2.5">Collaborateurs dotés de dossiers</div>
+      </article>
+    </section>
+
+    <!-- Analytics: storage + types -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-[13px] mb-6">
+      <article *ngIf="!isManager" class="lg:col-span-1 bg-white border border-[#e7ecf2] rounded-[14px] p-[19px] shadow-[0_6px_22px_rgba(19,35,68,.03)]">
+        <div class="flex justify-between items-start">
+          <div>
+            <span class="text-[13px] text-[#69768b]">Utilisation du stockage</span>
+            <h3 class="text-[26px] font-bold mt-1" style="letter-spacing:-.8px">{{ storageUsed }} <small class="text-[14px] font-medium" style="letter-spacing:0">/ {{ storageTotal }}</small></h3>
+          </div>
+          <div class="w-[37px] h-[37px] rounded-[10px] bg-[#e7f8f6] text-[#0d9488] flex items-center justify-center">
+            <svg lucideHardDrive class="w-4 h-4"></svg>
+          </div>
+        </div>
+        <div class="mt-3">
+          <div class="flex justify-between text-[#9aa5b7] text-[11px] mb-1">
+            <span>Utilisation</span><b class="text-[#66738a]">{{ storagePercentage }}%</b>
+          </div>
+          <div class="h-[5px] bg-[#edf0f4] rounded-[10px] overflow-hidden">
+            <div class="h-full transition-all duration-500"
+              [style.width.%]="storagePercentage"
+              [ngClass]="{ 'bg-[#0d9488]': storagePercentage < 60, 'bg-[#f59e0b]': storagePercentage >= 60 && storagePercentage < 85, 'bg-[#ef4444]': storagePercentage >= 85 }"></div>
+          </div>
+          <div class="flex justify-between text-[11px] text-[#9aa5b7] mt-1.5">
+            <span>{{ storageFree }} libres</span>
+            <span>{{ storagePercentage }}% occupé</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="bg-white border border-[#e7ecf2] rounded-[14px] p-[19px] shadow-[0_6px_22px_rgba(19,35,68,.03)]"
+        [class.lg:col-span-2]="!isManager" [class.lg:col-span-3]="isManager">
+        <div class="flex items-center gap-2.5 mb-4">
+          <div class="w-[34px] h-[34px] rounded-[9px] bg-[#edf4ff] text-[#2563eb] flex items-center justify-center">
+            <svg lucidePieChart class="w-4 h-4"></svg>
+          </div>
+          <div>
+            <h3 class="text-[14.5px] font-bold" style="letter-spacing:-.2px">Répartition par type</h3>
+            <p class="text-[12px] text-[#95a1b3]">Top types de documents archivés</p>
+          </div>
+        </div>
+        <div class="space-y-3">
+          <div *ngFor="let g of typeGroups()" class="flex items-center gap-3">
+            <span class="w-[150px] shrink-0 text-[12.5px] text-[#46536a] truncate">{{ g.label }}</span>
+            <div class="flex-1 h-[7px] bg-[#eef1f6] rounded-[6px] overflow-hidden">
+              <div class="h-full bg-[#2563eb] rounded-[6px]" [style.width.%]="g.pct"></div>
+            </div>
+            <span class="w-[42px] text-right text-[12.5px] font-bold text-[#46536a]">{{ g.count }}</span>
+          </div>
+          <div *ngIf="typeGroups().length === 0" class="text-[13px] text-[#a0aabb] py-2">Aucun document archivé.</div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Filters -->
+    <section class="bg-white border border-[#e7ecf2] rounded-[14px] p-[17px] shadow-[0_6px_22px_rgba(19,35,68,.03)] mb-6 flex flex-wrap gap-3 items-end">
+      <div class="flex-1 min-w-48">
+        <label class="block text-[12px] font-semibold text-[#7a879b] mb-1.5 uppercase tracking-wide">Recherche</label>
+        <div class="relative">
+          <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9aa5b7]"></svg>
+          <input [(ngModel)]="searchQuery" (ngModelChange)="search()" type="text" placeholder="Nom, référence,..."
+            class="w-full pl-9 pr-3 py-[9px] border border-[#e1e7ef] rounded-[9px] text-[13.5px] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 focus:border-[#2563eb]">
+        </div>
+      </div>
+      <div class="min-w-48">
+        <label class="block text-[12px] font-semibold text-[#7a879b] mb-1.5 uppercase tracking-wide">Type</label>
+        <select [(ngModel)]="selectedType" (ngModelChange)="search()"
+          class="w-full px-3 py-[9px] border border-[#e1e7ef] rounded-[9px] text-[13.5px] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 focus:border-[#2563eb]">
+          <option value="">Tous les types</option>
+          <option *ngFor="let t of docTypes" [value]="t">{{ docTypeLabels[t] }}</option>
+        </select>
+      </div>
+      <button (click)="search()" disabled
+        class="px-[17px] h-[40px] rounded-[9px] bg-[#2563eb] text-white text-[13px] font-bold shadow-[0_5px_14px_rgba(37,99,235,.13)] hover:bg-[#1d4ed8] transition-colors">
+        Rechercher
+      </button>
+    </section>
+
+    <!-- Loading -->
+    <div *ngIf="loading()" class="p-8 text-center text-[#95a1b3] text-sm">Chargement...</div>
+
+    <!-- Empty -->
+    <div *ngIf="!loading() && documents().length === 0" class="p-8 text-center text-[#95a1b3] text-sm">
+      Aucun document trouvé.
+    </div>
+
+    <!-- Grouped by employee -->
+    <div *ngIf="!loading() && documents().length > 0" class="space-y-4">
+      <div *ngFor="let group of pagedGroups()" class="bg-white rounded-[14px] border border-[#e7ecf2] overflow-hidden shadow-[0_6px_22px_rgba(19,35,68,.03)]">
+        <!-- Employee header -->
+        <button (click)="toggleGroup(group.employeeId)"
+          class="w-full flex items-center justify-between px-5 py-3 bg-[#fcfdff] hover:bg-[#f2f6ff] transition-colors border-b border-[#eaeff5]">
+          <div class="flex items-center gap-3">
+            <div *ngIf="group.employeeHasPhoto; else noPhoto" class="w-9 h-9 rounded-full overflow-hidden shrink-0">
+              <img [src]="apiUrl + '/employees/' + group.employeeId + '/photo/content'" alt="Photo"
+                class="w-full h-full object-cover">
+            </div>
+            <ng-template #noPhoto>
+              <div class="w-9 h-9 bg-[#3b5bdb] rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
+                {{ (group.employeeFirstName || '?').charAt(0) }}{{ (group.employeeLastName || '?').charAt(0) }}
+              </div>
+            </ng-template>
+            <div class="text-left">
+              <p class="font-bold text-[14px] text-[#17233c]">{{ group.employeeFirstName || '' }} {{ group.employeeLastName || '' }}</p>
+              <p class="text-[12px] text-[#8a96a9]">{{ group.employeeMatricule || '—' }} — {{ group.documents.length }} document(s)</p>
+            </div>
+          </div>
+          <svg lucideChevronDown class="w-4 h-4 text-[#9aa5b7] transition-transform"
+            [class.rotate-180]="expandedGroups().has(group.employeeId)"></svg>
+        </button>
+
+        <!-- Documents table -->
+        <div *ngIf="expandedGroups().has(group.employeeId)" class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-[#fcfdff] border-b border-[#eaeff5]">
+              <tr>
+                <th class="text-left px-4 py-2.5 text-[11px] font-extrabold text-[#7b8799] uppercase tracking-wide">Document</th>
+                <th class="text-left px-4 py-2.5 text-[11px] font-extrabold text-[#7b8799] uppercase tracking-wide">Type</th>
+                <th class="text-left px-4 py-2.5 text-[11px] font-extrabold text-[#7b8799] uppercase tracking-wide">Référence</th>
+                <th class="text-left px-4 py-2.5 text-[11px] font-extrabold text-[#7b8799] uppercase tracking-wide">Version</th>
+                <th class="text-left px-4 py-2.5 text-[11px] font-extrabold text-[#7b8799] uppercase tracking-wide">Date</th>
+                <th class="text-right px-4 py-2.5 text-[11px] font-extrabold text-[#7b8799] uppercase tracking-wide">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#eef2f7]">
+              <tr *ngFor="let doc of group.documents" class="hover:bg-[#f2f6ff] transition-colors cursor-pointer" (click)="openVersions(doc)">
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-[#edf4ff] rounded-[9px] flex items-center justify-center shrink-0">
+                      <svg lucideFileText class="w-4 h-4 text-[#2563eb]"></svg>
+                    </div>
+                    <div>
+                      <p class="font-semibold text-[13.5px] text-[#17233c]">{{ doc.name }}</p>
+                      <p class="text-[12px] text-[#9aa5b7]">{{ doc.author }}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p class="font-medium text-gray-900">{{ doc.name }}</p>
-                    <p class="text-xs text-gray-400">{{ doc.author }}</p>
+                </td>
+                <td class="px-4 py-3">
+                  <span class="px-2.5 py-1 rounded-full text-[11.5px] font-semibold bg-[#edf4ff] text-[#2563eb]">
+                    {{ docTypeLabels[doc.type] }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 font-mono text-[12px] text-[#66738a]">{{ doc.documentReference }}</td>
+                <td class="px-4 py-3 text-[13px] text-[#66738a]">v{{ doc.currentVersion }}</td>
+                <td class="px-4 py-3 text-[12.5px] text-[#8a96a9]">{{ doc.createdAt | date:'dd/MM/yyyy' }}</td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center justify-end gap-1" (click)="$event.stopPropagation()">
+                    <button (click)="openVersions(doc)" title="Versions"
+                      class="p-1.5 text-[#9aa5b7] hover:text-[#7c3aed] hover:bg-[#f3edff] rounded-[8px] transition-colors">
+                      <svg lucideLayers class="w-4 h-4"></svg>
+                    </button>
+                    <button (click)="download(doc)" title="Télécharger"
+                      class="p-1.5 text-[#9aa5b7] hover:text-[#16a34a] hover:bg-[#eaf8ef] rounded-[8px] transition-colors">
+                      <svg lucideDownload class="w-4 h-4"></svg>
+                    </button>
                   </div>
-                </div>
-              </td>
-              <td class="px-4 py-3">
-                <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                  {{ docTypeLabels[doc.type] }}
-                </span>
-              </td>
-              <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ doc.documentReference }}</td>
-              <td class="px-4 py-3 text-gray-600">v{{ doc.currentVersion }}</td>
-              <td class="px-4 py-3 text-gray-500">{{ doc.createdAt | date:'dd/MM/yyyy' }}</td>
-              <td class="px-4 py-3">
-                <div class="flex items-center justify-end gap-1">
-                  <button (click)="openVersions(doc)" title="Versions"
-                    class="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors">
-                    <svg lucideHistory class="w-4 h-4"></svg>
-                  </button>
-                  <button (click)="download(doc)" title="Télécharger"
-                    class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors">
-                    <svg lucideDownload class="w-4 h-4"></svg>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="flex flex-wrap items-center justify-between gap-3 px-1 pt-2 pb-1">
+        <p class="text-[12.5px] text-[#8a96a9]">
+          {{ groups().length }} employé(s) — page <b class="text-[#46536a]">{{ currentPage() }}</b> sur {{ lastPage() }}
+        </p>
+        <div class="flex items-center gap-2">
+          <button (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() <= 1"
+            class="w-[34px] h-[34px] rounded-[9px] border border-[#e1e7ef] bg-white text-[#66738a] flex items-center justify-center hover:bg-[#f2f6ff] hover:text-[#2563eb] disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            &lsaquo;
+          </button>
+          <button *ngFor="let p of pages()" (click)="goToPage(p)"
+            class="min-w-[34px] h-[34px] px-2 rounded-[9px] text-[13px] font-semibold transition-colors"
+            [class]="p === currentPage() ? 'bg-[#2563eb] text-white' : 'border border-[#e1e7ef] bg-white text-[#66738a] hover:bg-[#f2f6ff] hover:text-[#2563eb]'">
+            {{ p }}
+          </button>
+          <button (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() >= lastPage()"
+            class="w-[34px] h-[34px] rounded-[9px] border border-[#e1e7ef] bg-white text-[#66738a] flex items-center justify-center hover:bg-[#f2f6ff] hover:text-[#2563eb] disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            &rsaquo;
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
 <!-- Versions Modal -->
-<div *ngIf="showVersions()" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-  <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
-    <div class="flex items-center justify-between p-5 border-b border-gray-100">
-      <h2 class="font-semibold text-gray-900">Versions — {{ selectedDoc()?.name }}</h2>
-      <button (click)="showVersions.set(false)" class="text-gray-400 hover:text-gray-600">
-        <svg lucideX class="w-5 h-5"></svg>
+<div *ngIf="showVersions()" class="fixed inset-0 z-50 bg-[#15213d]/50 backdrop-blur-[2px] flex items-center justify-center p-4" (click)="showVersions.set(false)">
+  <div class="bg-white rounded-[18px] shadow-[0_24px_60px_rgba(21,33,61,.28)] w-full max-w-md mx-4 overflow-hidden" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between gap-4 px-5 py-5 border-b border-[#f2f4f7]">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-[38px] h-[38px] rounded-[11px] bg-[#eaf2ff] text-[#2563eb] flex items-center justify-center shrink-0">
+          <svg lucideLayers class="w-[17px] h-[17px]"></svg>
+        </div>
+        <div class="min-w-0">
+          <div class="text-[10px] font-bold uppercase tracking-[.1em] text-[#9aa5b7] mb-0.5">Versions</div>
+          <h2 class="font-bold text-[15px] text-[#17233c] truncate">{{ selectedDoc()?.name }}</h2>
+        </div>
+      </div>
+      <button (click)="showVersions.set(false)"
+        class="w-[34px] h-[34px] rounded-[9px] hover:bg-[#f6f8fb] flex items-center justify-center shrink-0" aria-label="Fermer">
+        <svg lucideX class="w-4.5 h-4.5 text-[#68758a]"></svg>
       </button>
     </div>
-    <div class="divide-y divide-gray-50 max-h-64 overflow-y-auto">
+    <div class="divide-y divide-[#eef2f7] max-h-64 overflow-y-auto">
       <div *ngFor="let v of versions()" class="p-4 flex items-center justify-between">
         <div>
-          <p class="text-sm font-medium text-gray-900">Version {{ v.versionNumber }}</p>
-          <p class="text-xs text-gray-400">{{ v.createdAt | date:'dd/MM/yyyy HH:mm' }} · {{ v.uploadedBy }}</p>
+          <p class="text-[13.5px] font-semibold text-[#17233c]">Version {{ v.versionNumber }}</p>
+          <p class="text-[12px] text-[#9aa5b7]">{{ v.createdAt | date:'dd/MM/yyyy HH:mm' }} · {{ v.uploadedBy }}</p>
         </div>
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1" (click)="$event.stopPropagation()">
           <button (click)="openVersion(v)" title="Ouvrir"
-            class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
+            class="p-1.5 text-[#9aa5b7] hover:text-[#2563eb] hover:bg-[#edf4ff] rounded-[8px] transition-colors">
             <svg lucideEye class="w-4 h-4"></svg>
           </button>
           <button (click)="downloadVersion(v)" title="Télécharger"
-            class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors">
+            class="p-1.5 text-[#9aa5b7] hover:text-[#16a34a] hover:bg-[#eaf8ef] rounded-[8px] transition-colors">
             <svg lucideDownload class="w-4 h-4"></svg>
           </button>
         </div>
       </div>
-      <div *ngIf="versions().length === 0" class="p-6 text-center text-gray-400 text-sm">Aucune version.</div>
+      <div *ngIf="versions().length === 0" class="p-6 text-center text-[#9aa5b7] text-sm">Aucune version.</div>
     </div>
   </div>
 </div>

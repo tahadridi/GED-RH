@@ -1,18 +1,37 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { EmployeeService } from '../../../core/services/employee.service';
-import { DocumentService } from '../../../core/services/document.service';
+import { DocumentService, OcrPreviewResult } from '../../../core/services/document.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiService } from '../../../core/services/api.service';
 import { AnnouncementService } from '../../../core/services/announcement.service';
+import { EventService, CalendarEvent } from '../../../core/services/event.service';
 import { Router } from '@angular/router';
 import { environment } from '../../../../environments/environment';
+import { getErrorMessage } from '../../../core/utils/error.utils';
+import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe';
+import {
+  LucideUsers, LucideFiles, LucideMegaphone, LucideFileCheck2,
+  LucideHardDrive, LucideCalendarDays,
+  LucideChevronDown,
+  LucideBuilding2, LucideFileText, LucideX, LucideLayoutDashboard,
+  LucideUpload, LucideScanText, LucideCheck
+} from '@lucide/angular';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [
+    CommonModule, RouterModule, FormsModule,
+    LucideUsers, LucideFiles, LucideMegaphone, LucideFileCheck2,
+    LucideHardDrive, LucideCalendarDays,
+    LucideChevronDown,
+    LucideBuilding2, LucideFileText, LucideX, LucideLayoutDashboard,
+    LucideUpload, LucideScanText, LucideCheck,
+    SafeHtmlPipe
+  ],
   templateUrl: './dashboard.html',
   styles: ``
 })
@@ -33,9 +52,80 @@ export class Dashboard implements OnInit {
   reclamations = signal<any[]>([]);
   loadingReclamations = signal(false);
   announcements = signal<any[]>([]);
+  events = signal<CalendarEvent[]>([]);
+
+  // Upload state
+  showUpload = signal(false);
+  uploadStep = signal<1 | 2>(1);
+  selectedEmployee = '';
+  uploadFile: File | null = null;
+  uploadName = '';
+  uploadType = 'EMPLOYMENT_CONTRACT';
+  uploadRef = '';
+  uploadOcrText = '';
+  uploadTempKey = '';
+  analyzingOcr = signal(false);
+  saving = signal(false);
+  ocrError = signal('');
+  saveError = signal('');
+  uploadDocTypes = [
+    'EMPLOYMENT_CONTRACT', 'PAYSLIP', 'LEAVE_REQUEST', 'EVALUATION',
+    'TRAINING', 'ADMINISTRATIVE', 'PERSONAL_FILE', 'INVOICE', 'CONTRACT', 'OTHER'
+  ];
 
   pendingReclamations = computed(() => this.reclamations().filter(r => r.status === 'PENDING'));
   recentPendingReclamations = computed(() => this.pendingReclamations().slice(0, 3));
+
+  departmentsCount = computed(() => {
+    const depts = new Set(this.allEmployees().map(e => e.department).filter(Boolean));
+    return depts.size;
+  });
+
+  calendarEvents = computed(() => {
+    const now = new Date();
+    const events: { title: string; date: Date; startTime: string; priority: string; type: string; raw: any }[] = [];
+    for (const ev of this.events()) {
+      const d = new Date(ev.eventDate);
+      events.push({ title: ev.title, date: d, startTime: ev.startTime || '', priority: ev.priority || 'NORMALE', type: 'event', raw: ev });
+    }
+    for (const a of this.announcements()) {
+      const d = new Date(a.createdAt);
+      events.push({ title: a.title, date: d, startTime: '', priority: a.priority, type: 'announcement', raw: a });
+    }
+    return events
+      .filter(e => e.date >= new Date(now.getFullYear(), now.getMonth(), now.getDate()))
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .slice(0, 6);
+  });
+
+  selectedCalendarItem: any = null;
+
+  distributionColors = ['#3b82f6', '#8b5cf6', '#22c55e', '#f97316', '#ef4444', '#06b6d4', '#ec4899', '#eab308'];
+
+  get distributionGradient(): string {
+    const items = this.documentDistribution();
+    let acc = 0;
+    const segments = items.map((it, i) => {
+      const start = acc;
+      acc += it.percentage;
+      const color = this.distributionColors[i % this.distributionColors.length];
+      return `${color} ${start}% ${acc}%`;
+    }).join(', ');
+    return `conic-gradient(${segments || '#e5e7eb 0% 100%'})`;
+  }
+
+  get userFirstName(): string {
+    return (this.authService.profile()?.firstName as string) || this.userEmail.split('@')[0] || 'Utilisateur';
+  }
+
+  get roleLabel(): string {
+    const roles = (this.authService.profile()?.roles as string[]) || [];
+    if (roles.includes('ADMINISTRATOR')) return 'Administrateur';
+    if (roles.includes('DIRECTION_GENERALE')) return 'Direction Générale';
+    if (roles.includes('MANAGER')) return 'Manager';
+    if (roles.includes('RH')) return 'Ressources Humaines';
+    return 'Utilisateur';
+  }
 
   recentGroups = computed(() => {
     const map = new Map<string, { employeeId: string; employeeFirstName: string; employeeLastName: string; employeeMatricule: string; employeeHasPhoto: boolean; documents: any[] }>();
@@ -62,6 +152,7 @@ export class Dashboard implements OnInit {
     private authService: AuthService,
     private apiService: ApiService,
     private announcementService: AnnouncementService,
+    private eventService: EventService,
     private router: Router
   ) {}
 
@@ -127,6 +218,86 @@ export class Dashboard implements OnInit {
     }));
   }
 
+  docsByMonth = computed(() => this.monthSeries(this.allDocuments(), 12, (d: any) => d.createdAt));
+
+  docSizeTotal = computed(() => this.allDocuments().reduce((s, d) => s + (d.fileSize || 0), 0));
+
+  storageByDepartment = computed(() => {
+    const empIdToDept = new Map<string, string>();
+    for (const e of this.allEmployees()) empIdToDept.set(e.id, e.department || 'Sans département');
+    const deptSize = new Map<string, number>();
+    for (const d of this.allDocuments()) {
+      const dept = empIdToDept.get(d.employeeId) || 'Sans département';
+      deptSize.set(dept, (deptSize.get(dept) || 0) + (d.fileSize || 0));
+    }
+    const total = this.docSizeTotal() || 1;
+    return Array.from(deptSize.entries())
+      .map(([name, sizeBytes]) => ({ name, sizeBytes, sizeLabel: this.formatFileSize(sizeBytes), pct: (sizeBytes / total) * 100 }))
+      .sort((a, b) => b.sizeBytes - a.sizeBytes);
+  });
+
+  docsPerEmployee = computed(() => {
+    const total = this.allEmployees().length || 1;
+    return this.allDocuments().length / total;
+  });
+
+  employeesWithoutDoc = computed(() => {
+    const ids = new Set(this.allDocuments().map(d => d.employeeId));
+    return this.allEmployees().filter(e => !ids.has(e.id)).length;
+  });
+
+  docsThisMonthByDepartment = computed(() => {
+    const now = new Date();
+    const m = now.getMonth();
+    const y = now.getFullYear();
+    const empIdToDept = new Map<string, string>();
+    for (const e of this.allEmployees()) empIdToDept.set(e.id, e.department || 'Sans département');
+    const counts = new Map<string, number>();
+    for (const d of this.allDocuments()) {
+      const dt = new Date(d.createdAt);
+      if (dt.getMonth() !== m || dt.getFullYear() !== y) continue;
+      const dept = empIdToDept.get(d.employeeId) || 'Sans département';
+      counts.set(dept, (counts.get(dept) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
+  });
+
+  get docStorageUsedLabel(): string {
+    return this.formatFileSize(this.docSizeTotal());
+  }
+
+  get docStorageOfDiskPct(): number {
+    const total = this.diskTotal();
+    if (total <= 0) return 0;
+    return Math.min(100, +((this.docSizeTotal() / total) * 100).toFixed(1));
+  }
+
+  get diskTotalLabel(): string {
+    return this.formatFileSize(this.diskTotal());
+  }
+
+  private monthSeries<T>(items: T[], months: number, dateOf: (t: T) => string): { month: string; count: number; pct: number; isCurrent: boolean }[] {
+    const counts = new Map<string, number>();
+    const now = new Date();
+    for (let i = months - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      counts.set(d.toLocaleDateString('fr-FR', { month: 'short' }) + ' ' + String(d.getFullYear()).slice(2), 0);
+    }
+    for (const it of items) {
+      const v = dateOf(it);
+      if (!v) continue;
+      const d = new Date(v);
+      const key = d.toLocaleDateString('fr-FR', { month: 'short' }) + ' ' + String(d.getFullYear()).slice(2);
+      if (counts.has(key)) counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    const max = Math.max(...Array.from(counts.values()), 1);
+    const currentKey = now.toLocaleDateString('fr-FR', { month: 'short' }) + ' ' + String(now.getFullYear()).slice(2);
+    return Array.from(counts.entries()).map(([month, count]) => ({ month, count, pct: (count / max) * 100, isCurrent: month === currentKey }));
+  }
+
   // Refresh data
   async refreshData() {
     this.loading.set(true);
@@ -139,7 +310,7 @@ export class Dashboard implements OnInit {
       this.allDocuments.set(docs);
       this.totalEmployees.set(employees.filter(e => e.status === 'ACTIVE').length);
       this.totalDocuments.set(docs.length);
-      this.recentDocuments.set(docs.slice(0, 5));
+      this.recentDocuments.set(docs.slice(0, 10));
       this.expandAllRecentGroups();
     } catch (e) {
       console.error('Refresh failed', e);
@@ -203,6 +374,14 @@ export class Dashboard implements OnInit {
     }
   }
 
+  async loadEvents() {
+    try {
+      this.events.set(await this.eventService.upcoming());
+    } catch (e) {
+      console.error('Failed to load events', e);
+    }
+  }
+
   statusLabel(s: string): string {
     switch (s) {
       case 'PENDING': return 'En attente';
@@ -216,10 +395,17 @@ export class Dashboard implements OnInit {
     switch (p) {
       case 'FAIBLE': return 'Faible';
       case 'MOYENNE': return 'Moyenne';
+      case 'NORMALE': return 'Normale';
       case 'HAUTE': return 'Haute';
       case 'CRITIQUE': return 'Critique';
       default: return p || 'Moyenne';
     }
+  }
+
+  announcementEyebrow(p: string): string {
+    if (p === 'CRITIQUE') return 'Annonce importante';
+    if (p === 'HAUTE') return 'Annonce prioritaire';
+    return 'Annonce';
   }
 
   priorityClass(p: string): string {
@@ -232,7 +418,8 @@ export class Dashboard implements OnInit {
       this.refreshData(),
       this.refreshStorageStats(),
       this.loadReclamations(),
-      this.loadAnnouncements()
+      this.loadAnnouncements(),
+      this.loadEvents()
     ]);
   }
 
@@ -241,6 +428,14 @@ export class Dashboard implements OnInit {
     if (set.has(employeeId)) set.delete(employeeId);
     else set.add(employeeId);
     this.expandedRecentGroups.set(set);
+  }
+
+  openCalendarItem(item: any) {
+    this.selectedCalendarItem = item;
+  }
+
+  openEmployee(emp: any) {
+    this.router.navigate(['/employees', emp.id]);
   }
 
   expandAllRecentGroups() {
@@ -263,6 +458,78 @@ export class Dashboard implements OnInit {
       PERSONAL_FILE: 'Dossier', OTHER: 'Autre', INVOICE: 'Facture', CONTRACT: 'Contrat'
     };
     return labels[type] ?? type;
+  }
+
+  // Upload methods
+  openUpload() {
+    this.uploadStep.set(1);
+    this.uploadFile = null;
+    this.uploadName = '';
+    this.uploadRef = '';
+    this.uploadOcrText = '';
+    this.uploadTempKey = '';
+    this.selectedEmployee = '';
+    this.ocrError.set('');
+    this.saveError.set('');
+    this.uploadType = this.uploadDocTypes[0];
+    this.showUpload.set(true);
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files?.length) {
+      this.uploadFile = input.files[0];
+      this.uploadName = this.uploadFile.name.replace(/\.[^.]+$/, '');
+    }
+  }
+
+  async analyzeOcr() {
+    if (!this.uploadFile) return;
+    this.analyzingOcr.set(true);
+    this.ocrError.set('');
+    try {
+      const result: OcrPreviewResult = await this.documentService.ocrPreview(this.uploadFile);
+      this.uploadTempKey = result.tempKey;
+      this.uploadOcrText = result.ocrText;
+      this.uploadStep.set(2);
+    } catch (e: any) {
+      this.ocrError.set(getErrorMessage(e, 'Erreur OCR'));
+    } finally {
+      this.analyzingOcr.set(false);
+    }
+  }
+
+  async saveDocument() {
+    if (!this.selectedEmployee || !this.uploadTempKey) return;
+    this.saving.set(true);
+    this.saveError.set('');
+    try {
+      await this.documentService.saveFromPreview({
+        employeeId: this.selectedEmployee,
+        documentReference: this.uploadRef || `REF-${Date.now()}`,
+        name: this.uploadName,
+        type: this.uploadType,
+        author: this.authService.profile()?.email ?? '',
+        tempKey: this.uploadTempKey,
+        ocrText: this.uploadOcrText
+      });
+      this.showUpload.set(false);
+      await this.refreshData();
+    } catch (e: any) {
+      this.saveError.set(getErrorMessage(e, 'Erreur enregistrement'));
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+
+
+  formatFileSize(bytes?: number | null): string {
+    if (bytes == null || isNaN(bytes) || bytes < 0) return '—';
+    if (bytes < 1024) return `${bytes} o`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} Go`;
   }
 }
 

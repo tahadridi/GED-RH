@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef, ViewChild, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -7,10 +7,12 @@ import { DocumentService, OcrPreviewResult } from '../../../core/services/docume
 import { EmployeeService } from '../../../core/services/employee.service';
 import { ApiService } from '../../../core/services/api.service';
 import { AnnouncementService } from '../../../core/services/announcement.service';
+import { EventService, CalendarEvent } from '../../../core/services/event.service';
 import { Employee } from '../../../core/models/employee.model';
 import { DocumentType } from '../../../core/models/user.model';
 import { environment } from '../../../../environments/environment';
 import { getErrorMessage } from '../../../core/utils/error.utils';
+import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe';
 import {
   LucideUpload,
   LucideScanText,
@@ -18,7 +20,17 @@ import {
   LucideX,
   LucideSearch,
   LucideChevronLeft,
-  LucideChevronRight
+  LucideChevronRight,
+  LucideChevronDown,
+  LucideUsers,
+  LucideFileCheck2,
+  LucideBuilding2,
+  LucideHardDrive,
+  LucideMegaphone,
+  LucideFileText,
+  LucideUserCog,
+  LucideFiles,
+  LucideCalendarDays
 } from '@lucide/angular';
 
 interface DocumentItem {
@@ -62,12 +74,49 @@ interface DistributionItem {
     LucideX,
     LucideSearch,
     LucideChevronLeft,
-    LucideChevronRight
+    LucideChevronRight,
+    LucideChevronDown,
+    LucideUsers,
+    LucideFileCheck2,
+    LucideBuilding2,
+    LucideHardDrive,
+    LucideMegaphone,
+    LucideFileText,
+    LucideUserCog,
+    LucideFiles,
+    LucideCalendarDays,
+    SafeHtmlPipe
   ],
   templateUrl: './rh-dashboard.html'
 })
-export class RhDashboard implements OnInit {
+export class RhDashboard implements OnInit, AfterViewInit, OnDestroy {
   apiUrl = environment.apiUrl;
+
+  @ViewChild('employesSection') employesSectionEl?: ElementRef<HTMLElement>;
+  @ViewChild('recentDocsHeader') recentDocsHeaderEl?: ElementRef<HTMLElement>;
+  recentDocsListHeight = signal<number | undefined>(undefined);
+  private heightObserver?: ResizeObserver;
+
+  ngAfterViewInit() {
+    this.syncRecentDocsHeight();
+    if (typeof ResizeObserver !== 'undefined' && this.employesSectionEl?.nativeElement) {
+      this.heightObserver = new ResizeObserver(() => this.syncRecentDocsHeight());
+      this.heightObserver.observe(this.employesSectionEl.nativeElement);
+    }
+  }
+
+  ngOnDestroy() {
+    this.heightObserver?.disconnect();
+  }
+
+  private syncRecentDocsHeight() {
+    const target = this.employesSectionEl?.nativeElement;
+    const header = this.recentDocsHeaderEl?.nativeElement;
+    if (!target) return;
+    const headerH = header ? header.offsetHeight : 60;
+    const h = target.offsetHeight - headerH - 16;
+    if (h > 60) this.recentDocsListHeight.set(Math.round(h));
+  }
 
   // Data signals
   employees = signal<Employee[]>([]);
@@ -122,7 +171,7 @@ export class RhDashboard implements OnInit {
   saveError = signal('');
 
   // Computed signals – general
-  totalEmployees = computed(() => this.employees().length);
+  totalEmployees = computed(() => this.employees().filter(e => e.status !== 'TERMINATED').length);
 
   departmentsCount = computed(() => {
     const depts = new Set(this.employees().map(e => e.department).filter(Boolean));
@@ -172,6 +221,25 @@ export class RhDashboard implements OnInit {
   announcements = signal<any[]>([]);
   diskTotal = signal(0);
   diskFree = signal(0);
+  events = signal<CalendarEvent[]>([]);
+  selectedCalendarItem: any = null;
+
+  calendarEvents = computed(() => {
+    const now = new Date();
+    const events: { title: string; date: Date; startTime: string; priority: string; type: string; raw: any }[] = [];
+    for (const ev of this.events()) {
+      const d = new Date(ev.eventDate);
+      events.push({ title: ev.title, date: d, startTime: ev.startTime || '', priority: ev.priority || 'NORMALE', type: 'event', raw: ev });
+    }
+    for (const a of this.announcements()) {
+      const d = new Date(a.createdAt);
+      events.push({ title: a.title, date: d, startTime: '', priority: a.priority, type: 'announcement', raw: a });
+    }
+    return events
+      .filter(e => e.date >= new Date(now.getFullYear(), now.getMonth(), now.getDate()))
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .slice(0, 6);
+  });
 
   get storageUsed(): string { return formatBytes(this.storageBytes()); }
   get storageFree(): string { return formatBytes(this.diskFree()); }
@@ -182,8 +250,44 @@ export class RhDashboard implements OnInit {
     return Math.min(100, +(this.storageBytes() / total * 100).toFixed(1));
   }
 
+  distributionColors = ['#3b82f6', '#8b5cf6', '#22c55e', '#f97316', '#ef4444', '#06b6d4', '#ec4899', '#eab308'];
+
+  get distributionGradient(): string {
+    const items = this.docDistribution();
+    let acc = 0;
+    const segments = items.map((it, i) => {
+      const start = acc;
+      acc += it.percentage;
+      const color = this.distributionColors[i % this.distributionColors.length];
+      return `${color} ${start}% ${acc}%`;
+    }).join(', ');
+    return `conic-gradient(${segments || '#e5e7eb 0% 100%'})`;
+  }
+
   // Helper for template
   Math = Math;
+
+  respColors: Array<{ bg: string; text: string }> = [
+    { bg: '#eaf2ff', text: '#2563eb' },
+    { bg: '#f2ecff', text: '#8b5cf6' },
+    { bg: '#e9f9ef', text: '#16a34a' },
+    { bg: '#fff5dd', text: '#f59e0b' },
+    { bg: '#fff0f0', text: '#ef4444' },
+    { bg: '#e7f8f6', text: '#0d9488' }
+  ];
+
+  respIcon(type: string): string {
+    switch (type) {
+      case 'PERSONAL_FILE': return 'user';
+      case 'EMPLOYMENT_CONTRACT': return 'contract';
+      case 'PAYSLIP': return 'payslip';
+      case 'LEAVE_REQUEST': return 'leave';
+      case 'EVALUATION': return 'eval';
+      case 'TRAINING': return 'training';
+      case 'ADMINISTRATIVE': return 'admin';
+      default: return 'file';
+    }
+  }
 
   docTypeLabels: Record<string, string> = {
     PERSONAL_FILE: 'Dossier personnel',
@@ -201,7 +305,8 @@ export class RhDashboard implements OnInit {
     private documentService: DocumentService,
     private employeeService: EmployeeService,
     private apiService: ApiService,
-    private announcementService: AnnouncementService
+    private announcementService: AnnouncementService,
+    private eventService: EventService
   ) {}
 
   async ngOnInit() {
@@ -211,6 +316,11 @@ export class RhDashboard implements OnInit {
       this.announcements.set(await this.announcementService.list());
     } catch (e) {
       console.warn('Announcements not available', e);
+    }
+    try {
+      this.events.set(await this.eventService.upcoming());
+    } catch (e) {
+      console.warn('Events not available', e);
     }
     this.responsibilities.set(this.authService.getRhResponsibilities());
     if (this.responsibilities().length > 0) {
@@ -289,6 +399,38 @@ export class RhDashboard implements OnInit {
     return p ? `${p.firstName} ${p.lastName}` : '';
   }
 
+  get userFirstName(): string {
+    const p = this.authService.profile();
+    return p?.firstName || (this.userName || 'Utilisateur');
+  }
+
+  get userInitial(): string {
+    const p = this.authService.profile();
+    return (p?.firstName?.charAt(0) || 'U').toUpperCase();
+  }
+
+  greeting(): string {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Bonjour';
+    if (hour < 18) return 'Bon après-midi';
+    return 'Bonsoir';
+  }
+
+  priorityLabel(p: string): string {
+    switch (p) {
+      case 'CRITIQUE': return 'Critique';
+      case 'HAUTE': return 'Haute';
+      case 'NORMALE': return 'Normale';
+      default: return p || 'Normale';
+    }
+  }
+
+  announcementEyebrow(p: string): string {
+    if (p === 'CRITIQUE') return 'Annonce importante';
+    if (p === 'HAUTE') return 'Annonce prioritaire';
+    return 'Annonce';
+  }
+
   toggleRecentGroup(employeeId: string) {
     const set = new Set(this.expandedRecentGroups());
     if (set.has(employeeId)) {
@@ -299,9 +441,21 @@ export class RhDashboard implements OnInit {
     this.expandedRecentGroups.set(set);
   }
 
+  openCalendarItem(item: any) {
+    this.selectedCalendarItem = item;
+  }
+
   expandAllRecentGroups() {
     const set = new Set(this.recentGroups().map(g => g.employeeId));
     this.expandedRecentGroups.set(set);
+  }
+
+  async openDocument(doc: any) {
+    try {
+      await this.documentService.open(doc.id, doc.name);
+    } catch (e) {
+      console.error('Failed to open document', e);
+    }
   }
 
   // Employee pagination methods

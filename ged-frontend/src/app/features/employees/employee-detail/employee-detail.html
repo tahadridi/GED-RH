@@ -1,205 +1,256 @@
-<div class="min-h-screen bg-gray-50" *ngIf="!loading()">
-  <!-- Breadcrumb -->
-  <div class="px-8 pt-6 pb-3">
-    <nav class="flex items-center gap-1.5 text-sm text-gray-400">
-      <a routerLink="/employees" class="hover:text-blue-800 transition-colors">Employés</a>
-      <svg lucideChevronRight class="w-3.5 h-3.5"></svg>
-      <span class="text-gray-700 font-medium">{{ employee()?.firstName }} {{ employee()?.lastName }}</span>
-    </nav>
-  </div>
+﻿<div class="min-h-screen bg-[#F7F9FC] text-[#17233C] font-[Inter,'Segoe UI',system-ui,Arial,sans-serif]" *ngIf="!loading()">
+  <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12">
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 px-8 pb-8">
-    <!-- ── Info Card ── -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <!-- Gradient header -->
-      <div class="px-5 pt-6 pb-5 text-center bg-gray-50">
-        <div class="w-20 h-20 rounded-full mx-auto border-2 border-gray-200 overflow-hidden mb-3">
-          <img *ngIf="employee()?.photoUrl" [src]="apiUrl + '/employees/' + employee()?.id + '/photo/content'"
-            alt="Photo" class="w-full h-full object-cover">
-          <div *ngIf="!employee()?.photoUrl" class="w-full h-full bg-gray-100 flex items-center justify-center">
-            <span class="text-2xl font-bold text-gray-400">{{ employee()?.firstName?.charAt(0) }}{{ employee()?.lastName?.charAt(0) }}</span>
-          </div>
-        </div>
-        <h1 class="text-lg font-bold text-gray-900">{{ employee()?.firstName }} {{ employee()?.lastName }}</h1>
-        <p class="text-gray-400 text-sm">{{ employee()?.matricule }}</p>
-        <span class="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-medium mt-2 border"
-          [ngClass]="statusClass(employee()?.status)">
-          <span class="w-1.5 h-1.5 rounded-full"
-            [ngClass]="{
-              'bg-green-500': employee()?.status === 'ACTIVE',
-              'bg-gray-400': employee()?.status === 'INACTIVE',
-              'bg-yellow-500': employee()?.status === 'ON_LEAVE',
-              'bg-red-500': employee()?.status === 'TERMINATED'
-            }"></span>
-          {{ statusLabel(employee()?.status) }}
-        </span>
-      </div>
-
-      <!-- Info fields -->
-      <div class="p-5 space-y-4">
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
-            <svg lucideMail class="w-4 h-4 text-blue-600"></svg>
-          </div>
-          <div class="min-w-0">
-            <p class="text-xs text-gray-400">Email</p>
-            <p class="text-sm text-gray-800 truncate">{{ employee()?.email }}</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
-            <svg lucidePhone class="w-4 h-4 text-blue-600"></svg>
-          </div>
-          <div>
-            <p class="text-xs text-gray-400">Téléphone</p>
-            <p class="text-sm text-gray-800">{{ employee()?.phoneNumber || '—' }}</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
-            <svg lucideBuilding class="w-4 h-4 text-blue-600"></svg>
-          </div>
-          <div>
-            <p class="text-xs text-gray-400">Département</p>
-            <p class="text-sm text-gray-800">{{ employee()?.department || '—' }}</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
-            <svg lucideBriefcase class="w-4 h-4 text-blue-600"></svg>
-          </div>
-          <div>
-            <p class="text-xs text-gray-400">Poste</p>
-            <p class="text-sm text-gray-800">{{ employee()?.position || '—' }}</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
-            <svg lucideCalendar class="w-4 h-4 text-blue-600"></svg>
-          </div>
-          <div>
-            <p class="text-xs text-gray-400">Date d'embauche</p>
-            <p class="text-sm text-gray-800">{{ employee()?.hireDate | date:'dd/MM/yyyy' }}</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
-            <svg lucideUser class="w-4 h-4 text-blue-600"></svg>
-          </div>
-          <div>
-            <p class="text-xs text-gray-400">Manager</p>
-            <p class="text-sm text-gray-800">{{ employee()?.managerName || '—' }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Stats footer -->
-      <div class="border-t border-gray-100 px-5 py-3 space-y-2">
-        <div class="flex justify-between items-center">
-          <div class="flex items-center gap-1.5">
-            <svg lucideFileText class="w-3.5 h-3.5 text-gray-400"></svg>
-            <span class="text-xs text-gray-500">{{ documents().length }} document{{ documents().length > 1 ? 's' : '' }}</span>
-          </div>
-          <button *ngIf="canManageEmployees" (click)="showEditForm.set(true)"
-            class="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 transition-colors">
-            <svg lucidePencil class="w-3 h-3"></svg>
-            Modifier
-          </button>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <svg lucideCalendar class="w-3.5 h-3.5 text-gray-400"></svg>
-          <span class="text-xs text-gray-500">Dernière activité&nbsp;: {{ lastActivityDate }}</span>
-        </div>
-      </div>
+    <!-- Top area: breadcrumb + retour -->
+    <div class="flex items-center justify-between gap-4 mb-7">
+      <nav class="flex items-center gap-2 text-[13px] text-[#9AA5B7]">
+        <a routerLink="/employees" class="hover:text-[#2563EB] transition-colors">Employés</a>
+        <span>&rsaquo;</span>
+        <b class="font-semibold text-[#66738A]">{{ employee()?.firstName }} {{ employee()?.lastName }}</b>
+      </nav>
+      <button (click)="goBack()"
+        class="inline-flex items-center gap-1.5 px-3.5 h-[36px] text-[13px] font-semibold text-[#66738A] border border-[#E1E7EF] bg-white rounded-[9px] hover:text-[#17233C] hover:bg-[#F2F6FF] hover:border-[#C7D4E8] transition-colors duration-200">
+        <svg lucideArrowLeft class="w-4 h-4"></svg>
+        Retour
+      </button>
     </div>
 
-    <!-- ── Documents ── -->
-    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <!-- Header -->
-      <div class="p-4 border-b border-gray-100">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="font-semibold text-gray-800">
-            Documents
-            <span class="text-gray-400 font-normal">({{ documents().length }})</span>
-          </h2>
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
+
+      <!-- ─── Employee Profile Card ─── -->
+      <div class="lg:col-span-2 relative bg-white border border-[#E7ECF2] rounded-[15px] shadow-[0_1px_3px_rgba(15,23,42,.05)] overflow-hidden">
+
+        <!-- Three-dot action menu -->
+        <div *ngIf="canManageEmployees" class="absolute top-4 right-4 z-20">
+          <button (click)="toggleProfileMenu()" title="Actions"
+            class="w-8 h-8 rounded-[8px] flex items-center justify-center text-[#8A96A9] hover:text-[#17233C] hover:bg-[#F0F4FA] transition-colors">
+            <svg lucideMoreVertical class="w-[18px] h-[18px]"></svg>
+          </button>
+          <div *ngIf="showProfileMenu()" class="fixed inset-0 z-10" (click)="closeProfileMenu()"></div>
+          <div *ngIf="showProfileMenu()" class="absolute right-0 top-10 z-20 w-44 bg-white border border-[#E7ECF2] rounded-[10px] shadow-[0_8px_24px_rgba(15,23,42,.08)] py-1.5">
+            <button (click)="showEditForm.set(true)" class="w-full flex items-center gap-2 px-3.5 py-2 text-[13px] font-medium text-[#17233C] hover:bg-[#F2F6FF] transition-colors">
+              <svg lucidePencil class="w-4 h-4 text-[#2563EB]"></svg>
+              Modifier le profil
+            </button>
+          </div>
+        </div>
+
+        <!-- Identity -->
+        <div class="pt-8 pb-6 px-7 text-center border-b border-[#EEF2F7]">
+          <div class="w-[84px] h-[84px] rounded-full bg-[#3B5BDB] flex items-center justify-center text-white text-[30px] font-bold mx-auto mb-4 overflow-hidden border-4 border-[#EEF4FF] shadow-[0_4px_12px_rgba(37,99,235,.15)]">
+            <img *ngIf="employee()?.photoUrl" [src]="apiUrl + '/employees/' + employee()?.id + '/photo/content'"
+              alt="Photo" class="w-full h-full object-cover">
+            <span *ngIf="!employee()?.photoUrl">{{ employee()?.firstName?.charAt(0) }}{{ employee()?.lastName?.charAt(0) }}</span>
+          </div>
+          <h1 class="text-[19px] font-bold text-[#071334]" style="letter-spacing:-.4px">{{ employee()?.firstName }} {{ employee()?.lastName }}</h1>
+          <p class="text-[13px] text-[#8A96A9] mt-1">{{ employee()?.matricule }}</p>
+          <div class="mt-3">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold border"
+              [ngClass]="statusClass(employee()?.status)">
+              <span class="w-1.5 h-1.5 rounded-full"
+                [ngClass]="{
+                  'bg-[#16A34A]': employee()?.status === 'ACTIVE',
+                  'bg-[#F59E0B]': employee()?.status === 'ON_LEAVE',
+                  'bg-[#DC2626]': employee()?.status === 'TERMINATED'
+                }"></span>
+              {{ statusLabel(employee()?.status) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Information grid -->
+        <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-[34px] h-[34px] rounded-[9px] bg-[#F0F5FF] text-[#2563EB] flex items-center justify-center shrink-0">
+              <svg lucideMail class="w-4 h-4"></svg>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[11px] text-[#9AA5B7] font-medium">Email</p>
+              <p class="text-[13.5px] font-semibold text-[#17233C] break-words">{{ employee()?.email }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-[34px] h-[34px] rounded-[9px] bg-[#F0F5FF] text-[#2563EB] flex items-center justify-center shrink-0">
+              <svg lucidePhone class="w-4 h-4"></svg>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[11px] text-[#9AA5B7] font-medium">Téléphone</p>
+              <p class="text-[13.5px] font-semibold text-[#17233C] break-words">{{ employee()?.phoneNumber || '—' }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-[34px] h-[34px] rounded-[9px] bg-[#F0F5FF] text-[#2563EB] flex items-center justify-center shrink-0">
+              <svg lucideBuilding class="w-4 h-4"></svg>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[11px] text-[#9AA5B7] font-medium">Département</p>
+              <p class="text-[13.5px] font-semibold text-[#17233C] break-words">{{ employee()?.department || '—' }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-[34px] h-[34px] rounded-[9px] bg-[#F0F5FF] text-[#2563EB] flex items-center justify-center shrink-0">
+              <svg lucideBriefcase class="w-4 h-4"></svg>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[11px] text-[#9AA5B7] font-medium">Poste</p>
+              <p class="text-[13.5px] font-semibold text-[#17233C] break-words">{{ employee()?.position || '—' }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-[34px] h-[34px] rounded-[9px] bg-[#F0F5FF] text-[#2563EB] flex items-center justify-center shrink-0">
+              <svg lucideCalendar class="w-4 h-4"></svg>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[11px] text-[#9AA5B7] font-medium">Date d'embauche</p>
+              <p class="text-[13.5px] font-semibold text-[#17233C]">{{ employee()?.hireDate | date:'dd/MM/yyyy' }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-[34px] h-[34px] rounded-[9px] bg-[#F0F5FF] text-[#2563EB] flex items-center justify-center shrink-0">
+              <svg lucideUser class="w-4 h-4"></svg>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[11px] text-[#9AA5B7] font-medium">Manager</p>
+              <p class="text-[13.5px] font-semibold text-[#17233C] break-words">{{ employee()?.managerName || '—' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Secondary info -->
+        <div class="grid grid-cols-2 divide-x divide-[#EEF2F7] border-t border-[#EEF2F7] bg-[#FCFDFF]">
+          <div class="px-6 py-4">
+            <p class="text-[11px] text-[#9AA5B7] font-medium mb-0.5">Documents</p>
+            <p class="text-[16px] font-bold text-[#17233C]" style="letter-spacing:-.3px">{{ documents().length }}</p>
+          </div>
+          <div class="px-6 py-4">
+            <p class="text-[11px] text-[#9AA5B7] font-medium mb-0.5">Dernière activité</p>
+            <p class="text-[16px] font-bold text-[#17233C]" style="letter-spacing:-.3px">{{ lastActivityDate }}</p>
+          </div>
+        </div>
+
+        <!-- Department info box -->
+        <div class="px-6 pb-6">
+          <div class="bg-[#F0F5FF] border border-[#DCE9FF] rounded-[10px] px-4 py-3.5 flex gap-2.5">
+            <svg lucideInfo class="w-4 h-4 text-[#2563EB] shrink-0 mt-0.5"></svg>
+            <p class="text-[12.5px] leading-relaxed text-[#3D5A9E]">
+              {{ employee()?.firstName }} {{ employee()?.lastName }}
+              occupe le poste de <b>{{ employee()?.position || 'membre de l\'équipe' }}</b>
+              au sein du département <b>{{ employee()?.department || 'département général' }}</b>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Documents Section ─── -->
+      <div class="lg:col-span-3 bg-white border border-[#E7ECF2] rounded-[15px] shadow-[0_1px_3px_rgba(15,23,42,.05)] overflow-hidden">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between gap-4 px-6 pt-6 pb-4 border-b border-[#EEF2F7] flex-wrap">
+          <div class="flex items-center gap-3">
+            <div class="w-[38px] h-[38px] rounded-[10px] bg-[#F0F5FF] text-[#2563EB] flex items-center justify-center">
+              <svg lucideFileText class="w-[18px] h-[18px]"></svg>
+            </div>
+            <div>
+              <h2 class="text-[16px] font-bold text-[#071334]" style="letter-spacing:-.2px">
+                Documents <span class="text-[#8A96A9] font-semibold">({{ documents().length }})</span>
+              </h2>
+              <p class="text-[12.5px] text-[#95A1B3]">Documents personnels de cet employé.</p>
+            </div>
+          </div>
           <button *ngIf="canManageDocs" (click)="openUploadModal()"
-            class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-800 text-white rounded-lg text-xs font-medium hover:bg-blue-900 transition-colors">
-            <svg lucideUpload class="w-3.5 h-3.5"></svg>
-            Ajouter
+            class="inline-flex items-center gap-2 px-4 h-[38px] rounded-[9px] bg-[#2563EB] text-white text-[13px] font-semibold shadow-[0_5px_14px_rgba(37,99,235,.13)] hover:bg-[#1D4ED8] transition-colors duration-200">
+            <svg lucideUpload class="w-4 h-4"></svg>
+            Ajouter un document
           </button>
         </div>
-        <!-- Search -->
-        <div class="relative">
-          <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></svg>
-          <input [(ngModel)]="docSearchQuery" placeholder="Rechercher un document..."
-            class="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800/20 focus:border-blue-800">
-        </div>
-      </div>
 
-      <!-- Empty state -->
-      <div *ngIf="filteredDocGroups().length === 0" class="py-16 text-center">
-        <svg lucideFileText class="w-10 h-10 mx-auto text-gray-300 mb-3"></svg>
-        <p class="text-sm text-gray-400">
-          <ng-container *ngIf="documents().length === 0">Aucun document pour cet employé.</ng-container>
-          <ng-container *ngIf="documents().length > 0">Aucun résultat pour « {{ docSearchQuery }} ».</ng-container>
-        </p>
-      </div>
-
-      <!-- Document groups -->
-      <div *ngFor="let group of filteredDocGroups()" class="border-b border-gray-50 last:border-b-0">
-        <button (click)="toggleDocType(group.type)"
-          class="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors">
-          <div class="flex items-center gap-2">
-            <span class="px-2 py-0.5 text-xs font-medium rounded-full"
-              [ngClass]="typeColors[group.type] || typeColors['OTHER']">
-              {{ group.label }}
-            </span>
-            <span class="text-xs text-gray-400">({{ group.docs.length }})</span>
+        <!-- Search + filters -->
+        <div class="px-6 pt-4 pb-1 flex flex-col sm:flex-row gap-3">
+          <div class="relative flex-1 min-w-0">
+            <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9AA5B7]"></svg>
+            <input [(ngModel)]="docSearchQuery" type="text" placeholder="Rechercher un document..."
+              class="w-full pl-9 pr-3 py-[9px] border border-[#E1E7EF] rounded-[9px] text-[13.5px] placeholder:text-[#A8B4C8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 focus:border-[#2563EB] transition-colors">
           </div>
-          <svg lucideChevronDown
-            class="w-4 h-4 text-gray-400 transition-transform duration-200"
-            [class.rotate-180]="expandedDocTypes().has(group.type)">
-          </svg>
-        </button>
+          <div class="sm:w-48">
+            <select [(ngModel)]="docTypeFilter"
+              class="w-full px-3 py-[9px] border border-[#E1E7EF] rounded-[9px] text-[13.5px] bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 focus:border-[#2563EB] transition-colors">
+              <option value="">Tous les types</option>
+              <option *ngFor="let t of docTypes" [value]="t">{{ docTypeLabels[t] }}</option>
+            </select>
+          </div>
+        </div>
 
-        <div *ngIf="expandedDocTypes().has(group.type)" class="animate-fade-in">
-          <div *ngFor="let doc of group.docs" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-t border-gray-50">
-            <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-              [ngClass]="typeIconBgs[group.type] || typeIconBgs['OTHER']">
-              <svg lucideFileText class="w-4 h-4"
-                [ngClass]="typeIconColors[group.type] || typeIconColors['OTHER']"></svg>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-gray-900 truncate">{{ doc.name }}</p>
-              <p class="text-xs text-gray-400">
-                <span class="text-[11px] text-gray-500 font-medium">v{{ doc.currentVersion }}</span>
-                <span class="mx-1">·</span>
-                {{ doc.createdAt | date:'dd/MM/yyyy' }}
-              </p>
-            </div>
-            <div class="flex items-center gap-1 shrink-0">
-              <button (click)="openVersions(doc)" title="Historique versions"
-                class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors">
-                <svg lucideHistory class="w-4 h-4"></svg>
-              </button>
-              <button (click)="openDoc(doc)" title="Ouvrir"
-                class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors">
-                <svg lucideEye class="w-4 h-4"></svg>
-              </button>
-              <button *ngIf="canManageDocs" (click)="openVersionModal(doc)" title="Ajouter une nouvelle version"
-                class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 8l5-5m0 0l5 5m-5-5v12" />
-                </svg>
-              </button>
-              <button (click)="download(doc)" title="Télécharger"
-                class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors">
-                <svg lucideDownload class="w-4 h-4"></svg>
-              </button>
-              <button *ngIf="canManageDocs" (click)="deleteDoc(doc)" title="Supprimer"
-                class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors">
-                <svg lucideTrash2 class="w-4 h-4"></svg>
-              </button>
+        <!-- Empty state -->
+        <div *ngIf="filteredDocGroups().length === 0" class="py-[72px] px-6 flex flex-col items-center justify-center text-center">
+          <div class="w-16 h-16 rounded-[18px] border-2 border-dashed border-[#CBD5E3] bg-[#F7F9FC] flex items-center justify-center mb-4">
+            <svg lucideFileText class="w-7 h-7 text-[#A8B4C8]"></svg>
+          </div>
+          <p class="text-[15px] font-semibold text-[#17233C]">Aucun document pour cet employé</p>
+          <p class="text-[13px] text-[#95A1B3] mt-1 mb-5">Cet employé n'a encore aucun document dans le système.</p>
+          <button *ngIf="canManageDocs" (click)="openUploadModal()"
+            class="inline-flex items-center gap-2 px-4 h-[38px] rounded-[9px] bg-[#2563EB] text-white text-[13px] font-semibold shadow-[0_5px_14px_rgba(37,99,235,.13)] hover:bg-[#1D4ED8] transition-colors duration-200">
+            <svg lucideUpload class="w-4 h-4"></svg>
+            Ajouter un document
+          </button>
+        </div>
+
+        <!-- Document groups -->
+        <div *ngIf="filteredDocGroups().length > 0" class="mt-2">
+          <div *ngFor="let group of filteredDocGroups()" class="border-b border-[#EEF2F7] last:border-b-0">
+            <button (click)="toggleDocType(group.type)"
+              class="w-full flex items-center justify-between px-6 py-3 bg-[#DBEAFE] hover:bg-[#BFDBFE] text-[#1D4ED8] transition-colors duration-150">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 text-[11.5px] font-semibold rounded-full bg-white text-[#2563EB]">
+                  {{ group.label }}
+                </span>
+                <span class="text-[12px] text-[#1D4ED8]">{{ group.docs.length }}</span>
+              </div>
+              <svg lucideChevronDown
+                class="w-4 h-4 text-[#2563EB] transition-transform duration-200"
+                [class.rotate-180]="expandedDocTypes().has(group.type)">
+              </svg>
+            </button>
+
+            <div *ngIf="expandedDocTypes().has(group.type)" class="animate-fade-in">
+              <div *ngFor="let doc of group.docs" class="flex items-center gap-3 px-6 py-3.5 hover:bg-[#F7FAFF] transition-colors duration-150 border-t border-[#EEF2F7]">
+                <div class="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0"
+                  [ngClass]="typeIconBgs[group.type] || typeIconBgs['OTHER']">
+                  <svg lucideFileText class="w-4 h-4"
+                    [ngClass]="typeIconColors[group.type] || typeIconColors['OTHER']"></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-[13.5px] font-semibold text-[#17233C] truncate">{{ doc.name }}</p>
+                  <p class="text-[12px] text-[#8A96A9]">
+                    <span class="font-semibold">v{{ doc.currentVersion }}</span>
+                    <span class="mx-1">·</span>
+                    {{ doc.createdAt | date:'dd/MM/yyyy' }}
+                  </p>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  <button (click)="openVersions(doc)" title="Historique versions"
+                    class="p-1.5 text-[#9AA5B7] hover:text-[#7C3AED] hover:bg-[#F3EDFF] rounded-[8px] transition-colors duration-150">
+                    <svg lucideLayers class="w-4 h-4"></svg>
+                  </button>
+                  <button (click)="openDoc(doc)" title="Ouvrir"
+                    class="p-1.5 text-[#9AA5B7] hover:text-[#2563EB] hover:bg-[#EDF4FF] rounded-[8px] transition-colors duration-150">
+                    <svg lucideEye class="w-4 h-4"></svg>
+                  </button>
+                  <button *ngIf="canManageDocs" (click)="openVersionModal(doc)" title="Ajouter une nouvelle version"
+                    class="p-1.5 text-[#9AA5B7] hover:text-[#2563EB] hover:bg-[#EDF4FF] rounded-[8px] transition-colors duration-150">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 8l5-5m0 0l5 5m-5-5v12" />
+                    </svg>
+                  </button>
+                  <button (click)="download(doc)" title="Télécharger"
+                    class="p-1.5 text-[#9AA5B7] hover:text-[#16A34A] hover:bg-[#EAF8EF] rounded-[8px] transition-colors duration-150">
+                    <svg lucideDownload class="w-4 h-4"></svg>
+                  </button>
+                  <button *ngIf="canManageDocs" (click)="deleteDoc(doc)" title="Supprimer"
+                    class="p-1.5 text-[#9AA5B7] hover:text-[#DC2626] hover:bg-[#FFF0F0] rounded-[8px] transition-colors duration-150">
+                    <svg lucideTrash2 class="w-4 h-4"></svg>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -209,25 +260,30 @@
 </div>
 
 <!-- Loading -->
-<div *ngIf="loading()" class="p-8 text-center text-gray-400">Chargement...</div>
+<div *ngIf="loading()" class="min-h-screen bg-[#F7F9FC] flex items-center justify-center">
+  <div class="flex items-center gap-3 text-[15px] text-[#95A1B3] font-medium">
+    <span class="inline-block w-5 h-5 border-2 border-[#2563EB] border-t-transparent rounded-full animate-spin"></span>
+    Chargement du dossier...
+  </div>
+</div>
 
 <!-- Edit Form Modal -->
 <app-employee-form *ngIf="showEditForm()" [employee]="employee()" (close)="onEditClose($event)"></app-employee-form>
 
 <!-- Upload Modal (2-step wizard) -->
 <div *ngIf="showUploadModal()" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-  <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+  <div class="bg-white rounded-[14px] shadow-xl w-full max-w-lg mx-4 overflow-hidden">
 
     <!-- Header -->
-    <div class="flex items-center justify-between p-5 border-b border-gray-100">
+    <div class="flex items-center justify-between p-5 border-b border-[#EAEFF5]">
       <div>
-        <h2 class="text-lg font-semibold text-gray-900">Ajouter un document</h2>
-        <p class="text-xs text-gray-400 mt-0.5">
+        <h2 class="text-[16px] font-bold text-[#17233C]">Ajouter un document</h2>
+        <p class="text-[12px] text-[#9AA5B7] mt-0.5">
           Étape {{ uploadStep() }} sur 2 —
           {{ uploadStep() === 1 ? 'Sélection du fichier' : 'Révision et enregistrement' }}
         </p>
       </div>
-      <button (click)="showUploadModal.set(false)" class="text-gray-400 hover:text-gray-600">
+      <button (click)="showUploadModal.set(false)" class="text-[#9AA5B7] hover:text-[#17233C]">
         <svg lucideX class="w-5 h-5"></svg>
       </button>
     </div>
@@ -236,30 +292,30 @@
     <div class="flex items-center px-5 pt-4 gap-2">
       <div class="flex items-center gap-1.5">
         <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-          [class]="uploadStep() >= 1 ? 'bg-blue-800 text-white' : 'bg-gray-200 text-gray-500'">1</div>
-        <span class="text-xs text-gray-500">Fichier</span>
+          [class]="uploadStep() >= 1 ? 'bg-[#2563EB] text-white' : 'bg-[#E9EEF5] text-[#8A96A9]'">1</div>
+        <span class="text-xs text-[#8A96A9]">Fichier</span>
       </div>
-      <div class="flex-1 h-px bg-gray-200 mx-1"></div>
+      <div class="flex-1 h-px bg-[#E9EEF5] mx-1"></div>
       <div class="flex items-center gap-1.5">
         <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-          [class]="uploadStep() >= 2 ? 'bg-blue-800 text-white' : 'bg-gray-200 text-gray-500'">2</div>
-        <span class="text-xs text-gray-500">Révision OCR</span>
+          [class]="uploadStep() >= 2 ? 'bg-[#2563EB] text-white' : 'bg-[#E9EEF5] text-[#8A96A9]'">2</div>
+        <span class="text-xs text-[#8A96A9]">Révision OCR</span>
       </div>
     </div>
 
     <!-- STEP 1: File selection -->
     <div *ngIf="uploadStep() === 1" class="p-5 space-y-4">
       <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">Fichier * (PDF, JPG, PNG)</label>
+        <label class="block text-[12px] font-semibold text-[#7A879B] mb-1.5 uppercase tracking-wide">Fichier * (PDF, JPG, PNG)</label>
         <input type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="onFileSelected($event)"
-          class="w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-800 file:text-sm file:font-medium hover:file:bg-blue-100 cursor-pointer">
-        <p *ngIf="uploadFile" class="text-xs text-green-600 mt-1">✓ {{ uploadFile.name }}</p>
+          class="w-full text-sm text-[#66738A] file:mr-3 file:py-1.5 file:px-3 file:rounded-[9px] file:border-0 file:bg-[#EDF4FF] file:text-[#2563EB] file:text-sm file:font-medium hover:file:bg-[#DBEAFE] cursor-pointer">
+        <p *ngIf="uploadFile" class="text-xs text-[#16A34A] mt-1">✓ {{ uploadFile.name }}</p>
       </div>
-      <div *ngIf="ocrError()" class="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{{ ocrError() }}</div>
+      <div *ngIf="ocrError()" class="text-[13px] text-[#DC2626] bg-[#FFF0F0] px-3 py-2 rounded-[9px]">{{ ocrError() }}</div>
       <div class="flex justify-end gap-3 pt-2">
-        <button (click)="showUploadModal.set(false)" class="px-4 py-2 text-sm text-gray-600">Annuler</button>
+        <button (click)="showUploadModal.set(false)" class="px-4 py-2 text-[13px] text-[#66738A] hover:text-[#17233C]">Annuler</button>
         <button (click)="analyzeOcr()" [disabled]="!uploadFile || analyzingOcr()"
-          class="flex items-center gap-2 px-4 py-2 text-sm bg-blue-800 text-white rounded-lg hover:bg-blue-900 disabled:opacity-50 font-medium">
+          class="inline-flex items-center gap-2 px-4 py-2 text-[13px] bg-[#2563EB] text-white rounded-[9px] hover:bg-[#1D4ED8] disabled:opacity-50 font-semibold shadow-[0_5px_14px_rgba(37,99,235,.13)] transition-colors duration-200">
           <svg lucideScanText class="w-4 h-4"></svg>
           {{ analyzingOcr() ? 'Analyse en cours...' : 'Analyser avec OCR' }}
         </button>
@@ -270,19 +326,19 @@
     <div *ngIf="uploadStep() === 2" class="p-5 space-y-4">
       <div class="grid grid-cols-2 gap-4">
         <div class="col-span-2">
-          <label class="block text-xs font-medium text-gray-700 mb-1">Nom du document *</label>
+          <label class="block text-[12px] font-semibold text-[#7A879B] mb-1.5 uppercase tracking-wide">Nom du document *</label>
           <input [(ngModel)]="uploadName" type="text"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+            class="w-full px-3 py-2 border border-[#E1E7EF] rounded-[9px] text-[13.5px] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 focus:border-[#2563EB] transition-colors">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1">Référence</label>
+          <label class="block text-[12px] font-semibold text-[#7A879B] mb-1.5 uppercase tracking-wide">Référence</label>
           <input [(ngModel)]="uploadRef" type="text" placeholder="Auto-générée si vide"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+            class="w-full px-3 py-2 border border-[#E1E7EF] rounded-[9px] text-[13.5px] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 focus:border-[#2563EB] transition-colors">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1">Type *</label>
+          <label class="block text-[12px] font-semibold text-[#7A879B] mb-1.5 uppercase tracking-wide">Type *</label>
           <select [(ngModel)]="uploadType"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+            class="w-full px-3 py-2 border border-[#E1E7EF] rounded-[9px] text-[13.5px] bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 focus:border-[#2563EB] transition-colors">
             <option *ngFor="let t of docTypes" [value]="t">{{ docTypeLabels[t] }}</option>
           </select>
         </div>
@@ -290,25 +346,25 @@
 
       <!-- OCR text — editable -->
       <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">
+        <label class="block text-[12px] font-semibold text-[#7A879B] mb-1.5 uppercase tracking-wide">
           Texte extrait par OCR
-          <span class="text-gray-400 font-normal ml-1">(modifiable — corrigez si nécessaire)</span>
+          <span class="text-[#9AA5B7] font-normal ml-1">(modifiable — corrigez si nécessaire)</span>
         </label>
         <textarea [(ngModel)]="uploadOcrText" rows="6"
-          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 font-mono resize-y"
+          class="w-full px-3 py-2 border border-[#E1E7EF] rounded-[9px] text-[13.5px] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 focus:border-[#2563EB] font-mono resize-y transition-colors"
           placeholder="Aucun texte extrait (document image non lisible ?)"></textarea>
       </div>
 
-      <div *ngIf="saveError()" class="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{{ saveError() }}</div>
+      <div *ngIf="saveError()" class="text-[13px] text-[#DC2626] bg-[#FFF0F0] px-3 py-2 rounded-[9px]">{{ saveError() }}</div>
 
       <div class="flex justify-between gap-3 pt-2">
-        <button (click)="uploadStep.set(1)" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-200 rounded-lg">
+        <button (click)="uploadStep.set(1)" class="px-4 py-2 text-[13px] text-[#66738A] hover:text-[#17233C] border border-[#E1E7EF] rounded-[9px]">
           ← Retour
         </button>
         <div class="flex gap-3">
-          <button (click)="showUploadModal.set(false)" class="px-4 py-2 text-sm text-gray-600">Annuler</button>
+          <button (click)="showUploadModal.set(false)" class="px-4 py-2 text-[13px] text-[#66738A] hover:text-[#17233C]">Annuler</button>
           <button (click)="saveDocument()" [disabled]="!uploadName || saving()"
-            class="flex items-center gap-2 px-4 py-2 text-sm bg-blue-800 text-white rounded-lg hover:bg-blue-900 disabled:opacity-50 font-medium">
+            class="inline-flex items-center gap-2 px-4 py-2 text-[13px] bg-[#2563EB] text-white rounded-[9px] hover:bg-[#1D4ED8] disabled:opacity-50 font-semibold shadow-[0_5px_14px_rgba(37,99,235,.13)] transition-colors duration-200">
             <svg lucideCheck class="w-4 h-4"></svg>
             {{ saving() ? 'Enregistrement...' : 'Enregistrer' }}
           </button>
@@ -321,19 +377,19 @@
 
 <!-- Version Upload Modal (2-step OCR wizard) -->
 <div *ngIf="showVersionModal()" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-  <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+  <div class="bg-white rounded-[14px] shadow-xl w-full max-w-lg mx-4 overflow-hidden">
 
     <!-- Header -->
-    <div class="flex items-center justify-between p-5 border-b border-gray-100">
+    <div class="flex items-center justify-between p-5 border-b border-[#EAEFF5]">
       <div>
-        <h2 class="text-lg font-semibold text-gray-900">Ajouter une version</h2>
-        <p class="text-xs text-gray-400 mt-0.5">
+        <h2 class="text-[16px] font-bold text-[#17233C]">Ajouter une version</h2>
+        <p class="text-[12px] text-[#9AA5B7] mt-0.5">
           {{ versionTargetDoc()?.name }} —
           Étape {{ versionStep() }} sur 2 —
           {{ versionStep() === 1 ? 'Sélection du fichier' : 'Révision OCR' }}
         </p>
       </div>
-      <button (click)="showVersionModal.set(false)" class="text-gray-400 hover:text-gray-600">
+      <button (click)="showVersionModal.set(false)" class="text-[#9AA5B7] hover:text-[#17233C]">
         <svg lucideX class="w-5 h-5"></svg>
       </button>
     </div>
@@ -342,30 +398,30 @@
     <div class="flex items-center px-5 pt-4 gap-2">
       <div class="flex items-center gap-1.5">
         <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-          [class]="versionStep() >= 1 ? 'bg-blue-800 text-white' : 'bg-gray-200 text-gray-500'">1</div>
-        <span class="text-xs text-gray-500">Fichier</span>
+          [class]="versionStep() >= 1 ? 'bg-[#2563EB] text-white' : 'bg-[#E9EEF5] text-[#8A96A9]'">1</div>
+        <span class="text-xs text-[#8A96A9]">Fichier</span>
       </div>
-      <div class="flex-1 h-px bg-gray-200 mx-1"></div>
+      <div class="flex-1 h-px bg-[#E9EEF5] mx-1"></div>
       <div class="flex items-center gap-1.5">
         <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-          [class]="versionStep() >= 2 ? 'bg-blue-800 text-white' : 'bg-gray-200 text-gray-500'">2</div>
-        <span class="text-xs text-gray-500">Révision OCR</span>
+          [class]="versionStep() >= 2 ? 'bg-[#2563EB] text-white' : 'bg-[#E9EEF5] text-[#8A96A9]'">2</div>
+        <span class="text-xs text-[#8A96A9]">Révision OCR</span>
       </div>
     </div>
 
     <!-- STEP 1: File selection -->
     <div *ngIf="versionStep() === 1" class="p-5 space-y-4">
       <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">Fichier * (PDF, JPG, PNG)</label>
+        <label class="block text-[12px] font-semibold text-[#7A879B] mb-1.5 uppercase tracking-wide">Fichier * (PDF, JPG, PNG)</label>
         <input type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="onVersionFileSelected($event)"
-          class="w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-800 file:text-sm file:font-medium hover:file:bg-blue-100 cursor-pointer">
-        <p *ngIf="versionFile" class="text-xs text-green-600 mt-1">✓ {{ versionFile.name }}</p>
+          class="w-full text-sm text-[#66738A] file:mr-3 file:py-1.5 file:px-3 file:rounded-[9px] file:border-0 file:bg-[#EDF4FF] file:text-[#2563EB] file:text-sm file:font-medium hover:file:bg-[#DBEAFE] cursor-pointer">
+        <p *ngIf="versionFile" class="text-xs text-[#16A34A] mt-1">✓ {{ versionFile.name }}</p>
       </div>
-      <div *ngIf="versionOcrError()" class="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{{ versionOcrError() }}</div>
+      <div *ngIf="versionOcrError()" class="text-[13px] text-[#DC2626] bg-[#FFF0F0] px-3 py-2 rounded-[9px]">{{ versionOcrError() }}</div>
       <div class="flex justify-end gap-3 pt-2">
-        <button (click)="showVersionModal.set(false)" class="px-4 py-2 text-sm text-gray-600">Annuler</button>
+        <button (click)="showVersionModal.set(false)" class="px-4 py-2 text-[13px] text-[#66738A] hover:text-[#17233C]">Annuler</button>
         <button (click)="analyzeVersionOcr()" [disabled]="!versionFile || analyzingVersionOcr()"
-          class="flex items-center gap-2 px-4 py-2 text-sm bg-blue-800 text-white rounded-lg hover:bg-blue-900 disabled:opacity-50 font-medium">
+          class="inline-flex items-center gap-2 px-4 py-2 text-[13px] bg-[#2563EB] text-white rounded-[9px] hover:bg-[#1D4ED8] disabled:opacity-50 font-semibold shadow-[0_5px_14px_rgba(37,99,235,.13)] transition-colors duration-200">
           <svg lucideScanText class="w-4 h-4"></svg>
           {{ analyzingVersionOcr() ? 'Analyse en cours...' : 'Analyser avec OCR' }}
         </button>
@@ -375,25 +431,25 @@
     <!-- STEP 2: Review OCR text -->
     <div *ngIf="versionStep() === 2" class="p-5 space-y-4">
       <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">
+        <label class="block text-[12px] font-semibold text-[#7A879B] mb-1.5 uppercase tracking-wide">
           Texte extrait par OCR
-          <span class="text-gray-400 font-normal ml-1">(modifiable — corrigez si nécessaire)</span>
+          <span class="text-[#9AA5B7] font-normal ml-1">(modifiable — corrigez si nécessaire)</span>
         </label>
         <textarea [(ngModel)]="versionOcrText" rows="8"
-          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 font-mono resize-y"
+          class="w-full px-3 py-2 border border-[#E1E7EF] rounded-[9px] text-[13.5px] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 focus:border-[#2563EB] font-mono resize-y transition-colors"
           placeholder="Aucun texte extrait (document image non lisible ?)"></textarea>
       </div>
 
-      <div *ngIf="versionSaveError()" class="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{{ versionSaveError() }}</div>
+      <div *ngIf="versionSaveError()" class="text-[13px] text-[#DC2626] bg-[#FFF0F0] px-3 py-2 rounded-[9px]">{{ versionSaveError() }}</div>
 
       <div class="flex justify-between gap-3 pt-2">
-        <button (click)="versionStep.set(1)" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-200 rounded-lg">
+        <button (click)="versionStep.set(1)" class="px-4 py-2 text-[13px] text-[#66738A] hover:text-[#17233C] border border-[#E1E7EF] rounded-[9px]">
           ← Retour
         </button>
         <div class="flex gap-3">
-          <button (click)="showVersionModal.set(false)" class="px-4 py-2 text-sm text-gray-600">Annuler</button>
+          <button (click)="showVersionModal.set(false)" class="px-4 py-2 text-[13px] text-[#66738A] hover:text-[#17233C]">Annuler</button>
           <button (click)="saveVersion()" [disabled]="savingVersion()"
-            class="flex items-center gap-2 px-4 py-2 text-sm bg-blue-800 text-white rounded-lg hover:bg-blue-900 disabled:opacity-50 font-medium">
+            class="inline-flex items-center gap-2 px-4 py-2 text-[13px] bg-[#2563EB] text-white rounded-[9px] hover:bg-[#1D4ED8] disabled:opacity-50 font-semibold shadow-[0_5px_14px_rgba(37,99,235,.13)] transition-colors duration-200">
             <svg lucideCheck class="w-4 h-4"></svg>
             {{ savingVersion() ? 'Enregistrement...' : 'Enregistrer la version' }}
           </button>
@@ -405,32 +461,45 @@
 </div>
 
 <!-- Versions Modal -->
-<div *ngIf="showVersionsModal()" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-  <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
-    <div class="flex items-center justify-between p-5 border-b border-gray-100">
-      <h2 class="text-lg font-semibold text-gray-900">Versions — {{ selectedDoc()?.name }}</h2>
-      <button (click)="showVersionsModal.set(false)" class="text-gray-400 hover:text-gray-600">
-        <svg lucideX class="w-5 h-5"></svg>
+<div *ngIf="showVersionsModal()" class="fixed inset-0 z-50 bg-[#15213d]/50 backdrop-blur-[2px] flex items-center justify-center p-4" (click)="showVersionsModal.set(false)">
+  <div class="bg-white rounded-[18px] shadow-[0_24px_60px_rgba(21,33,61,.28)] w-full max-w-md mx-4 overflow-hidden" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between gap-4 px-5 py-5 border-b border-[#f2f4f7]">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-[38px] h-[38px] rounded-[11px] bg-[#eaf2ff] text-[#2563eb] flex items-center justify-center shrink-0">
+          <svg lucideLayers class="w-[17px] h-[17px]"></svg>
+        </div>
+        <div class="min-w-0">
+          <div class="text-[10px] font-bold uppercase tracking-[.1em] text-[#9aa5b7] mb-0.5">Versions</div>
+          <h2 class="text-[15px] font-bold text-[#17233c] truncate">{{ selectedDoc()?.name }}</h2>
+        </div>
+      </div>
+      <button (click)="showVersionsModal.set(false)"
+        class="w-[34px] h-[34px] rounded-[9px] hover:bg-[#f6f8fb] flex items-center justify-center shrink-0" aria-label="Fermer">
+        <svg lucideX class="w-4.5 h-4.5 text-[#68758a]"></svg>
       </button>
     </div>
-    <div class="divide-y divide-gray-50 max-h-80 overflow-y-auto">
+    <div class="divide-y divide-[#EEF2F7] max-h-80 overflow-y-auto">
       <div *ngFor="let v of versions()" class="p-4 flex items-center justify-between">
         <div>
-          <p class="text-sm font-medium text-gray-900">Version {{ v.versionNumber }}</p>
-          <p class="text-xs text-gray-400">{{ v.createdAt | date:'dd/MM/yyyy HH:mm' }} · {{ v.uploadedBy }}</p>
+          <p class="text-[13.5px] font-semibold text-[#17233C]">Version {{ v.versionNumber }}</p>
+          <p class="text-[12px] text-[#9AA5B7]">{{ v.createdAt | date:'dd/MM/yyyy HH:mm' }} · {{ v.uploadedBy }}</p>
         </div>
         <div class="flex items-center gap-1">
           <button (click)="openVersion(v)" title="Ouvrir"
-            class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors">
+            class="p-1.5 text-[#9AA5B7] hover:text-[#2563EB] hover:bg-[#EDF4FF] rounded-[8px] transition-colors duration-150">
             <svg lucideEye class="w-4 h-4"></svg>
           </button>
           <button (click)="downloadVersion(v)" title="Télécharger"
-            class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors">
+            class="p-1.5 text-[#9AA5B7] hover:text-[#16A34A] hover:bg-[#EAF8EF] rounded-[8px] transition-colors duration-150">
             <svg lucideDownload class="w-4 h-4"></svg>
+          </button>
+          <button (click)="deleteVersion(v)" title="Supprimer"
+            class="p-1.5 text-[#9AA5B7] hover:text-[#DC2626] hover:bg-[#FDEAEA] rounded-[8px] transition-colors duration-150">
+            <svg lucideTrash2 class="w-4 h-4"></svg>
           </button>
         </div>
       </div>
-      <div *ngIf="versions().length === 0" class="p-6 text-center text-gray-400 text-sm">Aucune version.</div>
+      <div *ngIf="versions().length === 0" class="p-6 text-center text-[#9AA5B7] text-sm">Aucune version.</div>
     </div>
   </div>
 </div>

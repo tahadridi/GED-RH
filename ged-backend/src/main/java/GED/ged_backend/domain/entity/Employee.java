@@ -56,6 +56,8 @@ public class Employee {
 
 	private LocalDate hireDate;
 
+	private LocalDate terminationDate;
+
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 32)
 	private EmployeeStatus status = EmployeeStatus.ACTIVE;
@@ -152,6 +154,14 @@ public class Employee {
 
 	public void setHireDate(LocalDate hireDate) {
 		this.hireDate = hireDate;
+	}
+
+	public LocalDate getTerminationDate() {
+		return terminationDate;
+	}
+
+	public void setTerminationDate(LocalDate terminationDate) {
+		this.terminationDate = terminationDate;
 	}
 
 	public String getPhotoPath() {

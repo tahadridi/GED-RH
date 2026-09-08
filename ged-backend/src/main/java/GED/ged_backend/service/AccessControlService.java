@@ -75,12 +75,8 @@ public class AccessControlService {
     public boolean canManageDocument(Object principal, DocumentType type) {
         SystemUser actor = resolveActor(principal);
         if (actor == null) return false;
-        if (hasRole(actor, SystemRole.ADMINISTRATOR)) return true;
-        if (hasRole(actor, SystemRole.RH)) {
-            Set<DocumentType> responsibilities = actor.getRhResponsibilities();
-            return responsibilities != null && responsibilities.contains(type);
-        }
-        return false;
+        if (hasRole(actor, SystemRole.ADMINISTRATOR) || hasRole(actor, SystemRole.DIRECTION_GENERALE)) return true;
+        return hasRole(actor, SystemRole.RH);
     }
 
     public boolean canViewVersion(Object principal, UUID versionId) {
@@ -139,21 +135,20 @@ public class AccessControlService {
             // Can view transitive subordinates' documents
             return isManagerInChain(document.getEmployee(), actor.getEmployeeProfile());
         }
-        if (hasRole(actor, SystemRole.RH)) {
-            Set<DocumentType> responsibilities = actor.getRhResponsibilities();
-            return responsibilities != null && responsibilities.contains(document.getType());
-        }
-        return false;
+        return hasRole(actor, SystemRole.RH);
     }
 
     public boolean canManageDocument(SystemUser actor, EmployeeDocument document) {
         if (actor == null) return false;
-        if (hasRole(actor, SystemRole.ADMINISTRATOR)) return true;
-        if (hasRole(actor, SystemRole.RH)) {
-            Set<DocumentType> responsibilities = actor.getRhResponsibilities();
-            return responsibilities != null && responsibilities.contains(document.getType());
-        }
-        return false;
+        if (hasRole(actor, SystemRole.ADMINISTRATOR) || hasRole(actor, SystemRole.DIRECTION_GENERALE)) return true;
+        return hasRole(actor, SystemRole.RH);
+    }
+
+    /** Annonces internes : seuls l'administrateur et la direction generale peuvent publier. */
+    public boolean canSendAnnouncements(SystemUser actor) {
+        if (actor == null || actor.getRoles() == null) return false;
+        return actor.getRoles().contains(SystemRole.ADMINISTRATOR)
+                || actor.getRoles().contains(SystemRole.DIRECTION_GENERALE);
     }
 
     private boolean hasRole(SystemUser actor, SystemRole role) {

@@ -1,6 +1,7 @@
 package GED.ged_backend.repository;
 
 import GED.ged_backend.domain.entity.Employee;
+import GED.ged_backend.domain.enums.EmployeeStatus;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,6 +19,11 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID>, JpaSp
 	List<Employee> findByManagerId(UUID managerId);
 
 	Optional<Employee> findTopByMatriculeStartingWithOrderByMatriculeDesc(String prefix);
+
+	long countByStatus(EmployeeStatus status);
+
+	@Query("select count(distinct e.department) from Employee e where e.department is not null")
+	long countDistinctDepartments();
 
 	@Query(value = """
 		WITH RECURSIVE descendants AS (

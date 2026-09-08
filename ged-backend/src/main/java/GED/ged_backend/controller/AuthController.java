@@ -144,14 +144,22 @@ public class AuthController {
     private static class UnauthorizedException extends RuntimeException {}
 
     @PostMapping("/password")
-    @Operation(summary = "Changer le mot de passe", description = "Met a jour le mot de passe via Supabase Auth.")
+    @Operation(summary = "Changer le mot de passe", description = "Verifie le mot de passe actuel puis met a jour via Supabase Auth.")
     public void changePassword(@RequestBody ChangePasswordRequest req) {
         SystemUser user = accessControlService.getCurrentUser();
         if (user == null) throw new UnauthorizedException();
 
+        if (req.currentPassword == null || req.currentPassword.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le mot de passe actuel est requis.");
+        }
+
         SupabaseAdminClient client = supabaseAdminClientProvider.getIfAvailable();
         if (client == null) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "L'administration Supabase n'est pas activée.");
+        }
+
+        if (user.getEmail() == null || !client.verifyPassword(user.getEmail(), req.currentPassword)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le mot de passe actuel est incorrect.");
         }
 
         try {
@@ -161,5 +169,5 @@ public class AuthController {
         }
     }
 
-    public record ChangePasswordRequest(String newPassword) {}
+    public record ChangePasswordRequest(String currentPassword, String newPassword) {}
 }

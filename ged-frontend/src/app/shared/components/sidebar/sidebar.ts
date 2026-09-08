@@ -1,14 +1,20 @@
-import { Component, Input, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
+import { EmployeeService } from '../../../core/services/employee.service';
+import { UserService } from '../../../core/services/user.service';
+import { OrganizationService } from '../../../core/services/organization.service';
+import { DocumentService } from '../../../core/services/document.service';
 import { environment } from '../../../../environments/environment';
 import { FormsModule } from '@angular/forms';
 import {
-  LucideLayoutDashboard, LucideFileText,
-  LucideSearch, LucideShield, LucideLogOut, LucideUser, LucideBuilding, LucideX, LucideCamera,
-  LucideEye, LucideEyeOff, LucideCheck, LucideMegaphone, LucideGitBranch
+  LucideLayoutDashboard,
+  LucideLogOut, LucideX, LucideCamera,
+  LucideEye, LucideEyeOff, LucideCheck, LucideMegaphone, LucideGitBranch,
+  LucideUsers, LucideFiles, LucideMessageSquareWarning, LucideBuilding2,
+  LucideFileType, LucideUserCog, LucideCalendarDays
 } from '@lucide/angular';
 import { getErrorMessage } from '../../../core/utils/error.utils';
 
@@ -16,44 +22,58 @@ import { getErrorMessage } from '../../../core/utils/error.utils';
   selector: 'app-sidebar',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule,
-    LucideLayoutDashboard, LucideFileText,
-    LucideSearch, LucideShield, LucideLogOut, LucideUser, LucideBuilding, LucideX, LucideCamera,
-    LucideEye, LucideEyeOff, LucideCheck, LucideMegaphone, LucideGitBranch],
+    LucideLayoutDashboard,
+    LucideLogOut, LucideX, LucideCamera,
+    LucideEye, LucideEyeOff, LucideCheck, LucideMegaphone, LucideGitBranch,
+    LucideUsers, LucideFiles, LucideMessageSquareWarning, LucideBuilding2,
+    LucideFileType, LucideUserCog, LucideCalendarDays],
   template: `
     <aside class="sidebar-container">
       <div class="sidebar-header flex items-center gap-3">
-        <div class="logo-circle">
-          <img src="/logo.png" alt="Logo" class="logo-img">
+        <img src="/logo.png" alt="Logo" class="logo-img">
+        <div class="min-w-0 flex-1">
+          <span class="block leading-tight truncate">GED RH</span>
+          <span class="sidebar-sub">Gestion Électronique des Documents</span>
         </div>
-        <span>GED RH</span>
+        <button (click)="sidebarClose.emit()" aria-label="Fermer le menu" class="lg:hidden w-[34px] h-[34px] rounded-[9px] bg-white/10 text-white/80 hover:bg-white/20 transition-colors flex items-center justify-center shrink-0">
+          <svg lucideX class="w-4.5 h-4.5"></svg>
+        </button>
       </div>
 
       <div class="px-4 pt-3 pb-1">
         <span class="role-banner">Espace {{ roleLabel }}</span>
       </div>
 
-      <nav class="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
+      <nav class="flex-1 px-3 py-3 space-y-1 overflow-y-auto" (click)="sidebarClose.emit()">
         <a [routerLink]="dashboardRoute" routerLinkActive="active-link"
            class="nav-link">
           <svg lucideLayoutDashboard class="w-4 h-4 shrink-0"></svg>
           Tableau de bord
         </a>
 
-        <a routerLink="/employees" routerLinkActive="active-link"
+        <a [routerLink]="employeesRoute" routerLinkActive="active-link"
            class="nav-link">
-          <svg lucideUser class="w-4 h-4 shrink-0"></svg>
-          Employés
+          <svg lucideUsers class="w-4 h-4 shrink-0"></svg>
+          {{ isManager ? 'Mon équipe' : 'Employés' }}
+          <span *ngIf="employeeCount > 0" class="nav-badge">{{ employeeCount }}</span>
         </a>
 
-        <a routerLink="/documents" routerLinkActive="active-link"
+        <a [routerLink]="documentsRoute" routerLinkActive="active-link"
            class="nav-link">
-          <svg lucideFileText class="w-4 h-4 shrink-0"></svg>
-          Documents
+          <svg lucideFiles class="w-4 h-4 shrink-0"></svg>
+          {{ isManager ? 'Documents ' : 'Documents' }}
+          <span *ngIf="documentCount > 0" class="nav-badge">{{ documentCount }}</span>
+        </a>
+
+        <a *ngIf="isAdmin || isRH || isManager" routerLink="/calendar" routerLinkActive="active-link"
+           class="nav-link">
+          <svg lucideCalendarDays class="w-4 h-4 shrink-0"></svg>
+          Calendrier
         </a>
 
         <a *ngIf="!isDG" routerLink="/reclamations" routerLinkActive="active-link"
            class="nav-link" style="position: relative;">
-          <svg lucideFileText class="w-4 h-4 shrink-0"></svg>
+          <svg lucideMessageSquareWarning class="w-4 h-4 shrink-0"></svg>
           Réclamations
           <span *ngIf="recBadgeCount > 0" class="rec-badge">{{ recBadgeCount }}</span>
         </a>
@@ -69,8 +89,9 @@ import { getErrorMessage } from '../../../core/utils/error.utils';
           <div class="space-y-1">
             <a routerLink="/admin/organization" routerLinkActive="active-link"
                class="nav-link">
-              <svg lucideBuilding class="w-4 h-4 shrink-0"></svg>
+              <svg lucideBuilding2 class="w-4 h-4 shrink-0"></svg>
               Départements
+              <span *ngIf="departmentCount > 0" class="nav-badge">{{ departmentCount }}</span>
             </a>
             <a routerLink="/admin/announcements" routerLinkActive="active-link"
                class="nav-link">
@@ -90,17 +111,19 @@ import { getErrorMessage } from '../../../core/utils/error.utils';
           <div class="space-y-1">
             <a routerLink="/admin/users" routerLinkActive="active-link"
                class="nav-link">
-              <svg lucideShield class="w-4 h-4 shrink-0"></svg>
+              <svg lucideUserCog class="w-4 h-4 shrink-0"></svg>
               Utilisateurs
+              <span *ngIf="userCount > 0" class="nav-badge">{{ userCount }}</span>
             </a>
             <a routerLink="/admin/organization" routerLinkActive="active-link"
                class="nav-link">
-              <svg lucideBuilding class="w-4 h-4 shrink-0"></svg>
+              <svg lucideBuilding2 class="w-4 h-4 shrink-0"></svg>
               Départements
+              <span *ngIf="departmentCount > 0" class="nav-badge">{{ departmentCount }}</span>
             </a>
             <a routerLink="/admin/doc-types" routerLinkActive="active-link"
                class="nav-link">
-              <svg lucideFileText class="w-4 h-4 shrink-0"></svg>
+              <svg lucideFileType class="w-4 h-4 shrink-0"></svg>
               Types de documents
             </a>
             <a routerLink="/admin/announcements" routerLinkActive="active-link"
@@ -145,9 +168,15 @@ import { getErrorMessage } from '../../../core/utils/error.utils';
     <!-- Profile Popup -->
     <div *ngIf="showProfile" class="profile-overlay" (click)="showProfile = false">
       <div class="profile-popup" (click)="$event.stopPropagation()">
+
         <div class="profile-popup-header">
-          <h3>Mon Profil</h3>
-          <button (click)="showProfile = false" class="close-btn"><svg lucideX class="w-5 h-5"></svg></button>
+          <div class="min-w-0">
+            <div class="pp-label">Compte</div>
+            <h3 class="pp-title">Mon Profil</h3>
+          </div>
+          <button (click)="showProfile = false" class="close-btn" aria-label="Fermer">
+            <svg lucideX class="w-4.5 h-4.5 text-[#68758a]"></svg>
+          </button>
         </div>
 
         <div class="profile-popup-body">
@@ -163,65 +192,64 @@ import { getErrorMessage } from '../../../core/utils/error.utils';
               </button>
             </div>
             <input #photoInput type="file" accept="image/*" (change)="onPhotoSelected($event)" hidden>
-            <p *ngIf="photoUploading" class="text-xs text-blue-600 mt-2">Upload en cours...</p>
-            <p *ngIf="photoError" class="text-xs text-red-500 mt-2">{{ photoError }}</p>
+            <p *ngIf="photoUploading" class="pp-status-center text-blue-600 mt-2">Upload en cours...</p>
+            <p *ngIf="photoError" class="pp-status-center text-red-500 mt-2">{{ photoError }}</p>
           </div>
 
           <!-- Info -->
-          <div class="profile-info">
-            <div class="info-row">
-              <span class="info-label">Email</span>
-              <span class="info-value">{{ profile?.email }}</span>
+          <div class="pp-info-card">
+            <div class="pp-info-row">
+              <span class="pp-info-label">Email</span>
+              <span class="pp-info-value">{{ profile?.email }}</span>
             </div>
-            <div class="info-row">
-              <span class="info-label">Matricule</span>
-              <span class="info-value">{{ profile?.matricule || '—' }}</span>
+            <div class="pp-info-row">
+              <span class="pp-info-label">Matricule</span>
+              <span class="pp-info-value">{{ profile?.matricule || '—' }}</span>
             </div>
-            <div class="info-row">
-              <span class="info-label">Rôle</span>
-              <span class="info-value">{{ roleLabel }}</span>
+            <div class="pp-info-row pp-info-row-last">
+              <span class="pp-info-label">Rôle</span>
+              <span class="pp-info-value">{{ roleLabel }}</span>
             </div>
           </div>
 
           <!-- Email change request -->
-          <div class="email-change-section">
-            <p class="section-title">Changer d'email</p>
-            <p class="section-desc">Saisissez le nouvel email souhaité. Une demande sera envoyée à l'administrateur.</p>
-            <input [(ngModel)]="newEmail" type="email" placeholder="Nouvel email" class="form-input">
-            <div class="flex items-center gap-2 mt-2">
-              <button (click)="sendEmailChangeRequest()" [disabled]="!newEmail || sendingRequest" class="request-btn">
-                {{ sendingRequest ? 'Envoi...' : 'Envoyer la demande' }}
-              </button>
+          <div class="pp-section">
+            <div class="pp-section-head">
+              <p class="pp-section-title">Changer d'email</p>
+              <p class="pp-section-desc">Saisissez le nouvel email souhaité. Une demande sera envoyée à l'administrateur.</p>
             </div>
-            <p *ngIf="requestSuccess" class="text-xs text-green-600 mt-2">Demande envoyée avec succès</p>
-            <p *ngIf="requestError" class="text-xs text-red-500 mt-2">{{ requestError }}</p>
+            <input [(ngModel)]="newEmail" type="email" placeholder="Nouvel email" class="pp-input">
+            <button (click)="sendEmailChangeRequest()" [disabled]="!newEmail || sendingRequest" class="pp-btn pp-btn-primary">
+              {{ sendingRequest ? 'Envoi...' : 'Envoyer la demande' }}
+            </button>
+            <p *ngIf="requestSuccess" class="pp-status-left text-green-600 mt-2">Demande envoyée avec succès</p>
+            <p *ngIf="requestError" class="pp-status-left text-red-500 mt-2">{{ requestError }}</p>
           </div>
 
           <!-- Password change -->
-          <div class="password-change-section">
-            <p class="section-title">Changer le mot de passe</p>
+          <div class="pp-section">
+            <div class="pp-section-head">
+              <p class="pp-section-title">Changer le mot de passe</p>
+            </div>
             <div class="relative">
-              <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="newPassword" placeholder="Nouveau mot de passe" class="form-input pr-9">
-              <button type="button" (click)="showPassword = !showPassword" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1">
+              <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="currentPassword" placeholder="Mot de passe actuel" class="pp-input pr-12">
+              <button type="button" (click)="showPassword = !showPassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-[#9aa5b7] hover:text-[#4a5568]">
                 <svg *ngIf="!showPassword" lucideEye class="w-4 h-4"></svg>
                 <svg *ngIf="showPassword" lucideEyeOff class="w-4 h-4"></svg>
               </button>
             </div>
-            <div class="relative mt-2">
-              <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="confirmPassword" placeholder="Confirmer le mot de passe" class="form-input pr-9">
-            </div>
-            <div class="flex items-center gap-2 mt-2">
-              <button (click)="changePassword()" [disabled]="isPasswordChangeDisabled()" class="request-btn">
-                {{ passwordChanging ? 'Mise à jour...' : 'Changer le mot de passe' }}
-              </button>
-            </div>
-            <p *ngIf="passwordSuccess" class="text-xs text-green-600 mt-2">Mot de passe mis à jour avec succès</p>
-            <p *ngIf="passwordError" class="text-xs text-red-500 mt-2">{{ passwordError }}</p>
+            <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="newPassword" placeholder="Nouveau mot de passe" class="pp-input mt-2">
+            <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="confirmPassword" placeholder="Confirmer le mot de passe" class="pp-input mt-2">
+            <button (click)="changePassword()" [disabled]="isPasswordChangeDisabled()" class="pp-btn pp-btn-primary">
+              {{ passwordChanging ? 'Mise à jour...' : 'Changer le mot de passe' }}
+            </button>
+            <p *ngIf="passwordSuccess" class="pp-status-left text-green-600 mt-2">Mot de passe mis à jour avec succès</p>
+            <p *ngIf="passwordError" class="pp-status-left text-red-500 mt-2">{{ passwordError }}</p>
           </div>
         </div>
 
         <div class="profile-popup-footer">
-          <button (click)="showProfile = false" class="cancel-btn">Fermer</button>
+          <button (click)="showProfile = false" class="pp-btn pp-btn-cancel">Fermer</button>
         </div>
       </div>
     </div>
@@ -306,20 +334,19 @@ import { getErrorMessage } from '../../../core/utils/error.utils';
       letter-spacing: 0.025em;
     }
 
-    .logo-circle {
-      width: 48px;
-      height: 48px;
-      background-color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    .sidebar-sub {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 500;
+      line-height: 1.3;
+      color: #8ea0c4;
+      letter-spacing: 0.02em;
+      margin-top: 3px;
     }
+
     .logo-img {
-      width: 40px;
-      height: 40px;
+      width: 56px;
+      height: 56px;
       object-fit: contain;
     }
 
@@ -351,6 +378,18 @@ import { getErrorMessage } from '../../../core/utils/error.utils';
     }
     .active-link {
       background-color: #152040;
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 3px 7px;
+      border-radius: 20px;
+      background-color: rgba(255, 255, 255, 0.09);
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1;
+      flex: none;
     }
 
     .admin-section-title {
@@ -438,47 +477,66 @@ import { getErrorMessage } from '../../../core/utils/error.utils';
     .profile-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(21, 33, 61, 0.5);
+      backdrop-filter: blur(2px);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 1000;
+      padding: 1rem;
     }
     .profile-popup {
       background: white;
-      border-radius: 1rem;
+      border-radius: 18px;
       width: 100%;
-      max-width: 420px;
-      margin: 1rem;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 440px;
+      box-shadow: 0 24px 60px rgba(21, 33, 61, 0.28);
       overflow: hidden;
+      font-family: Inter, system-ui, Arial, sans-serif;
     }
     .profile-popup-header {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
-      padding: 1.25rem 1.5rem;
-      border-bottom: 1px solid #e5e7eb;
+      gap: 1rem;
+      padding: 1.5rem 1.5rem 1rem 1.5rem;
+      border-bottom: 1px solid #f2f4f7;
     }
-    .profile-popup-header h3 {
-      font-size: 1.125rem;
+    .pp-label {
+      font-size: 10px;
       font-weight: 700;
-      color: #111827;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #9aa5b7;
+      margin-bottom: 0.25rem;
+    }
+    .pp-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #15213d;
       margin: 0;
+      letter-spacing: -0.25px;
+      line-height: 1.3;
     }
     .close-btn {
-      background: none;
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
       border: none;
-      color: #9ca3af;
+      background: transparent;
+      color: #68758a;
       cursor: pointer;
-      padding: 0.25rem;
-      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background-color 0.15s;
     }
-    .close-btn:hover { color: #374151; }
+    .close-btn:hover { background: #f6f8fb; }
     .profile-popup-body {
       padding: 1.5rem;
       overflow-y: auto;
-      max-height: 60vh;
+      max-height: 62vh;
     }
     .profile-photo-section {
       display: flex;
@@ -488,130 +546,143 @@ import { getErrorMessage } from '../../../core/utils/error.utils';
     }
     .profile-photo-wrapper {
       position: relative;
-      width: 80px;
-      height: 80px;
+      width: 84px;
+      height: 84px;
     }
     .profile-photo {
       width: 100%;
       height: 100%;
       border-radius: 50%;
       object-fit: cover;
-      border: 3px solid #e5e7eb;
+      border: 4px solid #fff;
+      box-shadow: 0 0 0 1px #eef1f6, 0 8px 20px rgba(21, 33, 61, 0.10);
     }
     .camera-btn {
       position: absolute;
-      bottom: 0;
-      right: 0;
-      width: 28px;
-      height: 28px;
+      bottom: 2px;
+      right: 2px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
-      background: #3b82f6;
-      border: 2px solid white;
+      background: #2563eb;
+      border: 3px solid white;
       color: white;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+      transition: background-color 0.15s;
     }
-    .camera-btn:hover { background: #2563eb; }
-    .profile-info {
-      margin-bottom: 1rem;
+    .camera-btn:hover { background: #1d4ed8; }
+
+    .pp-status-center { font-size: 12px; text-align: center; }
+    .pp-status-left { font-size: 12px; }
+
+    .pp-info-card {
+      background: #f8fafc;
+      border: 1px solid #eef1f6;
+      border-radius: 13px;
+      padding: 0 1.25rem;
+      margin-bottom: 1.25rem;
     }
-    .info-row {
+    .pp-info-row {
       display: flex;
       justify-content: space-between;
-      padding: 0.5rem 0;
-      border-bottom: 1px solid #f3f4f6;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #eef1f6;
     }
-    .info-label {
-      font-size: 0.75rem;
+    .pp-info-row-last { border-bottom: none; }
+    .pp-info-label {
+      font-size: 11px;
       font-weight: 600;
-      color: #6b7280;
+      color: #9aa5b7;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
+      flex-shrink: 0;
     }
-    .info-value {
-      font-size: 0.875rem;
-      color: #111827;
+    .pp-info-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: #15213d;
+      text-align: right;
+      word-break: break-word;
     }
-    .email-change-section {
-      border-top: 1px solid #e5e7eb;
-      padding-top: 1rem;
+
+    .pp-section {
+      padding-top: 1.25rem;
+      margin-top: 1.25rem;
+      border-top: 1px solid #eef1f6;
     }
-    .password-change-section {
-      border-top: 1px solid #e5e7eb;
-      padding-top: 1rem;
-      margin-top: 1rem;
-    }
-    .section-title {
-      font-size: 0.875rem;
+    .pp-section-head { margin-bottom: 0.75rem; }
+    .pp-section-title {
+      font-size: 14px;
       font-weight: 700;
-      color: #111827;
+      color: #15213d;
       margin: 0 0 0.25rem 0;
     }
-    .section-desc {
-      font-size: 0.75rem;
-      color: #6b7280;
-      margin: 0 0 0.75rem 0;
+    .pp-section-desc {
+      font-size: 12px;
+      color: #8793a6;
+      margin: 0;
+      line-height: 1.5;
     }
-    .form-input {
+    .pp-input {
       width: 100%;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.5rem;
-      font-size: 0.875rem;
-      color: #111827;
+      padding: 0.6rem 0.85rem;
+      border: 1px solid #e1e7ef;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #15213d;
       outline: none;
-      transition: border-color 0.2s;
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
       box-sizing: border-box;
     }
-    .form-input:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    .pp-input:focus {
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
     }
-    .request-btn {
-      padding: 0.5rem 1rem;
+    .pp-input::placeholder { color: #9aa5b7; }
+    .pp-btn {
+      width: 100%;
+      padding: 0.6rem 1rem;
       border: none;
-      border-radius: 0.5rem;
-      background: #3b82f6;
-      color: white;
-      font-size: 0.8125rem;
+      border-radius: 10px;
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
+      transition: background-color 0.15s, opacity 0.15s;
+      margin-top: 0.65rem;
     }
-    .request-btn:hover { background: #2563eb; }
-    .request-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .pp-btn-primary {
+      background: #2563eb;
+      color: white;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    }
+    .pp-btn-primary:hover { background: #1d4ed8; }
+    .pp-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .pp-btn-cancel {
+      background: #fff;
+      color: #374151;
+      border: 1px solid #e1e7ef;
+      box-shadow: none;
+    }
+    .pp-btn-cancel:hover { background: #f7f9fc; }
     .profile-popup-footer {
       display: flex;
       justify-content: flex-end;
-      gap: 0.75rem;
       padding: 1rem 1.5rem;
-      border-top: 1px solid #e5e7eb;
+      border-top: 1px solid #eef1f6;
       background: #f9fafb;
     }
-    .cancel-btn {
-      padding: 0.5rem 1rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.5rem;
-      background: white;
-      color: #374151;
-      font-size: 0.875rem;
-      font-weight: 500;
-      cursor: pointer;
+    .profile-popup-footer .pp-btn {
+      width: auto;
+      min-width: 96px;
+      margin-top: 0;
     }
-    .cancel-btn:hover { background: #f3f4f6; }
-    .save-btn {
-      padding: 0.5rem 1.25rem;
-      border: none;
-      border-radius: 0.5rem;
-      background: #3b82f6;
-      color: white;
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .save-btn:hover { background: #2563eb; }
-    .save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* Reclamation popup */
     .reclamation-overlay {
@@ -733,6 +804,7 @@ import { getErrorMessage } from '../../../core/utils/error.utils';
 })
 export class Sidebar implements OnInit, OnDestroy {
   @Input() userEmail = '';
+  @Output() sidebarClose = new EventEmitter<void>();
   apiUrl = environment.apiUrl;
 
   isAdmin = false;
@@ -740,6 +812,8 @@ export class Sidebar implements OnInit, OnDestroy {
   isManager = false;
   isDG = false;
   dashboardRoute = '/dashboard';
+  employeesRoute = '/employees';
+  documentsRoute = '/documents';
   roleLabel = '';
   userName = '';
   profile: any = null;
@@ -751,6 +825,7 @@ export class Sidebar implements OnInit, OnDestroy {
   requestSuccess = false;
   photoUploading = false;
   photoError = '';
+  currentPassword = '';
   newPassword = '';
   confirmPassword = '';
   passwordChanging = false;
@@ -760,10 +835,18 @@ export class Sidebar implements OnInit, OnDestroy {
   pendingRec: any = null;
   recBadgeCount = 0;
   recPollTimer: any = null;
+  employeeCount = 0;
+  userCount = 0;
+  departmentCount = 0;
+  documentCount = 0;
 
   constructor(
     private authService: AuthService,
     private webSocketService: WebSocketService,
+    private employeeService: EmployeeService,
+    private userService: UserService,
+    private organizationService: OrganizationService,
+    private documentService: DocumentService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -777,6 +860,8 @@ export class Sidebar implements OnInit, OnDestroy {
       this.isManager = p.roles.includes('MANAGER');
       this.isDG = p.roles.includes('DIRECTION_GENERALE');
       this.dashboardRoute = this.authService.getDashboardRoute(p.roles);
+      this.employeesRoute = this.isManager && !this.isAdmin && !this.isRH ? '/employees/equipe' : '/employees';
+      this.documentsRoute = this.isManager && !this.isAdmin && !this.isRH ? '/documents/equipe' : '/documents';
       this.roleLabel = this.getRoleLabel(p.roles);
       this.userEmail = p.email;
       this.userName = `${p.firstName} ${p.lastName}`;
@@ -789,7 +874,40 @@ export class Sidebar implements OnInit, OnDestroy {
         });
       }
     }
+    this.loadCounts();
     this.startReclamationPolling();
+  }
+
+  private async loadCounts() {
+    if (this.employeesRoute === '/employees/equipe') {
+      try {
+        const empId = this.profile?.employeeId;
+        if (empId) {
+          const ctx = await this.employeeService.getOrgContext(empId);
+          this.employeeCount = (ctx.reports || []).length;
+        }
+      } catch (_) {}
+    } else {
+      try {
+        const employees = await this.employeeService.list();
+        this.employeeCount = employees.filter(e => e.status === 'ACTIVE').length;
+      } catch (_) {}
+    }
+    try {
+      const depts = await this.organizationService.listDepartments();
+      this.departmentCount = depts.length;
+    } catch (_) {}
+    try {
+      const docs = await this.documentService.search({});
+      this.documentCount = docs.length;
+    } catch (_) {}
+    if (this.isAdmin) {
+      try {
+        const users = await this.userService.list();
+        this.userCount = users.length;
+      } catch (_) {}
+    }
+    this.cdr.detectChanges();
   }
 
   ngOnDestroy() {
@@ -876,6 +994,7 @@ export class Sidebar implements OnInit, OnDestroy {
     this.newEmail = '';
     this.requestError = '';
     this.requestSuccess = false;
+    this.currentPassword = '';
     this.newPassword = '';
     this.confirmPassword = '';
     this.passwordError = '';
@@ -925,6 +1044,10 @@ export class Sidebar implements OnInit, OnDestroy {
   }
 
   async changePassword() {
+    if (!this.currentPassword) {
+      this.passwordError = 'Veuillez saisir votre mot de passe actuel';
+      return;
+    }
     if (this.newPassword !== this.confirmPassword) {
       this.passwordError = 'Les mots de passe ne correspondent pas';
       return;
@@ -938,16 +1061,19 @@ export class Sidebar implements OnInit, OnDestroy {
     this.passwordSuccess = false;
     this.cdr.detectChanges();
     try {
-      await this.authService.updatePassword(this.newPassword);
+      await this.authService.updatePassword(this.currentPassword, this.newPassword);
       this.passwordSuccess = true;
       this.passwordError = '';
+      this.currentPassword = '';
+      this.newPassword = '';
+      this.confirmPassword = '';
       this.cdr.detectChanges();
       setTimeout(() => {
         this.passwordSuccess = false;
         this.cdr.detectChanges();
       }, 4000);
     } catch (e: any) {
-      this.passwordError = e?.message || 'Erreur lors du changement de mot de passe';
+      this.passwordError = e?.error?.message || e?.message || 'Erreur lors du changement de mot de passe';
       this.cdr.detectChanges();
     } finally {
       this.passwordChanging = false;
@@ -956,6 +1082,6 @@ export class Sidebar implements OnInit, OnDestroy {
   }
 
   isPasswordChangeDisabled(): boolean {
-    return !this.newPassword || !this.confirmPassword || this.passwordChanging;
+    return !this.currentPassword || !this.newPassword || !this.confirmPassword || this.passwordChanging;
   }
 }

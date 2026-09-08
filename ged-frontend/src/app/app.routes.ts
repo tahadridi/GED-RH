@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { Login } from './features/auth/login/login';
 import { Shell } from './shared/components/shell/shell';
 import { authGuard } from './core/guards/auth.guard';
+import { managerGuard } from './core/guards/manager.guard';
 
 export const routes: Routes = [
   { path: 'auth/login', component: Login },
@@ -11,6 +12,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      // Calendar
+      {
+        path: 'calendar',
+        loadComponent: () => import('./features/calendar/calendar').then(m => m.CalendarComponent)
+      },
       // Admin dashboard
       {
         path: 'dashboard',
@@ -38,7 +44,12 @@ export const routes: Routes = [
       // Shared routes
       {
         path: 'employees',
-        loadComponent: () => import('./features/employees/employees-list/employees-list').then(m => m.EmployeesList)
+        loadComponent: () => import('./features/employees/employees-list/employees-list').then(m => m.EmployeesList),
+        canActivate: [managerGuard]
+      },
+      {
+        path: 'employees/equipe',
+        loadComponent: () => import('./features/employees/manager-employees/manager-employees').then(m => m.ManagerEmployees)
       },
       {
         path: 'employees/:id',
@@ -46,7 +57,12 @@ export const routes: Routes = [
       },
       {
         path: 'documents',
-        loadComponent: () => import('./features/documents/documents-list/documents-list').then(m => m.DocumentsList)
+        loadComponent: () => import('./features/documents/documents-list/documents-list').then(m => m.DocumentsList),
+        canActivate: [managerGuard]
+      },
+      {
+        path: 'documents/equipe',
+        loadComponent: () => import('./features/documents/manager-documents/manager-documents').then(m => m.ManagerDocuments)
       },
       {
         path: 'reclamations',

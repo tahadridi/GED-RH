@@ -46,6 +46,9 @@ public class EmployeeDocument {
 	@Column(nullable = false)
 	private Instant updatedAt = Instant.now();
 
+	@Column(name = "file_size")
+	private Long fileSize;
+
 	@Column(length = 255)
 	private String author;
 
@@ -145,6 +148,14 @@ public class EmployeeDocument {
 
 	public void setUpdatedAt(Instant updatedAt) {
 		this.updatedAt = updatedAt;
+	}
+
+	public Long getFileSize() {
+		return fileSize;
+	}
+
+	public void setFileSize(Long fileSize) {
+		this.fileSize = fileSize;
 	}
 
 	public String getAuthor() {

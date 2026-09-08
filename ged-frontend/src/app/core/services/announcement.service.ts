@@ -11,6 +11,7 @@ export interface Announcement {
   createdAt: string;
   authorId: string;
   authorName: string;
+  authorRole?: 'ADMINISTRATOR' | 'DIRECTION_GENERALE' | string;
 }
 
 export interface CreateAnnouncementRequest {

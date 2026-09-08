@@ -1,98 +1,202 @@
-<div class="p-8">
-  <div class="flex items-center justify-between mb-6">
-    <div>
-      <h1 class="text-2xl font-bold text-black-900">Annonces</h1>
-      <p class="text-sm text-gray-500 mt-1">Communiquez avec les utilisateurs de votre application.</p>
+<div class="min-h-screen bg-[#f7f9fc] text-[#17233c] font-[Inter,system-ui,Arial,sans-serif]">
+
+  <!-- Breadcrumb -->
+  <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+    <div class="flex items-center gap-2.5 text-[14px] text-[#9aa5b7]">
+      <span>GED</span>
+      <span>&rsaquo;</span>
+      <b class="font-semibold text-[#66738a]">Annonces</b>
     </div>
-    <button (click)="openCreate()"
-      class="flex items-center gap-2 px-4 py-2 bg-blue-800 text-white rounded-lg text-sm font-medium hover:bg-blue-900 transition-colors">
-      <svg lucidePlus class="w-4 h-4"></svg>
-      Nouvelle annonce
-    </button>
   </div>
 
-  <!-- Gradient divider -->
-  <div class="mb-6 h-px bg-gradient-to-r from-blue-400 via-purple-400 to-transparent"></div>
+  <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-6">
 
-  <div *ngIf="loading()" class="text-center py-12 text-gray-400 text-sm">Chargement...</div>
+    <!-- Heading -->
+    <section class="flex justify-between items-end gap-6 flex-wrap pb-7 mb-6" style="border-bottom:1px solid #e7ecf2">
+      <div class="flex items-center gap-4">
+        <div class="w-[50px] h-[50px] rounded-[15px] bg-[#edf4ff] text-[#2563eb] flex items-center justify-center shrink-0 shadow-[inset_0_0_0_1px_rgba(37,99,235,.08)]">
+          <svg lucideMegaphone class="w-[22px] h-[22px]"></svg>
+        </div>
+        <div>
+          <h1 class="text-[29px] font-extrabold mb-2" style="letter-spacing:-1px">Annonces</h1>
+          <p class="text-[14px] text-[#8793a6]">Communiquez avec les utilisateurs de votre application.</p>
+        </div>
+      </div>
+      <button *ngIf="canManage()" (click)="openCreate()"
+        class="h-[42px] px-[17px] rounded-[9px] bg-[#2563eb] text-white text-[13px] font-bold shadow-[0_5px_14px_rgba(37,99,235,.13)] hover:bg-[#1d4ed8] transition-colors inline-flex items-center gap-2">
+        <svg lucidePlus class="w-4 h-4"></svg>
+        Nouvelle annonce
+      </button>
+    </section>
 
-  <div *ngIf="!loading() && announcements().length === 0" class="text-center py-20">
-    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-      <svg lucideMegaphone class="w-8 h-8 text-gray-400"></svg>
+    <!-- Search -->
+    <section class="bg-white border border-[#e7ecf2] rounded-[14px] p-[17px] shadow-[0_6px_22px_rgba(19,35,68,.03)] mb-6">
+      <label class="block text-[12px] font-semibold text-[#7a879b] mb-1.5 uppercase tracking-wide">Recherche</label>
+      <div class="relative">
+        <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9aa5b7]"></svg>
+        <input [(ngModel)]="searchQuery" type="text" placeholder="Titre, contenu ou auteur..."
+          class="w-full pl-9 pr-9 py-[9px] border border-[#e1e7ef] rounded-[9px] text-[13.5px] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 focus:border-[#2563eb]">
+        <button *ngIf="searchQuery()" (click)="clearSearch()"
+          class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#9aa5b7] hover:text-[#17233c] rounded transition-colors">
+          <svg lucideX class="w-4 h-4"></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- Loading -->
+    <div *ngIf="loading()" class="text-center py-12 text-[#95a1b3] text-sm">Chargement...</div>
+
+    <!-- Empty -->
+    <div *ngIf="!loading() && filteredAnnouncements().length === 0 && announcements().length > 0" class="text-center py-12 text-[#95a1b3] text-sm">
+      Aucun résultat pour cette recherche.
     </div>
-    <h3 class="text-gray-600 font-medium mb-1">Aucune annonce</h3>
-    <p class="text-gray-400 text-sm">Créez votre première annonce pour informer vos équipes.</p>
-  </div>
 
-  <div *ngIf="!loading() && announcements().length > 0" class="space-y-4">
-    <div *ngFor="let a of announcements()" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="p-5">
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 mb-1">
-              <h3 class="font-semibold text-gray-900 text-lg">{{ a.title }}</h3>
-              <span class="px-2 py-0.5 rounded-full text-xs font-medium shrink-0 {{ priorityColors[a.priority] }}">
-                {{ priorityLabels[a.priority] }}
-              </span>
+    <!-- List -->
+    <div *ngIf="!loading() && filteredAnnouncements().length > 0" class="space-y-4">
+      <div *ngFor="let a of filteredAnnouncements()" class="bg-white rounded-[14px] border border-[#e7ecf2] overflow-hidden shadow-[0_6px_22px_rgba(19,35,68,.03)]">
+        <div class="p-5">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1">
+                <h3 class="font-bold text-[15.5px] text-[#17233c]" style="letter-spacing:-.2px">{{ a.title }}</h3>
+                <span class="px-2.5 py-1 rounded-full text-[11.5px] font-semibold shrink-0 {{ priorityColors[a.priority] }}">
+                  {{ priorityLabels[a.priority] }}
+                </span>
+              </div>
+              <p class="text-[12px] text-[#9aa5b7]">
+                Publiée le {{ formatDate(a.createdAt) }} par {{ a.authorName }}
+                <span *ngIf="isDirectionGenerale(a)" class="ml-1.5 px-2 py-[3px] rounded-full bg-white text-[#2563eb] border border-[#bfdbfe] text-[10px] font-bold uppercase tracking-wide align-text-bottom">
+                  Direction Générale
+                </span>
+              </p>
+              <p class="text-[13.5px] text-[#46536a] mt-3 whitespace-pre-line" [innerHTML]="a.content | safeHtml"></p>
             </div>
-            <p class="text-xs text-gray-400">
-              Publiée le {{ formatDate(a.createdAt) }} par {{ a.authorName }}
-            </p>
-            <p class="text-sm text-gray-700 mt-3 whitespace-pre-line">{{ a.content }}</p>
-          </div>
-          <div class="flex items-center gap-1 shrink-0">
-            <button (click)="openEdit(a)" class="text-gray-400 hover:text-blue-600 transition-colors p-1"
-              title="Modifier">
-              <svg lucidePencil class="w-4 h-4"></svg>
-            </button>
-            <button (click)="delete(a)" class="text-gray-400 hover:text-red-600 transition-colors p-1"
-              title="Supprimer">
-              <svg lucideTrash2 class="w-4 h-4"></svg>
-            </button>
+            <div class="flex items-center gap-1 shrink-0">
+              <button *ngIf="canManage()" (click)="openEdit(a)" class="p-1.5 text-[#9aa5b7] hover:text-[#2563eb] hover:bg-[#edf4ff] rounded-[8px] transition-colors" title="Modifier">
+                <svg lucidePencil class="w-4 h-4"></svg>
+              </button>
+              <button *ngIf="canManage()" (click)="askDelete(a)" class="p-1.5 text-[#9aa5b7] hover:text-[#dc2626] hover:bg-[#fdeaea] rounded-[8px] transition-colors" title="Supprimer">
+                <svg lucideTrash2 class="w-4 h-4"></svg>
+              </button>
+            </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Empty state (no announcements at all) -->
+    <div *ngIf="!loading() && announcements().length === 0" class="text-center py-20 bg-white rounded-[14px] border border-[#e7ecf2]">
+      <div class="w-16 h-16 bg-[#eef1f6] rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg lucideMegaphone class="w-8 h-8 text-[#9aa5b7]"></svg>
+      </div>
+      <h3 class="text-[#46536a] font-bold mb-1">Aucune annonce</h3>
+      <p class="text-[#9aa5b7] text-[13px]">Créez votre première annonce pour informer vos équipes.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Create/Edit Modal -->
+<div *ngIf="showForm()" class="fixed inset-0 z-50 bg-[#15213d]/50 backdrop-blur-[2px] flex items-center justify-center p-4" (click)="showForm.set(false)">
+  <div class="w-full max-w-[560px] bg-white rounded-[18px] shadow-[0_24px_60px_rgba(21,33,61,.28)] overflow-hidden" (click)="$event.stopPropagation()">
+    <div class="px-6 pt-6 pb-4 border-b border-[#f2f4f7] flex items-start justify-between gap-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-[46px] h-[46px] rounded-[12px] bg-[#eaf2ff] text-[#2563eb] flex items-center justify-center shrink-0">
+          <svg lucideMegaphone class="w-5 h-5"></svg>
+        </div>
+        <div class="min-w-0">
+          <div class="text-[10px] font-bold uppercase tracking-[.1em] text-[#9aa5b7] mb-1">
+            {{ editingAnnouncement() ? 'Modification' : 'Communication' }}
+          </div>
+          <h2 class="text-[17px] font-bold text-[#15213d] leading-snug truncate" style="letter-spacing:-.3px">
+            {{ editingAnnouncement() ? 'Modifier l\'annonce' : 'Nouvelle annonce' }}
+          </h2>
+        </div>
+      </div>
+      <button (click)="showForm.set(false)" class="w-[34px] h-[34px] rounded-[9px] hover:bg-[#f6f8fb] flex items-center justify-center shrink-0" aria-label="Fermer">
+        <svg lucideX class="w-4.5 h-4.5 text-[#68758a]"></svg>
+      </button>
+    </div>
+
+    <div class="px-6 py-5 space-y-5">
+      <div>
+        <label class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-2.5">Priorité</label>
+        <div class="grid grid-cols-3 gap-2.5">
+          <button type="button" (click)="form.priority = 'NORMALE'"
+            class="h-[42px] rounded-[11px] border text-[12.5px] font-semibold transition-colors flex items-center justify-center gap-2"
+            [ngClass]="form.priority === 'NORMALE' ? 'bg-[#f1f3f6] text-[#68758a] border-[#d8dee8] shadow-[inset_0_0_0_1px_#d8dee8]' : 'bg-white text-[#8793a6] border-[#e7ecf2] hover:bg-[#f8fafc]'">
+            <span class="w-[8px] h-[8px] rounded-full shrink-0"
+              [ngClass]="form.priority === 'NORMALE' ? 'bg-[#68758a]' : 'bg-[#c3ccd9]'"></span>
+            Normale
+          </button>
+          <button type="button" (click)="form.priority = 'HAUTE'"
+            class="h-[42px] rounded-[11px] border text-[12.5px] font-semibold transition-colors flex items-center justify-center gap-2"
+            [ngClass]="form.priority === 'HAUTE' ? 'bg-[#fff5dd] text-[#f59e0b] border-[#f5d58a] shadow-[inset_0_0_0_1px_#f5d58a]' : 'bg-white text-[#8793a6] border-[#e7ecf2] hover:bg-[#f8fafc]'">
+            <span class="w-[8px] h-[8px] rounded-full shrink-0"
+              [ngClass]="form.priority === 'HAUTE' ? 'bg-[#f59e0b]' : 'bg-[#c3ccd9]'"></span>
+            Haute
+          </button>
+          <button type="button" (click)="form.priority = 'CRITIQUE'"
+            class="h-[42px] rounded-[11px] border text-[12.5px] font-semibold transition-colors flex items-center justify-center gap-2"
+            [ngClass]="form.priority === 'CRITIQUE' ? 'bg-[#fff0f0] text-[#ef4444] border-[#f3c4c4] shadow-[inset_0_0_0_1px_#f3c4c4]' : 'bg-white text-[#8793a6] border-[#e7ecf2] hover:bg-[#f8fafc]'">
+            <span class="w-[8px] h-[8px] rounded-full shrink-0"
+              [ngClass]="form.priority === 'CRITIQUE' ? 'bg-[#ef4444]' : 'bg-[#c3ccd9]'"></span>
+            Critique
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-2">Titre *</label>
+        <input [(ngModel)]="form.title" type="text" placeholder="Ex: Nouvelle politique de télétravail"
+          class="w-full px-[13px] h-[44px] border border-[#e1e7ef] rounded-[11px] text-[13.5px] text-[#15213d] placeholder:text-[#b6c0cf] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15 focus:border-[#2563eb] transition-colors bg-[#fbfcfe]">
+      </div>
+
+      <div>
+        <label class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-2">Contenu *</label>
+        <div class="ged-editor rounded-[11px] overflow-hidden border border-[#e1e7ef] focus-within:ring-2 focus-within:ring-[#2563eb]/15 focus-within:border-[#2563eb] transition-colors">
+          <ngx-editor-menu [editor]="editor!" [toolbar]="toolbar" [colorPresets]="colorPresets"></ngx-editor-menu>
+          <ngx-editor [editor]="editor!" outputFormat="html" [ngModel]="form.content" (ngModelChange)="form.content = $event"
+            placeholder="Écrivez votre annonce ici..."></ngx-editor>
+        </div>
+      </div>
+
+      <div *ngIf="formError()" class="flex items-center gap-2.5 text-[#dc2626] text-[13px] bg-[#fdeaea] px-3.5 py-2.5 rounded-[10px]">
+        <svg lucideAlertTriangle class="w-4 h-4 shrink-0"></svg>
+        {{ formError() }}
+      </div>
+
+      <div class="flex justify-end gap-3 pt-1">
+        <button (click)="showForm.set(false)"
+          class="h-[42px] px-[18px] text-[13px] font-semibold text-[#66738a] border border-[#e1e7ef] rounded-[11px] hover:bg-[#f7f9fc] transition-colors">
+          Annuler
+        </button>
+        <button (click)="save()" [disabled]="saving()" [ngClass]="form.priority === 'CRITIQUE' ? 'bg-[#ef4444] hover:bg-[#dc2626]' : 'bg-[#2563eb] hover:bg-[#1d4ed8]'"
+          class="flex items-center gap-2 h-[42px] px-[18px] text-[13px] text-white rounded-[11px] disabled:opacity-50 disabled:hover:bg-[#2563eb] font-semibold shadow-[0_4px_12px_rgba(37,99,235,.18)] transition-colors">
+          <svg lucideMegaphone class="w-4 h-4"></svg>
+          {{ saving() ? 'Enregistrement...' : (editingAnnouncement() ? 'Enregistrer' : 'Publier') }}
+        </button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Create Modal -->
-<div *ngIf="showForm()" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-  <div class="bg-white rounded-xl shadow-xl w-full max-w-lg">
-    <div class="flex items-center justify-between p-5 border-b border-gray-100">
-      <h2 class="text-lg font-semibold text-gray-900">{{ editingAnnouncement() ? 'Modifier l\'annonce' : 'Nouvelle annonce' }}</h2>
-      <button (click)="showForm.set(false)" class="text-gray-400 hover:text-gray-600">
-        <svg lucideX class="w-5 h-5"></svg>
-      </button>
+<!-- Confirm Modal -->
+<div *ngIf="confirmState()" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" (click)="closeConfirm()">
+  <div class="bg-white rounded-[14px] shadow-xl w-full max-w-sm mx-4 p-6" (click)="$event.stopPropagation()">
+    <div class="w-[42px] h-[42px] rounded-full bg-[#fdeaea] text-[#dc2626] flex items-center justify-center mb-4">
+      <svg lucideAlertTriangle class="w-5 h-5"></svg>
     </div>
-    <div class="p-5 space-y-4">
-      <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">Priorité</label>
-        <select [(ngModel)]="form.priority"
-          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option *ngFor="let p of priorityOptions" [value]="p">{{ priorityLabels[p] }}</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">Titre *</label>
-        <input [(ngModel)]="form.title" type="text" placeholder="Ex: Nouvelle politique de télétravail"
-          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-      </div>
-      <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">Contenu *</label>
-        <textarea [(ngModel)]="form.content" rows="6"
-          placeholder="Écrivez votre annonce ici..."
-          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"></textarea>
-      </div>
-      <div *ngIf="formError()" class="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{{ formError() }}</div>
-      <div class="flex justify-end gap-3 pt-2">
-        <button (click)="showForm.set(false)" class="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg">Annuler</button>
-        <button (click)="save()" [disabled]="saving()"
-          class="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium">
-          <svg lucideMegaphone class="w-4 h-4"></svg>
-          {{ saving() ? 'Enregistrement...' : (editingAnnouncement() ? 'Enregistrer' : 'Publier') }}
-        </button>
-      </div>
+    <h3 class="text-[16px] font-bold text-[#17233c]" style="letter-spacing:-.3px">Confirmer la suppression</h3>
+    <p class="text-[13.5px] text-[#66738a] mt-1.5 leading-relaxed">{{ confirmState()?.message }}</p>
+    <div class="flex gap-2.5 mt-6">
+      <button (click)="closeConfirm()"
+        class="flex-1 h-[40px] rounded-[9px] border border-[#e1e7ef] text-[13px] font-bold text-[#66738a] hover:bg-[#f7f9fc] transition-colors">
+        Annuler
+      </button>
+      <button (click)="confirmAction()"
+        class="flex-1 h-[40px] rounded-[9px] bg-[#dc2626] text-white text-[13px] font-bold hover:bg-[#b91c1c] transition-colors">
+        Supprimer
+      </button>
     </div>
   </div>
 </div>

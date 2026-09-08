@@ -1,0 +1,192 @@
+<div class="min-h-screen bg-[#f6f8fb] text-[#15213d] font-[Inter,system-ui,Arial,sans-serif] antialiased">
+
+  <div class="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-9 pb-14 pt-6">
+    <!-- Breadcrumb -->
+    <div class="mb-6">
+      <div class="px-0 flex items-center gap-2.5 text-[13px] text-[#9aa5b7]">
+        <span>GED</span>
+        <span>&rsaquo;</span>
+        <b class="font-semibold text-[#66738a]">Calendrier</b>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <section class="flex items-center justify-between gap-6 mb-7 flex-wrap">
+      <div class="flex items-center gap-4">
+        <div class="w-[50px] h-[50px] rounded-[15px] bg-[#eaf2ff] text-[#2563eb] flex items-center justify-center shrink-0 shadow-[inset_0_0_0_1px_rgba(37,99,235,.08)]">
+          <svg lucideCalendarDays class="w-[22px] h-[22px]"></svg>
+        </div>
+        <div>
+          <h1 class="text-[30px] font-extrabold leading-[1.2] mb-1.5" style="letter-spacing:-1.1px">Calendrier des activités</h1>
+          <p class="text-[14px] text-[#738097]">Planifiez et suivez les événements de votre équipe.</p>
+        </div>
+      </div>
+      <button (click)="openCreateFor()"
+        class="h-[42px] px-[17px] rounded-[9px] bg-[#2563eb] text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-[0_4px_12px_rgba(37,99,235,.18)] hover:bg-[#1d4ed8] hover:-translate-y-px transition">
+        <svg lucidePlus class="w-4 h-4"></svg>
+        Nouvelle activité
+      </button>
+    </section>
+
+    <div class="grid grid-cols-1 xl:grid-cols-[1.7fr_1fr] gap-4">
+      <!-- Calendar grid -->
+      <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+        <div class="flex justify-between items-center px-5 py-[18px] border-b border-[#f0f2f5]">
+          <h2 class="text-[18px] font-bold capitalize" style="letter-spacing:-.25px">{{ monthLabel }}</h2>
+          <div class="flex items-center gap-2">
+            <button (click)="prevMonth()" class="w-[34px] h-[34px] rounded-[9px] hover:bg-[#f6f8fb] flex items-center justify-center">
+              <svg lucideChevronLeft class="w-4 h-4 text-[#68758a]"></svg>
+            </button>
+            <button (click)="nextMonth()" class="w-[34px] h-[34px] rounded-[9px] hover:bg-[#f6f8fb] flex items-center justify-center">
+              <svg lucideChevronRight class="w-4 h-4 text-[#68758a]"></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="px-5 py-3">
+          <div class="grid grid-cols-7 gap-1 mb-2">
+            @for (d of weekDays; track d) {
+              <div class="text-center text-[11px] font-bold text-[#9aa5b7] uppercase py-1">{{ d }}</div>
+            }
+          </div>
+
+          @if (loading()) {
+            <div class="py-16 text-center text-[#9aa5b7] text-[12px]">Chargement...</div>
+          } @else {
+            <div class="grid grid-cols-7 gap-1">
+              @for (cell of monthCells; track $index) {
+                @if (cell) {
+                  <button (click)="selectDay(cell)"
+                    class="min-h-[74px] rounded-[10px] border p-2 text-left transition flex flex-col"
+                    [ngClass]="{
+                      'border-[#2563eb] bg-[#eaf2ff] ring-2 ring-[#2563eb]/20': isSelected(cell),
+                      'border-[#e7ebf1] hover:border-[#c9d4e2] hover:bg-[#fafbfc]': !isSelected(cell)
+                    }">
+                    <span class="text-[11px] font-semibold mb-1"
+                      [ngClass]="isToday(cell) ? 'text-[#2563eb]' : 'text-[#15213d]'">{{ cell.getDate() }}</span>
+                    <div class="flex flex-col gap-0.5 overflow-hidden">
+                      @for (ev of eventsForDay(cell); track ev.id) {
+                        <span class="text-[9px] font-semibold leading-tight flex items-center gap-1 truncate">
+                          <i class="w-1.5 h-1.5 rounded-full shrink-0" [ngClass]="priorityDot[ev.priority]"></i>
+                          {{ ev.title }}
+                        </span>
+                      }
+                    </div>
+                  </button>
+                } @else {
+                  <div class="min-h-[74px] rounded-[10px] bg-[#fafbfc] border border-transparent"></div>
+                }
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Events list -->
+      <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+        <div class="flex justify-between items-center px-5 py-[18px] border-b border-[#f0f2f5]">
+          <div>
+            <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Activités</div>
+            <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">{{ selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) }}</h2>
+          </div>
+          <button (click)="openCreateFor(selectedDate)" class="w-[36px] h-[36px] rounded-[9px] hover:bg-[#f6f8fb] flex items-center justify-center" aria-label="Ajouter">
+            <svg lucidePlus class="w-4 h-4 text-[#68758a]"></svg>
+          </button>
+        </div>
+
+        @if (selectedDayEvents.length === 0) {
+          <div class="py-14 text-center">
+            <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <svg lucideCalendarDays class="w-6 h-6 text-gray-400"></svg>
+            </div>
+            <p class="text-[#9aa5b7] text-[12px]">Aucune activité ce jour</p>
+          </div>
+        } @else {
+          <div class="px-5 py-2.5">
+            @for (ev of selectedDayEvents; track ev.id) {
+              <div class="flex items-center gap-3 py-3 border-b border-[#f2f4f7] last:border-0">
+                <div class="w-[36px] h-[40px] border border-[#e7ebf1] rounded-[8px] bg-[#fafbfc] flex flex-col items-center justify-center shrink-0">
+                  <strong class="text-[13px] font-bold leading-none text-[#15213d]">{{ ev.startTime?.slice(0, 5) || '—' }}</strong>
+                  <span class="text-[8px] font-bold text-[#9aa5b7] mt-1 uppercase">{{ priorityLabels[ev.priority] }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <strong class="block text-[13px] font-semibold text-[#15213d] truncate mb-0.5">{{ ev.title }}</strong>
+                  <span class="block text-[11px] text-[#9aa5b7] truncate">{{ ev.description || 'Pas de description' }} · {{ ev.authorName }}</span>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  <button (click)="openEdit(ev)" class="w-[30px] h-[30px] rounded-[8px] hover:bg-[#f6f8fb] flex items-center justify-center">
+                    <svg lucidePencil class="w-3.5 h-3.5 text-[#68758a]"></svg>
+                  </button>
+                  <button (click)="delete(ev)" class="w-[30px] h-[30px] rounded-[8px] hover:bg-[#fff0f0] flex items-center justify-center">
+                    <svg lucideTrash2 class="w-3.5 h-3.5 text-[#ef4444]"></svg>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+  
+  </div>
+
+  <!-- Form Modal -->
+  @if (showForm()) {
+    <div class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" (click)="showForm.set(false)">
+      <div class="bg-white rounded-[16px] w-full max-w-[480px] shadow-[0_20px_60px_rgba(0,0,0,.3)] overflow-hidden" (click)="$event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-[#f0f2f5]">
+          <h3 class="text-[17px] font-bold" style="letter-spacing:-.25px">{{ isEditing ? 'Modifier' : 'Nouvelle' }} activité</h3>
+          <button (click)="showForm.set(false)" class="w-[30px] h-[30px] rounded-[8px] hover:bg-[#f6f8fb] flex items-center justify-center">
+            <svg lucideX class="w-4 h-4 text-[#68758a]"></svg>
+          </button>
+        </div>
+
+        <div class="px-6 py-5 space-y-4">
+          <div>
+            <label class="block text-[11px] font-bold text-[#66738a] uppercase tracking-wide mb-1.5">Titre *</label>
+            <input [(ngModel)]="form.title" type="text" placeholder="Ex : Réunion d'équipe"
+              class="w-full px-3.5 py-2.5 border border-[#d5dce7] rounded-[9px] text-[13px] outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-[#66738a] uppercase tracking-wide mb-1.5">Description</label>
+            <textarea [(ngModel)]="form.description" rows="2" placeholder="Détails de l'activité"
+              class="w-full px-3.5 py-2.5 border border-[#d5dce7] rounded-[9px] text-[13px] outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15 resize-none"></textarea>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            
+            <div>
+              <label class="block text-[11px] font-bold text-[#66738a] uppercase tracking-wide mb-1.5">Heure</label>
+              <input [(ngModel)]="form.startTime" type="time"
+                class="w-full px-3.5 py-2.5 border border-[#d5dce7] rounded-[9px] text-[13px] outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15">
+            </div>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-[#66738a] uppercase tracking-wide mb-1.5">Priorité</label>
+            <div class="grid grid-cols-4 gap-2">
+              @for (p of priorityOptions; track p) {
+                <button type="button" (click)="form.priority = p"
+                  class="px-2 py-2 rounded-[9px] border text-[11px] font-semibold flex items-center justify-center gap-1.5 transition"
+                  [ngClass]="form.priority === p ? 'border-[#2563eb] bg-[#eaf2ff] text-[#2563eb]' : 'border-[#e7ebf1] text-[#66738a] hover:border-[#c9d4e2]'">
+                  <i class="w-1.5 h-1.5 rounded-full" [ngClass]="priorityDot[p]"></i>
+                  {{ priorityLabels[p] }}
+                </button>
+              }
+            </div>
+          </div>
+          @if (formError()) {
+            <p class="text-[12px] text-red-600 bg-[#fff0f0] rounded-[8px] px-3 py-2">{{ formError() }}</p>
+          }
+        </div>
+
+        <div class="flex justify-end gap-2.5 px-6 py-4 border-t border-[#f0f2f5] bg-[#fafbfc]">
+          <button (click)="showForm.set(false)" class="px-4 py-2.5 rounded-[9px] border border-[#d5dce7] text-[13px] font-semibold text-[#374151] hover:bg-white transition">Annuler</button>
+          <button (click)="save()" [disabled]="saving()"
+            class="px-5 py-2.5 rounded-[9px] bg-[#2563eb] text-white text-[13px] font-semibold hover:bg-[#1d4ed8] transition disabled:opacity-50">
+            {{ saving() ? 'Enregistrement...' : (isEditing ? 'Enregistrer' : 'Créer') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

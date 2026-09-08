@@ -1,14 +1,20 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OrganizationService, Department, JobPosition } from '../../../core/services/organization.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { LucideTrash2, LucideBuilding, LucideBriefcase } from '@lucide/angular';
+import { LucideTrash2, LucideBuilding, LucideBriefcase, LucidePlus, LucideBuilding2, LucideSearch, LucideX, LucideAlertTriangle } from '@lucide/angular';
+
+interface ConfirmState {
+  message: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+}
 
 @Component({
   selector: 'app-admin-organization',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideTrash2, LucideBuilding, LucideBriefcase],
+  imports: [CommonModule, FormsModule, LucideTrash2, LucideBuilding, LucideBriefcase, LucidePlus, LucideBuilding2, LucideSearch, LucideX, LucideAlertTriangle],
   templateUrl: './admin-organization.html'
 })
 export class AdminOrganization implements OnInit {
@@ -16,11 +22,33 @@ export class AdminOrganization implements OnInit {
   loading = signal(false);
   readonly = signal(true);
 
+searchQuery = signal('');
+
   newDept = { name: '', matriculePrefix: '', description: '' };
-  
+
   // For nested position addition
   selectedDeptId: string | null = null;
   newPosTitle = '';
+
+  confirmState = signal<ConfirmState | null>(null);
+
+  totalPositions = computed(() => this.departments().reduce((sum, d) => sum + d.positions.length, 0));
+
+  avgPositions = computed(() => {
+    const count = this.departments().length;
+    if (count === 0) return 0;
+    return +(this.totalPositions() / count).toFixed(1);
+  });
+
+  filteredDepartments = computed(() => {
+    const q = this.searchQuery().trim().toLowerCase();
+    if (!q) return this.departments();
+    return this.departments().filter(d =>
+      d.name.toLowerCase().includes(q) ||
+      (d.matriculePrefix || '').toLowerCase().includes(q) ||
+      d.positions.some(p => p.title.toLowerCase().includes(q))
+    );
+  });
 
   constructor(
     private organizationService: OrganizationService,
@@ -44,6 +72,10 @@ export class AdminOrganization implements OnInit {
     }
   }
 
+  clearSearch() {
+    this.searchQuery.set('');
+  }
+
   async addDepartment() {
     if (!this.newDept.name || !this.newDept.matriculePrefix) return;
     try {
@@ -55,10 +87,37 @@ export class AdminOrganization implements OnInit {
     }
   }
 
-  async deleteDepartment(id: string) {
-    if (!confirm('Supprimer ce département et tous ses postes ?')) return;
-    await this.organizationService.deleteDepartment(id);
-    await this.load();
+  askDeleteDepartment(id: string) {
+    this.confirmState.set({
+      message: 'Supprimer ce département et tous ses postes ?',
+      confirmLabel: 'Supprimer',
+      onConfirm: async () => {
+        await this.organizationService.deleteDepartment(id);
+        await this.load();
+      }
+    });
+  }
+
+  askDeletePosition(id: string, title: string) {
+    this.confirmState.set({
+      message: `Supprimer le poste « ${title} » ?`,
+      confirmLabel: 'Supprimer',
+      onConfirm: async () => {
+        await this.organizationService.deletePosition(id);
+        await this.load();
+      }
+    });
+  }
+
+  closeConfirm() {
+    this.confirmState.set(null);
+  }
+
+  async confirmAction() {
+    const state = this.confirmState();
+    if (!state) return;
+    this.closeConfirm();
+    await state.onConfirm();
   }
 
   async addPosition(deptId: string) {
@@ -71,11 +130,5 @@ export class AdminOrganization implements OnInit {
     } catch (e) {
       console.error('Failed to add position', e);
     }
-  }
-
-  async deletePosition(id: string) {
-    if (!confirm('Supprimer ce poste ?')) return;
-    await this.organizationService.deletePosition(id);
-    await this.load();
   }
 }

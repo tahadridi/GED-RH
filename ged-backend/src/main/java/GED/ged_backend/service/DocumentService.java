@@ -9,13 +9,17 @@ import GED.ged_backend.repository.EmployeeDocumentRepository;
 import GED.ged_backend.repository.EmployeeRepository;
 import GED.ged_backend.repository.DocumentSpecifications;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.io.InputStream;
+import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class DocumentService {
@@ -109,6 +113,7 @@ public class DocumentService {
         doc.setAuthor(cmd.author() != null ? cmd.author() : (actor != null ? actor.getEmail() : ""));
         doc.setStoragePath(finalKey);
         doc.setOcrText(cmd.ocrText()); // user-corrected text
+        doc.setFileSize(storageService.getFileSize(finalKey));
         doc.setEmployee(employee);
         doc.setCurrentVersion(1);
 
@@ -147,6 +152,7 @@ public class DocumentService {
         doc.setType(cmd.type());
         doc.setAuthor(cmd.author());
         doc.setStoragePath(fileName);
+        doc.setFileSize(storageService.getFileSize(fileName));
         doc.setEmployee(employee);
         doc.setCurrentVersion(1);
         
@@ -190,6 +196,7 @@ public class DocumentService {
         doc.setCurrentVersion(next);
         doc.setStoragePath(finalKey);
         doc.setOcrText(ocrText);
+        doc.setFileSize(storageService.getFileSize(finalKey));
         doc.setUpdatedAt(java.time.Instant.now());
         documentRepository.save(doc);
 
@@ -237,6 +244,48 @@ public class DocumentService {
     }
 
     @Transactional
+    public void deleteVersion(UUID versionId) {
+        DocumentVersion v = versionRepository.findById(versionId).orElseThrow();
+        EmployeeDocument doc = v.getDocument();
+
+        // Delete the version file from storage
+        try { storageService.deleteFile(v.getStoragePath()); } catch (Exception ignored) {}
+        versionRepository.delete(v);
+        versionRepository.flush();
+
+        // Re-number remaining versions sequentially (v1, v2, ...) so the previous
+        // version becomes the new latest one.
+        List<DocumentVersion> remaining = versionRepository.findByDocumentIdOrderByVersionNumberDesc(doc.getId());
+        java.util.Collections.reverse(remaining);
+        int seq = 1;
+        for (DocumentVersion rv : remaining) {
+            rv.setVersionNumber(seq++);
+            versionRepository.save(rv);
+        }
+
+        if (remaining.isEmpty()) {
+            // No versions left -> the document itself becomes empty and useless.
+            // Delete the document entirely (Elasticsearch + DB) so it no longer
+            // appears in the employee's dossier or anywhere else.
+            try { storageService.deleteFile(doc.getStoragePath()); } catch (Exception ignored) {}
+            documentRepository.delete(doc);
+            elasticsearchService.deleteDocument(doc.getId().toString());
+            return;
+        }
+
+        // Update the document so it reflects the new latest version
+        DocumentVersion latest = remaining.get(remaining.size() - 1);
+        doc.setCurrentVersion(latest.getVersionNumber());
+        doc.setStoragePath(latest.getStoragePath());
+        doc.setOcrText(latest.getOcrText());
+        doc.setFileSize(storageService.getFileSize(latest.getStoragePath()));
+        doc.setUpdatedAt(java.time.Instant.now());
+        documentRepository.save(doc);
+
+        elasticsearchService.indexDocument(doc);
+    }
+
+    @Transactional
     public void deleteDocument(UUID id) {
         EmployeeDocument doc = documentRepository.findById(id).orElseThrow();
         
@@ -267,6 +316,64 @@ public class DocumentService {
         }
         
         return documentRepository.findAll(DocumentSpecifications.withSearchCriteria(criteria, actor));
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getStats() {
+        long total = documentRepository.count();
+        long totalSize = documentRepository.sumFileSize();
+        long employeesWithDocs = documentRepository.countDistinctEmployees();
+
+        java.time.ZonedDateTime startMonth = java.time.ZonedDateTime.now()
+            .withDayOfMonth(1)
+            .withHour(0).withMinute(0).withSecond(0).withNano(0);
+        long thisMonth = documentRepository.countByCreatedAtGreaterThanEqual(startMonth.toInstant());
+
+        List<Object[]> rows = documentRepository.countByType();
+        Map<String, Long> byType = new java.util.LinkedHashMap<>();
+        for (Object[] row : rows) {
+            byType.put(((DocumentType) row[0]).name(), (Long) row[1]);
+        }
+
+        return Map.of(
+            "total", total,
+            "totalSize", totalSize,
+            "thisMonth", thisMonth,
+            "employeesWithDocs", employeesWithDocs,
+            "byType", byType
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getStatsForActor(GED.ged_backend.domain.entity.SystemUser actor) {
+        List<EmployeeDocument> visible = documentRepository.findAll(
+                DocumentSpecifications.withSearchCriteria(new SearchCriteria(null, null, null, null, null, null), actor));
+
+        long total = visible.size();
+        long totalSize = visible.stream()
+                .filter(d -> d.getFileSize() != null)
+                .mapToLong(EmployeeDocument::getFileSize)
+                .sum();
+        long employeesWithDocs = visible.stream().map(EmployeeDocument::getEmployeeId).distinct().count();
+
+        java.time.ZonedDateTime startMonth = java.time.ZonedDateTime.now()
+            .withDayOfMonth(1)
+            .withHour(0).withMinute(0).withSecond(0).withNano(0);
+        Instant monthStart = startMonth.toInstant();
+        long thisMonth = visible.stream().filter(d -> !d.getCreatedAt().isBefore(monthStart)).count();
+
+        Map<String, Long> byType = new java.util.LinkedHashMap<>();
+        for (EmployeeDocument d : visible) {
+            byType.merge(d.getType().name(), 1L, Long::sum);
+        }
+
+        return Map.of(
+            "total", total,
+            "totalSize", totalSize,
+            "thisMonth", thisMonth,
+            "employeesWithDocs", employeesWithDocs,
+            "byType", byType
+        );
     }
 
     private String employeeFolder(Employee employee) {

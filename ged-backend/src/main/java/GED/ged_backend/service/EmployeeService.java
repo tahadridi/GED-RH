@@ -8,6 +8,8 @@ import GED.ged_backend.repository.EmployeeSpecifications;
 import java.io.InputStream;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -98,7 +100,14 @@ public class EmployeeService {
         e.setDepartment(cmd.department());
         e.setPosition(cmd.position());
         e.setHireDate(cmd.hireDate());
-        if (cmd.status() != null) e.setStatus(cmd.status());
+        if (cmd.status() != null) {
+            e.setStatus(cmd.status());
+            if (cmd.status() == EmployeeStatus.TERMINATED) {
+                if (e.getTerminationDate() == null) e.setTerminationDate(java.time.LocalDate.now());
+            } else {
+                e.setTerminationDate(null);
+            }
+        }
 
         if (cmd.managerId() != null) {
             Employee mgr = employeeRepository.findById(cmd.managerId())
@@ -141,6 +150,30 @@ public class EmployeeService {
     }
 
     @Transactional(readOnly = true)
+    public Map<String, Long> getStats() {
+        Map<String, Long> stats = new java.util.HashMap<>();
+        stats.put("total", employeeRepository.count() - employeeRepository.countByStatus(EmployeeStatus.TERMINATED));
+        stats.put("ACTIVE", employeeRepository.countByStatus(EmployeeStatus.ACTIVE));
+        stats.put("ON_LEAVE", employeeRepository.countByStatus(EmployeeStatus.ON_LEAVE));
+        stats.put("TERMINATED", employeeRepository.countByStatus(EmployeeStatus.TERMINATED));
+        stats.put("departments", employeeRepository.countDistinctDepartments());
+        return stats;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Long> getStatsForActor(SystemUser actor) {
+        List<Employee> visible = employeeRepository.findAll(EmployeeSpecifications.withSecurityFilter(actor));
+        long terminated = visible.stream().filter(e -> e.getStatus() == EmployeeStatus.TERMINATED).count();
+        Map<String, Long> stats = new java.util.HashMap<>();
+        stats.put("total", visible.size() - terminated);
+        stats.put("ACTIVE", visible.stream().filter(e -> e.getStatus() == EmployeeStatus.ACTIVE).count());
+        stats.put("ON_LEAVE", visible.stream().filter(e -> e.getStatus() == EmployeeStatus.ON_LEAVE).count());
+        stats.put("TERMINATED", terminated);
+        stats.put("departments", visible.stream().map(Employee::getDepartment).filter(Objects::nonNull).distinct().count());
+        return stats;
+    }
+
+    @Transactional(readOnly = true)
     public List<Employee> getTopLevelManagers() {
         return employeeRepository.findAll().stream()
                 .filter(e -> e.getManager() == null)
@@ -157,13 +190,6 @@ public class EmployeeService {
     }
 
     public record OrgContext(Employee manager, Employee employee, List<Employee> reports) {}
-
-    public void deactivateEmployee(UUID id) {
-        Employee e = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employé introuvable."));
-        e.setStatus(EmployeeStatus.INACTIVE);
-        employeeRepository.save(e);
-    }
 
     public void deleteEmployee(UUID id) {
         Employee e = employeeRepository.findById(id)

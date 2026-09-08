@@ -321,7 +321,7 @@ public class ReclamationController {
 
     @GetMapping("/stats/by-department")
     @Transactional(readOnly = true)
-    @Operation(summary = "Statistiques par departement", description = "ADMIN/DG : nombre total, en attente, approuve, rejete par departement.")
+    @Operation(summary = "Statistiques par origine", description = "ADMIN/DG : nombre total, en attente, approuve, rejete par origine (Ressources Humaines / Manager / Employe).")
     public List<DepartmentStats> statsByDepartment() {
         SystemUser current = accessControlService.getCurrentUser();
         if (current == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -333,9 +333,11 @@ public class ReclamationController {
         List<Reclamation> all = reclamationRepository.findAllByOrderByCreatedAtDesc();
         Map<String, List<Reclamation>> byDept = all.stream()
                 .collect(Collectors.groupingBy(r -> {
-                    var emp = r.getEmployee().getEmployeeProfile();
-                    if (emp == null || emp.getDepartment() == null) return "Sans département";
-                    return emp.getDepartment();
+                    var requester = r.getEmployee();
+                    if (requester == null) return "Sans profil";
+                    if (requester.getRoles().contains(SystemRole.MANAGER)) return "Manager";
+                    if (requester.getRoles().contains(SystemRole.RH)) return "Ressources Humaines";
+                    return "Employé";
                 }));
         return byDept.entrySet().stream()
                 .map(e -> {
@@ -350,9 +352,9 @@ public class ReclamationController {
                 .toList();
     }
 
-    @Schema(description = "Statistiques par departement")
+    @Schema(description = "Statistiques par origine")
     public record DepartmentStats(
-            @Schema(description = "Departement") String department,
+            @Schema(description = "Origine (Ressources Humaines / Manager / Employe)") String department,
             @Schema(description = "Total") int total,
             @Schema(description = "En attente") int pending,
             @Schema(description = "Approuve") int approved,

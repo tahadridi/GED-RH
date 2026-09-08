@@ -7,30 +7,35 @@ import { ApiService } from '../../../core/services/api.service';
 import { AnnouncementService } from '../../../core/services/announcement.service';
 import { DocumentService } from '../../../core/services/document.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
+import { EventService, CalendarEvent } from '../../../core/services/event.service';
 import { Employee } from '../../../core/models/employee.model';
 import { environment } from '../../../../environments/environment';
-import { LucideUsers, LucideFolderOpen, LucideAlertCircle, LucideCheckCircle, LucideXCircle, LucideFileText, LucideList, LucideBell, LucideChevronDown, LucideChevronRight, LucideGitBranch } from '@lucide/angular';
+import { LucideUsers, LucideFolderOpen, LucideAlertCircle, LucideCheckCircle, LucideXCircle, LucideFileText, LucideChevronDown, LucideChevronRight, LucideGitBranch, LucideMegaphone, LucideCalendarDays, LucideX, LucideLayoutDashboard } from '@lucide/angular';
+import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe';
 
 @Component({
   selector: 'app-manager-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, LucideUsers, LucideFolderOpen, LucideAlertCircle, LucideCheckCircle, LucideXCircle, LucideFileText, LucideList, LucideBell, LucideChevronDown, LucideChevronRight, LucideGitBranch],
+  imports: [CommonModule, RouterModule, LucideUsers, LucideFolderOpen, LucideAlertCircle, LucideCheckCircle, LucideXCircle, LucideFileText, LucideChevronDown, LucideChevronRight, LucideGitBranch, LucideMegaphone, LucideCalendarDays, LucideX, LucideLayoutDashboard, SafeHtmlPipe],
   templateUrl: './manager-dashboard.html',
   styles: [`
-    .org-card { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; border: 1px solid #e5e7eb; background: #fff; min-width: 200px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); cursor: pointer; transition: box-shadow .15s; }
-    .org-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .org-card-self { border-color: #3b82f6; background: #eff6ff; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
-    .org-card-manager { border-color: #dbeafe; background: #f0f7ff; }
-    .org-avatar { width: 36px; height: 36px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
-    .org-avatar-self { width: 40px; height: 40px; }
-    .org-initials { font-weight: 600; color: #6b7280; font-size: 11px; }
-    .org-info { min-width: 0; }
-    .org-name { font-weight: 600; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
-    .org-matricule { font-size: 11px; color: #3b82f6; font-weight: 500; }
-    .org-position { font-size: 11px; color: #6b7280; }
-    .org-line-down { width: 2px; height: 24px; background: #cbd5e1; flex-shrink: 0; }
-    .org-line-up { width: 2px; height: 16px; background: #cbd5e1; flex-shrink: 0; }
-    .org-card-self .org-name { color: #2563eb; }
+    .org-card { display: flex; align-items: center; gap: 11px; padding: 12px 16px; border-radius: 14px; border: 1px solid #e7ebf1; background: #fff; min-width: 210px; box-shadow: 0 1px 2px rgba(16,24,40,0.03); cursor: pointer; transition: box-shadow .2s ease, border-color .2s ease, transform .2s ease; }
+    .org-card:hover { box-shadow: 0 8px 22px rgba(16,24,40,0.08); border-color: #d3dbe8; transform: translateY(-1px); }
+    .org-card-self { border-color: #2563eb; background: #f3f8ff; box-shadow: 0 0 0 2px rgba(37,99,235,0.15); }
+    .org-card-manager { border-color: #e2e8f0; background: #ffffff; }
+    .org-avatar { width: 38px; height: 38px; border-radius: 50%; background: #edf2f9; border: 1px solid #e7ebf1; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+    .org-avatar-self { width: 42px; height: 42px; background: #eaf2ff; border-color: #d3e4ff; }
+    .org-initials { font-weight: 600; color: #8a96a9; font-size: 11px; }
+    .org-info { min-width: 0; flex: 1; }
+    .org-name { font-weight: 600; color: #15213d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+    .org-position { font-size: 11px; color: #95a1b3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .org-line-down { width: 2px; height: 24px; background: #d7dee8; flex-shrink: 0; }
+    .org-line-up { width: 2px; height: 16px; background: #d7dee8; flex-shrink: 0; }
+    .org-card-self .org-name { color: #1d4ed8; }
+    .org-tag { flex-shrink: 0; font-size: 10px; font-weight: 600; letter-spacing: .02em; padding: 3px 9px; border-radius: 999px; }
+    .org-tag-blue { background: #2563eb; color: #fff; }
+    .org-tag-light { background: #eaf2ff; color: #2563eb; }
+    .org-tag-gray { background: #f1f4f8; color: #7c889a; }
   `]
 })
 export class ManagerDashboard implements OnInit {
@@ -46,11 +51,43 @@ export class ManagerDashboard implements OnInit {
   recentDocs = signal<any[]>([]);
   expandedDocGroups = signal<Set<string>>(new Set());
   announcements = signal<any[]>([]);
+  events = signal<CalendarEvent[]>([]);
+  selectedCalendarItem: any = null;
+
+  calendarEvents = computed(() => {
+    const now = new Date();
+    const events: { title: string; date: Date; startTime: string; priority: string; type: string; raw: any }[] = [];
+    for (const ev of this.events()) {
+      const d = new Date(ev.eventDate);
+      events.push({ title: ev.title, date: d, startTime: ev.startTime || '', priority: ev.priority || 'NORMALE', type: 'event', raw: ev });
+    }
+    for (const a of this.announcements()) {
+      const d = new Date(a.createdAt);
+      events.push({ title: a.title, date: d, startTime: '', priority: a.priority, type: 'announcement', raw: a });
+    }
+    return events
+      .filter(e => e.date >= new Date(now.getFullYear(), now.getMonth(), now.getDate()))
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .slice(0, 6);
+  });
 
   teamFiltered = computed(() => {
     const p = this.authService.profile();
     const empId = p?.employeeId;
     return this.team().filter(e => e.id !== empId);
+  });
+
+  directTeam = computed<Employee[]>(() => {
+    const ctx = this.orgContext();
+    const p = this.authService.profile();
+    const empId = p?.employeeId;
+    if (!ctx) {
+      return this.team().filter(e => e.id !== empId);
+    }
+    const byId = new Map(this.team().map(e => [e.id, e]));
+    return ctx.reports
+      .map(r => byId.get(r.id))
+      .filter((e): e is Employee => !!e && e.id !== empId);
   });
 
   selfNode = computed(() => {
@@ -96,6 +133,7 @@ export class ManagerDashboard implements OnInit {
     private api: ApiService,
     private announcementService: AnnouncementService,
     private documentService: DocumentService,
+    private eventService: EventService,
     private webSocketService: WebSocketService
   ) {}
 
@@ -120,8 +158,21 @@ export class ManagerDashboard implements OnInit {
       this.loading.set(false);
     }
     this.loadAnnouncements();
+    this.loadEvents();
     this.loadOrgContext();
     this.webSocketService.onReclamationUpdate(() => this.refreshReclamations());
+  }
+
+  private async loadEvents() {
+    try {
+      this.events.set(await this.eventService.upcoming());
+    } catch (e) {
+      console.warn('Events not available', e);
+    }
+  }
+
+  openCalendarItem(item: any) {
+    this.selectedCalendarItem = item;
   }
 
   private async loadOrgContext() {
@@ -174,7 +225,7 @@ export class ManagerDashboard implements OnInit {
   }
 
   statusLabel(s: string) {
-    const m: Record<string, string> = { ACTIVE: 'Actif', INACTIVE: 'Inactif', ON_LEAVE: 'En congé', TERMINATED: 'Terminé' };
+    const m: Record<string, string> = { ACTIVE: 'Actif', ON_LEAVE: 'En congé', TERMINATED: 'Terminé' };
     return m[s] ?? s;
   }
 
@@ -184,8 +235,14 @@ export class ManagerDashboard implements OnInit {
   }
 
   priorityLabel(p: string) {
-    const m: Record<string, string> = { FAIBLE: 'Faible', MOYENNE: 'Moyenne', HAUTE: 'Haute', CRITIQUE: 'Critique' };
+    const m: Record<string, string> = { FAIBLE: 'Faible', MOYENNE: 'Moyenne', NORMALE: 'Normale', HAUTE: 'Haute', CRITIQUE: 'Critique' };
     return m[p] ?? p;
+  }
+
+  announcementEyebrow(p: string): string {
+    if (p === 'CRITIQUE') return 'Annonce importante';
+    if (p === 'HAUTE') return 'Annonce prioritaire';
+    return 'Annonce';
   }
 
   documentTypeLabel(type: string): string {

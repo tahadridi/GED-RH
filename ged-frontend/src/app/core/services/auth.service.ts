@@ -152,10 +152,10 @@ export class AuthService {
     return firstValueFrom(this.http.post(`${environment.apiUrl}/reclamations`, { title, message, newValue, priority }, { headers }));
   }
 
-  async updatePassword(newPassword: string): Promise<void> {
+  async updatePassword(currentPassword: string, newPassword: string): Promise<void> {
     const token = await this.getToken();
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' });
-    await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/password`, { newPassword }, { headers }));
+    await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/password`, { currentPassword, newPassword }, { headers }));
   }
 
   async getReclamations(): Promise<any[]> {

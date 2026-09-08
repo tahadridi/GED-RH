@@ -1,6 +1,7 @@
-<div class="p-8">
+<div class="min-h-screen bg-[#f7f9fc] text-[#17233c] font-[Inter,system-ui,Arial,sans-serif]" style="--n:#071334;--b:#2563eb;--bg:#f7f9fc;--t:#17233c;--m:#8793a6;--l:#e7ecf2;--g:#16a34a">
+
   <!-- Reset password notification -->
-  <div *ngIf="resetNotif()" class="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm flex items-start gap-3">
+  <div *ngIf="resetNotif()" class="mx-8 mt-6 mb-0 p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm flex items-start gap-3" style="max-width:1500px;margin-left:auto;margin-right:auto">
     <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
       <svg lucideKey class="w-3.5 h-3.5 text-green-700"></svg>
     </div>
@@ -17,105 +18,222 @@
     </button>
   </div>
 
-  <div class="flex items-center justify-between mb-6">
-    <div>
-      <h1 class="text-2xl font-bold text-black-900">Gestion des utilisateurs</h1>
-      <p class="text-sm text-gray-500 mt-1">Accès réservé à l'administrateur</p>
+  <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-6">
+
+    <!-- Breadcrumb -->
+    <div class="mb-6">
+      <div class="px-0 flex items-center gap-2.5 text-[14px] text-[#9aa5b7]">
+        <span>GED</span>
+        <span>&rsaquo;</span>
+        <b class="font-semibold text-[#66738a]">Utilisateurs</b>
+      </div>
     </div>
-    <button (click)="openCreate()"
-      class="flex items-center gap-2 px-4 py-2 bg-blue-800 text-white rounded-lg text-sm font-medium hover:bg-blue-900 transition-colors">
-      <svg lucideUserPlus class="w-4 h-4"></svg>
-      Nouvel utilisateur
-    </button>
-  </div>
 
-  <!-- Gradient divider -->
-  <div class="mb-6 h-px bg-gradient-to-r from-blue-400 via-purple-400 to-transparent"></div>
+    <!-- Heading -->
+    <section class="flex justify-between items-end gap-6 flex-wrap pb-7 mb-6" style="border-bottom:1px solid #e7ecf2">
+      <div class="flex items-center gap-4">
+        <div class="w-[50px] h-[50px] rounded-[15px] bg-[#edf4ff] text-[#2563eb] flex items-center justify-center shrink-0 shadow-[inset_0_0_0_1px_rgba(37,99,235,.08)]">
+          <svg lucideUserCog class="w-[22px] h-[22px]"></svg>
+        </div>
+        <div>
+          <h1 class="text-[29px] font-extrabold mb-2" style="letter-spacing:-1px">Utilisateurs</h1>
+          <p class="text-[14px] text-[#8793a6]">Gérez les comptes, rôles et responsabilités RH de votre organisation.</p>
+        </div>
+      </div>
+      <button (click)="openCreate()"
+        class="h-[42px] px-[17px] rounded-[9px] bg-[#2563eb] text-white text-[12px] font-bold shadow-[0_5px_14px_rgba(37,99,235,.13)] hover:bg-[#1d4ed8] transition-colors inline-flex items-center gap-2">
+        <svg lucideUserPlus class="w-4 h-4"></svg>
+        Nouvel utilisateur
+      </button>
+    </section>
 
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-    <div *ngIf="loading()" class="p-8 text-center text-gray-400 text-sm">Chargement...</div>
-    <table *ngIf="!loading()" class="w-full text-sm">
-      <thead class="bg-gray-50 border-b border-gray-100">
-        <tr>
-          <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Utilisateur</th>
-          <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Rôles</th>
-          <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Responsabilités RH</th>
-          <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Manager</th>
-          <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Statut</th>
-          <th class="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-50">
-        <tr *ngFor="let u of users()" class="hover:bg-gray-50 transition-colors">
-          <td class="px-4 py-3">
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-full overflow-hidden border border-gray-200 shrink-0">
-                <img *ngIf="u.employeeProfileId && !hasPhotoError(u)"
-                  [src]="apiUrl + '/employees/' + u.employeeProfileId + '/photo/content'"
-                  class="w-full h-full object-cover" (error)="onPhotoError(u)" alt="">
-                <div *ngIf="!u.employeeProfileId || hasPhotoError(u)"
-                  class="w-full h-full bg-gray-100 flex items-center justify-center">
-                  <img src="/UserIcon.png" alt="User" class="w-5 h-5 object-contain">
+    <!-- Stats KPI -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-[13px] mb-6">
+      <article class="bg-white border border-[#e7ecf2] rounded-[14px] p-[17px] shadow-[0_6px_22px_rgba(19,35,68,.03)]">
+        <div class="flex justify-between">
+          <div>
+            <label class="text-[13px] text-[#748197]">Total utilisateurs</label>
+            <h2 class="text-[28px] font-bold mt-1" style="letter-spacing:-.8px">{{ totalUsers < 10 ? '0' + totalUsers : totalUsers }}</h2>
+          </div>
+          <div class="w-[37px] h-[37px] rounded-[10px] bg-[#edf4ff] text-[#2563eb] flex items-center justify-center text-[16px]">
+            <svg lucideUsers class="w-4 h-4"></svg>
+          </div>
+        </div>
+        <div class="text-[12px] text-[#a0aabb] mt-2.5">Comptes de la plateforme GED RH</div>
+      </article>
+
+      <article class="bg-white border border-[#e7ecf2] rounded-[14px] p-[17px] shadow-[0_6px_22px_rgba(19,35,68,.03)]">
+        <div class="flex justify-between">
+          <div>
+            <label class="text-[13px] text-[#748197]">Utilisateurs actifs</label>
+            <h2 class="text-[28px] font-bold mt-1" style="letter-spacing:-.8px">{{ activeUsers < 10 ? '0' + activeUsers : activeUsers }}</h2>
+          </div>
+          <div class="w-[37px] h-[37px] rounded-[10px] bg-[#eaf8ef] text-[#16a34a] flex items-center justify-center text-[16px]">
+            <svg lucideCheck class="w-4 h-4"></svg>
+          </div>
+        </div>
+        <div class="text-[12px] text-[#a0aabb] mt-2.5"><b class="text-[#16a34a]">{{ activePct }}%</b> des comptes actifs</div>
+      </article>
+
+      <article class="bg-white border border-[#e7ecf2] rounded-[14px] p-[17px] shadow-[0_6px_22px_rgba(19,35,68,.03)]">
+        <div class="flex justify-between">
+          <div>
+            <label class="text-[13px] text-[#748197]">Managers</label>
+            <h2 class="text-[28px] font-bold mt-1" style="letter-spacing:-.8px">{{ managersCount < 10 ? '0' + managersCount : managersCount }}</h2>
+          </div>
+          <div class="w-[37px] h-[37px] rounded-[10px] bg-[#f2edff] text-[#7c3aed] flex items-center justify-center text-[16px]">
+            <svg lucideUserCheck class="w-4 h-4"></svg>
+          </div>
+        </div>
+        <div class="text-[12px] text-[#a0aabb] mt-2.5">Responsables d'équipes</div>
+      </article>
+
+      <article class="bg-white border border-[#e7ecf2] rounded-[14px] p-[17px] shadow-[0_6px_22px_rgba(19,35,68,.03)]">
+        <div class="flex justify-between">
+          <div>
+            <label class="text-[13px] text-[#748197]">Ressources Humaines</label>
+            <h2 class="text-[28px] font-bold mt-1" style="letter-spacing:-.8px">{{ rhCount < 10 ? '0' + rhCount : rhCount }}</h2>
+          </div>
+          <div class="w-[37px] h-[37px] rounded-[10px] bg-[#fff0f0] text-[#dc2626] flex items-center justify-center text-[16px]">
+            <svg lucideUserCog class="w-4 h-4"></svg>
+          </div>
+        </div>
+        <div class="text-[12px] text-[#a0aabb] mt-2.5">Comptes Ressources Humaines</div>
+      </article>
+
+      <article class="bg-white border border-[#e7ecf2] rounded-[14px] p-[17px] shadow-[0_6px_22px_rgba(19,35,68,.03)]">
+        <div class="flex justify-between">
+          <div>
+            <label class="text-[13px] text-[#748197]">Direction Générale</label>
+            <h2 class="text-[28px] font-bold mt-1" style="letter-spacing:-.8px">{{ dgCount < 10 ? '0' + dgCount : dgCount }}</h2>
+          </div>
+          <div class="w-[37px] h-[37px] rounded-[10px] bg-[#fff5dd] text-[#b45309] flex items-center justify-center text-[16px]">
+            <svg lucideBuilding2 class="w-4 h-4"></svg>
+          </div>
+        </div>
+        <div class="text-[12px] text-[#a0aabb] mt-2.5">Comptes Direction Générale</div>
+      </article>
+    </section>
+
+    <!-- Panel -->
+    <section class="bg-white border border-[#e7ecf2] rounded-[14px] shadow-[0_6px_22px_rgba(19,35,68,.03)] overflow-hidden">
+      <div class="px-[19px] py-[18px] border-b border-[#e7ecf2]">
+        <div class="text-[16px] font-extrabold">Liste des utilisateurs</div>
+        <div class="text-[12px] text-[#9aa5b7] mt-1">Comptes et autorisations de la plateforme GED RH</div>
+      </div>
+
+      <!-- Filters -->
+      <div class="px-[19px] py-4 border-b border-[#e7ecf2] bg-[#fcfdff] flex flex-col md:flex-row gap-[10px]">
+        <div class="relative flex-1">
+          <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a0aabb]"></svg>
+          <input [(ngModel)]="searchQuery" (ngModelChange)="searchQuery.set($event)" type="text" placeholder="Rechercher par nom ou email..."
+            class="h-10 w-full pl-9 pr-3 border border-[#e0e6ee] rounded-[9px] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/5 focus:border-[#8eaff0]">
+        </div>
+        <select [(ngModel)]="filterRole" (ngModelChange)="filterRole.set($event)"
+          class="h-10 px-3 border border-[#e0e6ee] rounded-[9px] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/5 focus:border-[#8eaff0] bg-white md:w-[190px]">
+          <option value="">Tous les rôles</option>
+          <option *ngFor="let r of allRoles" [value]="r">{{ roleLabels[r] }}</option>
+        </select>
+        <select [(ngModel)]="filterStatus" (ngModelChange)="filterStatus.set($event)"
+          class="h-10 px-3 border border-[#e0e6ee] rounded-[9px] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/5 focus:border-[#8eaff0] bg-white md:w-[160px]">
+          <option value="">Tous les statuts</option>
+          <option value="ACTIVE">Actif</option>
+          <option value="INACTIVE">Inactif</option>
+        </select>
+        <button (click)="clearFilters()"
+          class="h-10 px-[18px] rounded-[9px] bg-[#2563eb] text-white text-[12px] font-bold hover:bg-[#1d4ed8] transition-colors">
+          Rechercher
+        </button>
+      </div>
+
+      <div *ngIf="loading()" class="p-10 text-center text-[#8d99aa] text-[12px]">Chargement...</div>
+
+      <div *ngIf="!loading()" class="overflow-x-auto">
+        <table class="w-full min-w-[920px]" style="border-collapse:collapse">
+          <thead>
+            <tr class="bg-[#fcfdff]" style="border-bottom:1px solid #e7ecf2">
+              <th class="text-left px-[18px] py-[13px] text-[12px] font-extrabold tracking-[.05em] text-[#7b8799]">Utilisateur</th>
+              <th class="text-left px-[18px] py-[13px] text-[12px] font-extrabold tracking-[.05em] text-[#7b8799]">Rôle</th>
+              <th class="text-left px-[18px] py-[13px] text-[12px] font-extrabold tracking-[.05em] text-[#7b8799]">Responsabilités RH</th>
+              <th class="text-left px-[18px] py-[13px] text-[12px] font-extrabold tracking-[.05em] text-[#7b8799]">Manager</th>
+              <th class="text-left px-[18px] py-[13px] text-[12px] font-extrabold tracking-[.05em] text-[#7b8799]">Statut</th>
+              <th class="text-left px-[18px] py-[13px] text-[12px] font-extrabold tracking-[.05em] text-[#7b8799]">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of filteredUsers" class="hover:bg-[#fbfcff] transition-colors" style="border-bottom:1px solid #f0f3f7">
+              <td class="px-[18px] py-[14px] text-[13px] text-[#53627a]">
+                <div class="flex items-center gap-[11px] min-w-[230px]">
+                  <div class="w-[36px] h-[36px] rounded-full overflow-hidden border border-[#e7ecf2] shrink-0">
+                    <img *ngIf="u.employeeProfileId && !hasPhotoError(u)"
+                      [src]="apiUrl + '/employees/' + u.employeeProfileId + '/photo/content'"
+                      class="w-full h-full object-cover" (error)="onPhotoError(u)" alt="">
+                    <div *ngIf="!u.employeeProfileId || hasPhotoError(u)"
+                      class="w-full h-full bg-[#f1f3f6] text-[#64748b] flex items-center justify-center font-extrabold text-[12px]">
+                      {{ (u.firstName || '?').charAt(0) }}{{ (u.lastName || '?').charAt(0) }}
+                    </div>
+                  </div>
+                  <div class="min-w-0">
+                    <span class="font-bold text-[#293751] block truncate text-[14px]">{{ u.firstName }} {{ u.lastName }}</span>
+                    <span class="text-[12px] text-[#a0aabb] block mt-0.5 truncate">{{ u.email }}</span>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <p class="font-medium text-gray-900">{{ u.firstName }} {{ u.lastName }}</p>
-                <p class="text-xs text-gray-400">{{ u.email }}</p>
-              </div>
-            </div>
-          </td>
-          <td class="px-4 py-3">
-            <div class="flex flex-wrap gap-1">
-              <span *ngFor="let r of u.roles"
-                class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                {{ roleLabels[r] }}
-              </span>
-            </div>
-          </td>
-          <td class="px-4 py-3">
-            <div class="flex flex-wrap gap-1">
-              <span *ngFor="let t of u.rhResponsibilities"
-                class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                {{ docTypeLabel(t) }}
-              </span>
-              <span *ngIf="u.rhResponsibilities.length === 0" class="text-xs text-gray-400">—</span>
-            </div>
-          </td>
-          <td class="px-4 py-3 text-xs text-gray-600">
-            {{ getManagerName(u.managerId) }}
-          </td>
-          <td class="px-4 py-3">
-            <span [class]="u.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
-              class="px-2 py-0.5 rounded-full text-xs font-medium">
-              {{ u.active ? 'Actif' : 'Inactif' }}
-            </span>
-          </td>
-          <td class="px-4 py-3">
-            <div class="flex items-center justify-end gap-1">
-              <button (click)="openEdit(u)" title="Modifier"
-                class="p-1.5 text-gray-400 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors">
-                <svg lucidePencil class="w-4 h-4"></svg>
-              </button>
-              <button (click)="resetPassword(u)" title="Réinitialiser mot de passe"
-                class="p-1.5 text-gray-400 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors">
-                <svg lucideKey class="w-4 h-4"></svg>
-              </button>
-              <button (click)="deactivate(u)" title="Désactiver" *ngIf="u.active"
-                class="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors">
-                <svg lucideUserX class="w-4 h-4"></svg>
-              </button>
-              <button (click)="deleteUser(u)" title="Supprimer définitivement"
-                class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
-                <svg lucideTrash2 class="w-4 h-4"></svg>
-              </button>
-            </div>
-          </td>
-        </tr>
-        <tr *ngIf="users().length === 0">
-          <td colspan="6" class="px-4 py-8 text-center text-gray-400 text-sm">Aucun utilisateur.</td>
-        </tr>
-      </tbody>
-    </table>
+              </td>
+              <td class="px-[18px] py-[14px] text-[13px] text-[#53627a] whitespace-nowrap">
+                <div class="flex flex-wrap gap-1">
+                  <span *ngFor="let r of u.roles" class="inline-block bg-[#edf4ff] text-[#2563eb] rounded-full px-[9px] py-[5px] text-[11px] whitespace-nowrap">
+                    {{ roleLabels[r] }}
+                  </span>
+                </div>
+              </td>
+              <td class="px-[18px] py-[14px] text-[13px] text-[#53627a]">
+                <div class="flex flex-wrap gap-1">
+                  <span *ngFor="let t of u.rhResponsibilities" class="px-2 py-0.5 rounded-full text-[11px] bg-[#eaf8ef] text-[#179447]">{{ docTypeLabel(t) }}</span>
+                  <span *ngIf="u.rhResponsibilities.length === 0" class="text-[#aab3c0]">—</span>
+                </div>
+              </td>
+              <td class="px-[18px] py-[14px] text-[13px] text-[#68768c]">{{ getManagerName(u.managerId) }}</td>
+              <td class="px-[18px] py-[14px] text-[13px]">
+                <span [class]="u.active ? 'bg-[#eaf8ef] text-[#16a34a]' : 'bg-[#f1f3f6] text-[#8d99aa]'"
+                  class="inline-block px-[9px] py-[5px] rounded-full text-[11px] font-bold">
+                  {{ u.active ? 'Actif' : 'Inactif' }}
+                </span>
+              </td>
+              <td class="px-[18px] py-[14px] text-[13px]">
+                <div class="flex items-center gap-[5px]">
+                  <button (click)="openEdit(u)" title="Modifier"
+                    class="w-[29px] h-[29px] rounded-[7px] bg-[#f5f7fa] text-[#8a97aa] hover:bg-[#edf4ff] hover:text-[#2563eb] transition-colors flex items-center justify-center">
+                    <svg lucidePencil class="w-[14px] h-[14px]"></svg>
+                  </button>
+                  <button (click)="resetPassword(u)" title="Réinitialiser mot de passe"
+                    class="w-[29px] h-[29px] rounded-[7px] bg-[#f5f7fa] text-[#8a97aa] hover:bg-[#edf4ff] hover:text-[#2563eb] transition-colors flex items-center justify-center">
+                    <svg lucideKeyRound class="w-[14px] h-[14px]"></svg>
+                  </button>
+                  <button (click)="deactivate(u)" title="Désactiver" *ngIf="u.active"
+                    class="w-[29px] h-[29px] rounded-[7px] bg-[#f5f7fa] text-[#8a97aa] hover:bg-[#edf4ff] hover:text-[#2563eb] transition-colors flex items-center justify-center">
+                    <svg lucideUserX class="w-[14px] h-[14px]"></svg>
+                  </button>
+                  <button (click)="deleteUser(u)" title="Supprimer définitivement"
+                    class="w-[29px] h-[29px] rounded-[7px] bg-[#f5f7fa] text-[#8a97aa] hover:bg-[#edf4ff] hover:text-[#2563eb] transition-colors flex items-center justify-center">
+                    <svg lucideTrash2 class="w-[14px] h-[14px]"></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="filteredUsers.length === 0 && !loading()">
+              <td colspan="6" class="px-4 py-12 text-center">
+                <div class="mx-auto w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mb-3">
+                  <svg lucideUsers class="w-6 h-6 text-gray-400"></svg>
+                </div>
+                <p class="text-sm font-semibold text-[#17233c] mb-1">Aucun utilisateur trouvé</p>
+                <p class="text-[12px] text-[#8d99aa]">Essayez de modifier vos critères de recherche.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
   </div>
 </div>
 

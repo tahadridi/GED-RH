@@ -1,8 +1,8 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { EmployeeService } from '../../../core/services/employee.service';
+import { EmployeeService, EmployeeStats } from '../../../core/services/employee.service';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { OrganizationService } from '../../../core/services/organization.service';
@@ -10,11 +10,13 @@ import { Employee, EmployeeStatus } from '../../../core/models/employee.model';
 import { Page } from '../../../core/models/page.model';
 import { EmployeeForm } from '../employee-form/employee-form';
 import { environment } from '../../../../environments/environment';
+import { UiService } from '../../../core/services/ui.service';
 import {
   LucideUserPlus, LucidePencil, LucideTrash2, LucideSearch,
   LucideFolderOpen, LucideChevronUp, LucideChevronDown, LucideFilter,
   LucideChevronLeft, LucideChevronRight, LucideMail, LucidePhone,
-  LucideChevronsUpDown
+  LucideChevronsUpDown, LucideUsers, LucideUserCheck, LucideClock,
+  LucideUserX
 } from '@lucide/angular';
 
 type SortField = 'matricule' | 'firstName' | 'department' | 'status' | 'hireDate';
@@ -26,7 +28,9 @@ type SortField = 'matricule' | 'firstName' | 'department' | 'status' | 'hireDate
     CommonModule, RouterModule, FormsModule, EmployeeForm,
     LucideUserPlus, LucidePencil, LucideTrash2, LucideSearch,
     LucideFolderOpen, LucideChevronUp, LucideChevronDown, LucideFilter,
-    LucideChevronLeft, LucideChevronRight, LucideMail, LucidePhone
+    LucideChevronLeft, LucideChevronRight, LucideMail, LucidePhone,
+    LucideChevronsUpDown, LucideUsers, LucideUserCheck, LucideClock,
+    LucideUserX
   ],
   templateUrl: './employees-list.html'
 })
@@ -44,13 +48,14 @@ export class EmployeesList implements OnInit {
   loading = signal(true);
   showForm = signal(false);
   editingEmployee = signal<Employee | null>(null);
+  stats = signal<EmployeeStats>({ total: 0, ACTIVE: 0, ON_LEAVE: 0, TERMINATED: 0, departments: 0 });
 
   currentPage = signal(1);
 
   departments: string[] = [];
-  statuses: EmployeeStatus[] = ['ACTIVE', 'INACTIVE', 'ON_LEAVE', 'TERMINATED'];
+  statuses: EmployeeStatus[] = ['ACTIVE', 'ON_LEAVE', 'TERMINATED'];
   statusLabels: Record<string, string> = {
-    ACTIVE: 'Actif', INACTIVE: 'Inactif', ON_LEAVE: 'En congé', TERMINATED: 'Terminé'
+    ACTIVE: 'Actif', ON_LEAVE: 'En congé', TERMINATED: 'Terminé'
   };
 
   // Computed from page
@@ -74,7 +79,9 @@ export class EmployeesList implements OnInit {
     private employeeService: EmployeeService,
     private userService: UserService,
     private authService: AuthService,
-    private orgService: OrganizationService
+    private orgService: OrganizationService,
+    private router: Router,
+    private ui: UiService
   ) {}
 
   get canManageEmployees(): boolean {
@@ -82,7 +89,13 @@ export class EmployeesList implements OnInit {
   }
 
   async ngOnInit() {
-    await Promise.all([this.loadEmployees(), this.loadUsers(), this.loadDepartments()]);
+    await Promise.all([this.loadEmployees(), this.loadStats(), this.loadUsers(), this.loadDepartments()]);
+  }
+
+  async loadStats() {
+    try {
+      this.stats.set(await this.employeeService.stats());
+    } catch {}
   }
 
   async loadUsers() {
@@ -152,21 +165,31 @@ export class EmployeesList implements OnInit {
     this.showForm.set(true);
   }
 
+  openEmployee(emp: Employee) {
+    this.router.navigate(['/employees', emp.id]);
+  }
+
   async deactivate(id: string) {
-    if (!confirm('Désactiver cet employé ?')) return;
+    if (!(await this.ui.confirm({
+      title: 'Désactiver l\'employé',
+      message: 'Voulez-vous vraiment désactiver cet employé ?',
+      danger: true,
+      confirmLabel: 'Désactiver'
+    }))) return;
     await this.employeeService.delete(id);
-    await this.loadEmployees();
+    await Promise.all([this.loadEmployees(), this.loadStats()]);
   }
 
   onFormClose(saved: boolean) {
     this.showForm.set(false);
-    if (saved) this.loadEmployees();
+    if (saved) {
+      Promise.all([this.loadEmployees(), this.loadStats()]);
+    }
   }
 
   statusClass(s: string) {
     const m: Record<string, string> = {
       ACTIVE: 'bg-green-100 text-green-700',
-      INACTIVE: 'bg-gray-100 text-gray-600',
       ON_LEAVE: 'bg-yellow-100 text-yellow-700',
       TERMINATED: 'bg-red-100 text-red-600'
     };

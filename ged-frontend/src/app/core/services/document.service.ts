@@ -2,6 +2,14 @@ import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { EmployeeDocument, DocumentVersion, DocumentSearchParams } from '../models/document.model';
 
+export interface DocumentStats {
+  total: number;
+  totalSize: number;
+  thisMonth: number;
+  employeesWithDocs: number;
+  byType: Record<string, number>;
+}
+
 export interface OcrPreviewResult {
   tempKey: string;
   ocrText: string;
@@ -37,6 +45,10 @@ export class DocumentService {
     if (params.employeeId) p['employeeId'] = params.employeeId;
     if (params.department) p['department'] = params.department;
     return this.api.get<EmployeeDocument[]>('/documents/search', p);
+  }
+
+  stats(): Promise<DocumentStats> {
+    return this.api.get<DocumentStats>('/documents/stats');
   }
 
   /** Step 1: send file, get OCR text back for user review */
@@ -145,5 +157,9 @@ export class DocumentService {
 
   delete(id: string): Promise<void> {
     return this.api.delete<void>(`/documents/${id}`);
+  }
+
+  deleteVersion(versionId: string): Promise<void> {
+    return this.api.delete<void>(`/documents/versions/${versionId}`);
   }
 }

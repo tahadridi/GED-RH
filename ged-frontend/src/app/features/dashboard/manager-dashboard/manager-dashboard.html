@@ -1,331 +1,468 @@
-<div class="p-6 bg-gray-50 min-h-screen">
-  <div class="mb-8">
-    <h1 class="text-2xl font-bold text-gray-900">Tableau de Bord Manager</h1>
-    <p class="text-sm text-gray-500 mt-1">Bienvenue, {{ userName }} — gestion de votre équipe</p>
-  </div>
+<div class="min-h-screen bg-[#f6f8fb] text-[#15213d] font-[Inter,system-ui,Arial,sans-serif] antialiased" style="--navy:#071334;--blue:#2563eb;--blue-bg:#eaf2ff;--purple:#8b5cf6;--purple-bg:#f2ecff;--green:#16a34a;--green-bg:#e9f9ef;--orange:#f59e0b;--orange-bg:#fff5dd;--red:#ef4444;--red-bg:#fff0f0;--teal:#0d9488;--teal-bg:#e7f8f6;--text:#15213d;--muted:#738097;--border:#e7ebf1;">
 
-  <!-- Gradient divider -->
-  <div class="mb-8 h-px bg-gradient-to-r from-blue-400 via-purple-400 to-transparent"></div>
-
-  <!-- Announcements -->
-  <div *ngIf="announcements().length > 0" class="mb-8 bg-gradient-to-r from-gray-50 to-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-    <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
-      <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
-        <svg class="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 12h-2v-2h2v2zm0-4h-2V6h2v4z"/>
-        </svg>
-      </div>
-      <h2 class="font-semibold text-gray-800">Annonces</h2>
-    </div>
-    <div class="divide-y divide-gray-50">
-      <div *ngFor="let a of announcements()" class="border-l-4 transition hover:bg-gray-50/50 px-5 py-4"
-        [ngClass]="{
-          'border-l-red-500': a.priority === 'CRITIQUE',
-          'border-l-orange-500': a.priority === 'HAUTE',
-          'border-l-gray-400': a.priority === 'NORMALE'
-        }">
-        <div class="flex items-center gap-2 mb-1">
-          <svg *ngIf="a.priority === 'CRITIQUE'" class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>
-          </svg>
-          <svg *ngIf="a.priority === 'HAUTE'" class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-          </svg>
-          <svg *ngIf="a.priority === 'NORMALE'" class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          <p class="font-medium text-gray-900">{{ a.title }}</p>
-          <span class="ml-auto px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase shrink-0"
-            [ngClass]="{
-              'bg-red-100 text-red-700': a.priority === 'CRITIQUE',
-              'bg-orange-100 text-orange-700': a.priority === 'HAUTE',
-              'bg-gray-100 text-gray-600': a.priority === 'NORMALE'
-            }">{{ a.priority === 'CRITIQUE' ? 'Critique' : a.priority === 'HAUTE' ? 'Haute' : 'Normale' }}</span>
-        </div>
-        <p class="text-sm text-gray-600 leading-relaxed line-clamp-2">{{ a.content }}</p>
-        <p class="text-xs text-gray-400 mt-1.5 flex items-center gap-1">
-          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-          </svg>
-          {{ a.authorName }} &middot; {{ a.createdAt | date:'dd/MM/yyyy' }}
-        </p>
-      </div>
+  <!-- Breadcrumb -->
+  <div class="px-9 pt-6">
+    <div class="flex items-center gap-2.5 text-[13px] text-[#9aa5b7]">
+      <span>GED</span>
+      <span>&rsaquo;</span>
+      <b class="font-semibold text-[#66738a]">Tableau de bord</b>
     </div>
   </div>
 
-  <div *ngIf="loading()" class="text-center py-12 text-gray-400 text-sm">Chargement...</div>
+  <div class="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-9 pb-14 pt-7">
+    <!-- Hero + À venir (mini card top right) -->
+    <section class="flex items-center justify-between gap-6 mb-7 flex-wrap">
+      <div class="flex items-center gap-4">
+        <div class="w-[50px] h-[50px] rounded-[15px] bg-[#eaf2ff] text-[#2563eb] flex items-center justify-center shrink-0 shadow-[inset_0_0_0_1px_rgba(37,99,235,.08)]">
+          <svg lucideLayoutDashboard class="w-[22px] h-[22px]"></svg>
+        </div>
+        <div>
+          <h1 class="text-[30px] font-extrabold leading-[1.2] mb-1.5" style="letter-spacing:-1.1px">Bonjour, {{ userName }} 👋</h1>
+          <p class="text-[14px] text-[#738097]">Gérez votre équipe, les réclamations et les documents.</p>
+        </div>
+      </div>
 
-  <ng-container *ngIf="!loading()">
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-gray-500">Équipe</p>
-            <p class="text-3xl font-bold text-gray-900 mt-1">{{ teamFiltered().length }}</p>
-            <p class="text-xs text-gray-500 mt-2">Membres</p>
+      <!-- À venir (petite carte en haut à droite) -->
+      <div class="w-[320px] max-w-full bg-white border border-[#e7ebf1] rounded-[14px] shadow-[0_1px_2px_rgba(16,24,40,.03)] overflow-hidden">
+        <div class="flex justify-between items-center px-4 py-3 border-b border-[#f0f2f5]">
+          <div class="flex items-center gap-2">
+            <div class="w-[30px] h-[30px] rounded-[8px] bg-[#eaf2ff] text-[#2563eb] flex items-center justify-center">
+              <svg lucideCalendarDays class="w-4 h-4"></svg>
+            </div>
+            <span class="text-[13px] font-bold text-[#15213d]">À venir</span>
           </div>
-          <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center">
-            <svg lucideUsers class="w-6 h-6 text-indigo-600"></svg>
-          </div>
+          <a routerLink="/calendar" class="text-[#2563eb] text-[11px] font-semibold hover:underline shrink-0">Voir tout →</a>
         </div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-gray-500">Réclamations en attente</p>
-            <p class="text-3xl font-bold text-amber-600 mt-1">{{ pendingReclamations().length }}</p>
-            <p class="text-xs text-gray-500 mt-2">{{ reclamations().length }} totale(s)</p>
-          </div>
-          <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center">
-            <svg lucideAlertCircle class="w-6 h-6 text-amber-600"></svg>
-          </div>
-        </div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-gray-500">Approuvées</p>
-            <p class="text-3xl font-bold text-emerald-600 mt-1">{{ approvedReclamations().length }}</p>
-          </div>
-          <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
-            <svg lucideCheckCircle class="w-6 h-6 text-emerald-600"></svg>
-          </div>
-        </div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-gray-500">Rejetées</p>
-            <p class="text-3xl font-bold text-red-600 mt-1">{{ rejectedReclamations().length }}</p>
-          </div>
-          <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center">
-            <svg lucideXCircle class="w-6 h-6 text-red-600"></svg>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Main Grid: Pending Reclamations + Recent Documents -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-      <!-- Pending Reclamations -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="p-5 border-b border-gray-100 flex justify-between items-center">
-          <h2 class="font-semibold text-gray-800 flex items-center gap-2">
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            Réclamations en attente
-          </h2>
-          <a routerLink="/reclamations" class="text-blue-600 text-sm font-medium hover:underline">Voir tout</a>
-        </div>
-        <div *ngIf="pendingReclamations().length === 0" class="p-8 text-center text-gray-400 text-sm">
-          Aucune réclamation en attente.
-        </div>
-        <div *ngIf="pendingReclamations().length > 0" class="divide-y divide-gray-50">
-          <div *ngFor="let r of pendingReclamations()" class="p-4 flex items-start gap-3 hover:bg-gray-50">
-            <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-              <svg lucideAlertCircle class="w-4 h-4 text-amber-600"></svg>
+        <div *ngIf="calendarEvents().length === 0" class="px-4 py-6 text-center text-[#9aa5b7] text-[11px]">Aucune activité planifiée</div>
+        <div *ngIf="calendarEvents().length > 0" class="divide-y divide-[#f2f4f7] max-h-[170px] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]">
+          <button *ngFor="let event of calendarEvents()" (click)="openCalendarItem(event)" class="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[#f2f6ff] transition-colors cursor-pointer">
+            <div class="w-[34px] h-[38px] rounded-[6px] border border-[#e7ebf1] bg-[#fafbfc] flex flex-col items-center justify-center shrink-0"
+              [ngClass]="{
+                'bg-[#fff0f0] border-[#f0dada]': event.priority === 'CRITIQUE',
+                'bg-[#fff5dd] border-[#f5e6c6]': event.priority === 'HAUTE' || event.priority === 'MOYENNE'
+              }">
+              <strong class="text-[12px] font-bold leading-none text-[#15213d]">{{ event.date | date:'dd' }}</strong>
+              <span class="text-[7.5px] font-bold text-[#9aa5b7] mt-0.5 uppercase">{{ event.date | date:'MMM' }}</span>
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-gray-900">{{ r.title }}</p>
-              <p class="text-xs text-gray-400 mt-0.5">{{ r.employeeFirstName }} {{ r.employeeLastName }} · {{ formatDate(r.createdAt) }}</p>
+              <strong class="block text-[12px] font-semibold text-[#15213d] truncate">{{ event.title }}</strong>
+              <span class="text-[10.5px] text-[#9aa5b7]">{{ event.startTime ? (event.startTime | slice:0:5) : (event.type === 'announcement' ? 'Annonce' : 'Activité') }}</span>
             </div>
-            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full shrink-0"
+            <span class="w-[6px] h-[6px] rounded-full shrink-0"
               [ngClass]="{
-                'bg-gray-100 text-gray-600': r.priority === 'FAIBLE',
-                'bg-amber-100 text-amber-700': r.priority === 'MOYENNE',
-                'bg-orange-100 text-orange-700': r.priority === 'HAUTE',
-                'bg-red-100 text-red-700': r.priority === 'CRITIQUE'
-              }">{{ priorityLabel(r.priority) }}</span>
+                'bg-[#ef4444]': event.priority === 'CRITIQUE',
+                'bg-[#f59e0b]': event.priority === 'HAUTE',
+                'bg-[#2563eb]': event.type === 'announcement',
+                'bg-[#16a34a]': true
+              }"></span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Announcements -->
+    <section *ngIf="announcements().length > 0" class="space-y-4 mb-6">
+      <div *ngFor="let a of announcements()" class="flex gap-4 items-start relative bg-white border border-l-[3px] rounded-[13px] px-5 py-[18px] shadow-[0_1px_2px_rgba(16,24,40,.03)]"
+        [ngClass]="{
+          'border-[#f3c9c9] border-l-[#ef4444]': a.priority === 'CRITIQUE',
+          'border-[#f2d9a7] border-l-[#f59e0b]': a.priority === 'HAUTE',
+          'border-[#e1e6ee] border-l-[#9aa5b7]': a.priority === 'NORMALE'
+        }">
+        <div class="w-[39px] h-[39px] rounded-[10px] flex items-center justify-center text-[17px] shrink-0"
+          [ngClass]="{
+            'bg-[#fff0f0]': a.priority === 'CRITIQUE',
+            'bg-[#fff5dd]': a.priority === 'HAUTE',
+            'bg-[#f1f3f6]': a.priority === 'NORMALE'
+          }">
+          <svg lucideMegaphone class="w-[17px] h-[17px]"
+            [ngClass]="{
+              'text-[#ef4444]': a.priority === 'CRITIQUE',
+              'text-[#f59e0b]': a.priority === 'HAUTE',
+              'text-[#68758a]': a.priority === 'NORMALE'
+            }"></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex justify-between gap-5">
+            <div>
+              <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">{{ announcementEyebrow(a.priority) }}</div>
+              <h2 class="text-[20px] font-extrabold mb-1.5 text-[#15213d]" style="letter-spacing:-.3px">{{ a.title }}</h2>
+            </div>
+            <span class="text-[11px] font-bold uppercase rounded-full px-3 py-[6px] h-max shrink-0"
+              [ngClass]="{
+                'bg-[#fff0f0] text-[#ef4444]': a.priority === 'CRITIQUE',
+                'bg-[#fff5dd] text-[#f59e0b]': a.priority === 'HAUTE',
+                'bg-[#f1f3f6] text-[#68758a]': a.priority === 'NORMALE'
+              }">
+              <i class="inline-block w-1.5 h-1.5 rounded-full mr-1"
+                [ngClass]="{
+                  'bg-[#ef4444]': a.priority === 'CRITIQUE',
+                  'bg-[#f59e0b]': a.priority === 'HAUTE',
+                  'bg-[#9aa5b7]': a.priority === 'NORMALE'
+                }"></i>
+              {{ priorityLabel(a.priority) }}
+            </span>
+          </div>
+          <p class="text-[14px] text-[#4a5568] leading-[1.7] line-clamp-2 font-medium" [innerHTML]="a.content | safeHtml"></p>
+          <div class="flex gap-5 mt-2.5 text-[#9aa5b7] text-[11px]">
+            <span class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>{{ a.authorName }}</span>
+            <span class="flex items-center gap-1 px-1.5 py-[2px] rounded-full bg-white text-[#2563eb] border border-[#bfdbfe] text-[10px] font-bold uppercase tracking-wide whitespace-nowrap" *ngIf="a.authorRole === 'DIRECTION_GENERALE'">
+              <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.87"/></svg>
+              Direction Générale
+            </span>
+            <span class="flex items-center gap-1 px-1.5 py-[2px] rounded-full bg-white text-[#2563eb] border border-[#bfdbfe] text-[10px] font-bold uppercase tracking-wide whitespace-nowrap" *ngIf="a.authorRole === 'ADMINISTRATOR'">
+              <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+              Administrateur
+            </span>
+            <span>{{ a.createdAt | date:'dd MMMM yyyy' }}</span>
           </div>
         </div>
       </div>
+    </section>
 
-      <!-- Recent Documents -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="p-5 border-b border-gray-100 flex justify-between items-center">
-          <h2 class="font-semibold text-gray-800 flex items-center gap-2">
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.293.707l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Documents récents
-          </h2>
-          <a routerLink="/documents/list" class="text-blue-600 text-sm font-medium hover:underline">Voir tout</a>
-        </div>
-        <div *ngIf="recentGroups().length === 0" class="p-12 text-center">
-          <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.293.707l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+    <div *ngIf="loading()" class="text-center py-12 text-[#95a1b3] text-sm">Chargement...</div>
+
+    <ng-container *ngIf="!loading()">
+      <!-- Stats KPI -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[14px] mb-7">
+        <article class="bg-white border border-[#e7ebf1] rounded-[16px] px-[19px] py-[18px] min-h-[143px] shadow-[0_1px_2px_rgba(16,24,40,.03)] hover:shadow-[0_8px_22px_rgba(16,24,40,.06)] hover:-translate-y-0.5 transition">
+          <div class="flex justify-between">
+            <div>
+              <span class="text-[13px] text-[#69768b]">Équipe</span>
+              <h3 class="text-[32px] font-bold mt-1" style="letter-spacing:-1.3px">{{ directTeam().length }}</h3>
+            </div>
+            <div class="w-[42px] h-[42px] rounded-[11px] bg-[#eaf2ff] text-[#2563eb] flex items-center justify-center">
+              <svg lucideUsers class="w-[18px] h-[18px]"></svg>
+            </div>
           </div>
-          <h3 class="text-gray-600 font-medium mb-2">Aucun document</h3>
-          <p class="text-gray-400 text-sm">Aucun document récent dans votre équipe.</p>
-        </div>
-        <div *ngIf="recentGroups().length > 0" class="space-y-3 p-3">
-          <div *ngFor="let group of recentGroups()" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <button (click)="toggleDocGroup(group.employeeId)"
-              class="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors">
-              <div class="flex items-center gap-3">
-                <div *ngIf="!group.employeeHasPhoto" class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
-                  <img src="/UserIcon.png" alt="User" class="w-4 h-4 object-contain">
-                </div>
-                <img *ngIf="group.employeeHasPhoto" [src]="apiUrl + '/employees/' + group.employeeId + '/photo/content'" alt="Photo"
-                  class="w-8 h-8 rounded-full object-cover border border-gray-200 shrink-0">
-                <div class="text-left">
-                  <p class="font-semibold text-gray-900 text-sm">{{ group.employeeFirstName }} {{ group.employeeLastName }}</p>
-                  <p class="text-xs text-gray-500">{{ group.employeeMatricule || '—' }} — {{ group.documents.length }} document(s)</p>
-                </div>
+          <div class="flex items-center gap-[7px] mt-4 text-[12px] text-[#9aa5b7]">
+            <span class="text-[#16a34a] font-bold">✓ Membres</span>
+            <span>sous votre responsabilité</span>
+          </div>
+        </article>
+
+        <article class="bg-white border border-[#e7ebf1] rounded-[16px] px-[19px] py-[18px] min-h-[143px] shadow-[0_1px_2px_rgba(16,24,40,.03)] hover:shadow-[0_8px_22px_rgba(16,24,40,.06)] hover:-translate-y-0.5 transition">
+          <div class="flex justify-between">
+            <div>
+              <span class="text-[13px] text-[#69768b]">Réclamations en attente</span>
+              <h3 class="text-[32px] font-bold mt-1" style="letter-spacing:-1.3px">{{ pendingReclamations().length }}</h3>
+            </div>
+            <div class="w-[42px] h-[42px] rounded-[11px] bg-[#fff5dd] text-[#f59e0b] flex items-center justify-center">
+              <svg lucideAlertCircle class="w-[18px] h-[18px]"></svg>
+            </div>
+          </div>
+          <div class="flex items-center gap-[7px] mt-4 text-[12px] text-[#9aa5b7]">
+            <span class="text-[#15213d] font-bold">{{ reclamations().length }}</span>
+            <span>au total</span>
+          </div>
+        </article>
+
+        <article class="bg-white border border-[#e7ebf1] rounded-[16px] px-[19px] py-[18px] min-h-[143px] shadow-[0_1px_2px_rgba(16,24,40,.03)] hover:shadow-[0_8px_22px_rgba(16,24,40,.06)] hover:-translate-y-0.5 transition">
+          <div class="flex justify-between">
+            <div>
+              <span class="text-[13px] text-[#69768b]">Approuvées</span>
+              <h3 class="text-[32px] font-bold mt-1" style="letter-spacing:-1.3px">{{ approvedReclamations().length }}</h3>
+            </div>
+            <div class="w-[42px] h-[42px] rounded-[11px] bg-[#e9f9ef] text-[#16a34a] flex items-center justify-center">
+              <svg lucideCheckCircle class="w-[18px] h-[18px]"></svg>
+            </div>
+          </div>
+          <div class="flex items-center gap-[7px] mt-4 text-[12px] text-[#9aa5b7]">
+            <span class="text-[#16a34a] font-semibold">✓ Traitées</span>
+            <span>par vous</span>
+          </div>
+        </article>
+
+        <article class="bg-white border border-[#e7ebf1] rounded-[16px] px-[19px] py-[18px] min-h-[143px] shadow-[0_1px_2px_rgba(16,24,40,.03)] hover:shadow-[0_8px_22px_rgba(16,24,40,.06)] hover:-translate-y-0.5 transition">
+          <div class="flex justify-between">
+            <div>
+              <span class="text-[13px] text-[#69768b]">Rejetées</span>
+              <h3 class="text-[32px] font-bold mt-1" style="letter-spacing:-1.3px">{{ rejectedReclamations().length }}</h3>
+            </div>
+            <div class="w-[42px] h-[42px] rounded-[11px] bg-[#fff0f0] text-[#ef4444] flex items-center justify-center">
+              <svg lucideXCircle class="w-[18px] h-[18px]"></svg>
+            </div>
+          </div>
+          <div class="flex items-center gap-[7px] mt-4 text-[12px] text-[#9aa5b7]">
+            <span class="text-[#15213d] font-bold">✗ Non retenues</span>
+            <span>au total</span>
+          </div>
+        </article>
+      </section>
+
+      <!-- Réclamations en attente + Documents récents -->
+      <section class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-7">
+        <!-- Réclamations en attente -->
+        <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+          <div class="flex justify-between items-center px-5 py-[18px] border-b border-[#f0f2f5]">
+            <div>
+              <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Réclamations</div>
+              <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">En attente</h2>
+            </div>
+            <a routerLink="/reclamations" class="text-[#2563eb] text-[12px] font-semibold hover:underline">Voir tout →</a>
+          </div>
+          <div *ngIf="pendingReclamations().length === 0" class="py-14 text-center text-[#9aa5b7] text-[12px]">Aucune réclamation en attente</div>
+          <div *ngIf="pendingReclamations().length > 0" class="px-5 divide-y divide-[#f2f4f7]">
+            <div *ngFor="let r of pendingReclamations()" class="py-3.5 flex items-start gap-3">
+              <div class="w-[36px] h-[36px] rounded-[10px] bg-[#fff5dd] flex items-center justify-center shrink-0">
+                <svg lucideAlertCircle class="w-4 h-4 text-[#f59e0b]"></svg>
               </div>
-              <svg [class.rotate-180]="expandedDocGroups().has(group.employeeId)"
-                class="w-4 h-4 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            <div *ngIf="expandedDocGroups().has(group.employeeId)" class="divide-y divide-gray-50">
-              <div *ngFor="let doc of group.documents" (click)="openDocument(doc)"
-                class="p-3 flex items-center justify-between hover:bg-blue-50 transition-colors group cursor-pointer">
+              <div class="flex-1 min-w-0">
+                <strong class="block text-[13px] font-semibold text-[#15213d] truncate">{{ r.title }}</strong>
+                <span class="text-[11px] text-[#9aa5b7]">{{ r.employeeFirstName }} {{ r.employeeLastName }} · {{ formatDate(r.createdAt) }}</span>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0"
+                [ngClass]="{
+                  'bg-[#eef1f6] text-[#68758a]': r.priority === 'FAIBLE',
+                  'bg-[#fff5dd] text-[#b45309]': r.priority === 'MOYENNE',
+                  'bg-[#fff0f0] text-[#ef4444]': r.priority === 'HAUTE' || r.priority === 'CRITIQUE'
+                }">{{ priorityLabel(r.priority) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documents récents -->
+        <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+          <div class="flex justify-between items-center px-5 py-[18px] border-b border-[#f0f2f5]">
+            <div>
+              <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">GED</div>
+              <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Documents récents</h2>
+            </div>
+            <a routerLink="/documents/list" class="text-[#2563eb] text-[12px] font-semibold hover:underline">Voir tout →</a>
+          </div>
+          <div *ngIf="recentGroups().length === 0" class="py-12 text-center">
+            <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <svg lucideFileText class="w-6 h-6 text-gray-400"></svg>
+            </div>
+            <p class="text-[#9aa5b7] text-[12px]">Aucun document dans votre équipe</p>
+          </div>
+          <div *ngIf="recentGroups().length > 0" class="px-4 py-3 space-y-3 max-h-[330px] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]">
+            <div *ngFor="let group of recentGroups()" class="overflow-hidden rounded-[12px] border border-[#e7ebf1] bg-white">
+              <button (click)="toggleDocGroup(group.employeeId)"
+                class="w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-[#f8fafc]">
                 <div class="flex items-center gap-3 min-w-0">
-                  <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.293.707l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+                  <div *ngIf="!group.employeeHasPhoto" class="w-[38px] h-[38px] rounded-full bg-[#edf0f4] flex items-center justify-center text-[13px] font-bold shrink-0 text-[#66738a]">
+                    {{ (group.employeeFirstName || '?').charAt(0) }}{{ (group.employeeLastName || '?').charAt(0) }}
                   </div>
+                  <img *ngIf="group.employeeHasPhoto" [src]="apiUrl + '/employees/' + group.employeeId + '/photo/content'" alt=""
+                    class="w-[38px] h-[38px] rounded-full object-cover shrink-0">
                   <div class="min-w-0">
-                    <p class="text-sm font-medium text-gray-900 truncate">{{ doc.name }}</p>
-                    <p class="text-xs text-gray-400">{{ documentTypeLabel(doc.type) }} · {{ formatDate(doc.uploadDate || doc.createdAt) }}</p>
+                    <strong class="block text-[13px] font-semibold text-[#15213d] truncate">{{ group.employeeFirstName }} {{ group.employeeLastName }}</strong>
+                    <span class="text-[11px] text-[#66738a]">{{ group.documents.length }} document(s) · {{ group.employeeMatricule || '—' }}</span>
                   </div>
                 </div>
-                <span class="px-2 py-1 text-xs rounded-full shrink-0" [ngClass]="{
-                  'bg-green-100 text-green-700': doc.status === 'validé',
-                  'bg-yellow-100 text-yellow-700': doc.status === 'en attente',
-                  'bg-gray-100 text-gray-700': doc.status === 'brouillon'
-                }">{{ doc.status }}</span>
+                <svg lucideChevronDown class="w-3.5 h-3.5 text-[#68758a] transition-transform duration-200 shrink-0"
+                  [class.rotate-180]="expandedDocGroups().has(group.employeeId)"></svg>
+              </button>
+              <div *ngIf="expandedDocGroups().has(group.employeeId)" class="border-t border-[#f0f2f5]">
+                <button *ngFor="let doc of group.documents" (click)="openDocument(doc)"
+                  class="w-full flex items-center gap-3 px-4 py-3 border-b border-[#f0f2f5] last:border-0 transition-colors text-left hover:bg-[#f8fafc]">
+                  <div class="w-[36px] h-[36px] rounded-[8px] bg-[#f1f3f6] flex items-center justify-center shrink-0">
+                    <svg lucideFileText class="w-4 h-4 text-[#66738a]"></svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <strong class="block text-[13px] font-medium text-[#15213d] truncate">{{ doc.name }}</strong>
+                    <span class="block text-[11px] text-[#6b7a93]">
+                      {{ documentTypeLabel(doc.type) }} · {{ formatDate(doc.uploadDate || doc.createdAt) }}
+                    </span>
+                  </div>
+                  <span class="text-[11px] font-semibold px-[9px] py-1 rounded-full w-max shrink-0"
+                    [ngClass]="{
+                      'text-[#16a34a] bg-[#e9f9ef]': doc.status === 'validé',
+                      'text-[#f59e0b] bg-[#fff5dd]': doc.status === 'en attente',
+                      'text-[#66738a] bg-[#f1f3f6]': true
+                    }">{{ doc.status }}</span>
+                </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <!-- Org Chart + Team Members -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <!-- Mini Organigramme -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="p-5 border-b border-gray-100 flex justify-between items-center">
-          <h2 class="font-semibold text-gray-800 flex items-center gap-2">
-            <svg lucideGitBranch class="w-5 h-5 text-gray-600"></svg>
-            Mon organigramme
-          </h2>
-          <a routerLink="/dashboard/manager/organigramme" class="text-blue-600 text-sm font-medium hover:underline">Voir tout</a>
-        </div>
-        <div *ngIf="orgLoading()" class="p-8 text-center text-gray-400 text-sm">Chargement...</div>
-        <div *ngIf="!orgLoading() && !selfNode()" class="p-8 text-center text-gray-400 text-sm">
-          Impossible de charger l'organigramme.
-        </div>
-        <div *ngIf="!orgLoading() && selfNode() as self" class="p-4 overflow-x-auto">
-          <div class="flex flex-col items-center" style="min-width: max-content;">
-            <!-- Boss node -->
-            <div *ngIf="orgBoss" class="flex flex-col items-center">
-              <div class="org-card org-card-manager" [routerLink]="['/employees', orgBoss.id]">
-                <div class="org-avatar">
-                  <img *ngIf="orgBoss.photoUrl" [src]="apiUrl + orgBoss.photoUrl" alt="" class="w-full h-full object-cover rounded-full">
-                  <span *ngIf="!orgBoss.photoUrl" class="org-initials">{{ orgBoss.firstName[0] }}{{ orgBoss.lastName[0] }}</span>
-                </div>
-                <div class="org-info">
-                  <p class="org-name">{{ orgBoss.firstName }} {{ orgBoss.lastName }}</p>
-                  <p class="org-matricule">{{ orgBoss.matricule }}</p>
-                  <p class="org-position">{{ orgBoss.position }}</p>
-                </div>
+      <!-- Mon organigramme + Mon équipe -->
+      <section class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <!-- Mini Organigramme -->
+        <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+          <div class="flex justify-between items-center gap-3 px-5 py-[18px] border-b border-[#f0f2f5]">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-[40px] h-[40px] rounded-[11px] bg-[#eaf2ff] text-[#2563eb] flex items-center justify-center shrink-0">
+                <svg lucideGitBranch class="w-[18px] h-[18px]"></svg>
               </div>
-              <div class="org-line-down"></div>
+              <div class="min-w-0">
+                <h2 class="text-[15px] font-bold text-[#15213d]" style="letter-spacing:-.2px">Mon organigramme</h2>
+                <p class="text-[12px] text-[#95a1b3] truncate">Votre hiérarchie et les membres de votre équipe</p>
+              </div>
             </div>
-
-            <!-- Self node -->
-            <div class="flex flex-col items-center">
-              <div class="org-card org-card-self" [routerLink]="['/employees', self.id]">
-                <div class="org-avatar org-avatar-self">
-                  <img *ngIf="self.photoUrl" [src]="apiUrl + self.photoUrl" alt="" class="w-full h-full object-cover rounded-full">
-                  <span *ngIf="!self.photoUrl" class="org-initials">{{ self.firstName[0] }}{{ self.lastName[0] }}</span>
+            <a routerLink="/dashboard/manager/organigramme" class="inline-flex items-center gap-[6px] px-4 py-[9px] rounded-[9px] bg-[#2563eb] text-white text-[12px] font-semibold shadow-[0_1px_2px_rgba(37,99,235,.3)] hover:bg-[#1d4ed8] transition shrink-0">
+              Voir tout
+              <svg lucideChevronRight class="w-[14px] h-[14px]"></svg>
+            </a>
+          </div>
+          <div *ngIf="orgLoading()" class="p-8 text-center text-[#95a1b3] text-sm">Chargement...</div>
+          <div *ngIf="!orgLoading() && !selfNode()" class="p-8 text-center text-[#95a1b3] text-sm">Impossible de charger l'organigramme.</div>
+          <div *ngIf="!orgLoading() && selfNode() as self" class="p-5 overflow-x-auto">
+            <div class="flex flex-col items-center" style="min-width: max-content;">
+              <!-- Boss node -->
+              <div *ngIf="orgBoss" class="flex flex-col items-center">
+                <div class="org-card org-card-manager" [routerLink]="['/employees', orgBoss.id]">
+                  <div class="org-avatar">
+                    <img *ngIf="orgBoss.photoUrl" [src]="apiUrl + orgBoss.photoUrl" alt="" class="w-full h-full object-cover rounded-full">
+                    <span *ngIf="!orgBoss.photoUrl" class="org-initials">{{ orgBoss.firstName[0] }}{{ orgBoss.lastName[0] }}</span>
+                  </div>
+                  <div class="org-info">
+                    <p class="org-name">{{ orgBoss.firstName }} {{ orgBoss.lastName }}</p>
+                    <p class="org-position">{{ orgBoss.position }}</p>
+                  </div>
+                  <span class="org-tag org-tag-light">Manager</span>
                 </div>
-                <div class="org-info">
-                  <p class="org-name font-bold">{{ self.firstName }} {{ self.lastName }}</p>
-                  <p class="org-matricule">{{ self.matricule }}</p>
-                </div>
+                <div class="org-line-down"></div>
               </div>
 
-              <!-- Reports row -->
-              <div *ngIf="teamFiltered().length > 0" class="flex flex-col items-center">
-                <div class="org-line-down"></div>
-                <div class="flex gap-3" style="padding-left: 4px; padding-right: 4px;">
-                  <div *ngFor="let r of teamFiltered()" class="flex flex-col items-center">
-                    <div class="org-line-up"></div>
-                    <div class="org-card" [routerLink]="['/employees', r.id]">
-                      <div class="org-avatar">
-                        <img *ngIf="r.photoUrl" [src]="apiUrl + '/employees/' + r.id + '/photo/content'" alt="" class="w-full h-full object-cover rounded-full">
-                        <span *ngIf="!r.photoUrl" class="org-initials">{{ r.firstName[0] }}{{ r.lastName[0] }}</span>
-                      </div>
-                      <div class="org-info">
-                        <p class="org-name">{{ r.firstName }} {{ r.lastName }}</p>
-                        <p class="org-matricule">{{ r.matricule }}</p>
-                        <p class="org-position">{{ r.position }}</p>
+              <!-- Self node -->
+              <div class="flex flex-col items-center">
+                <div class="org-card org-card-self" [routerLink]="['/employees', self.id]">
+                  <div class="org-avatar org-avatar-self">
+                    <img *ngIf="self.photoUrl" [src]="apiUrl + self.photoUrl" alt="" class="w-full h-full object-cover rounded-full">
+                    <span *ngIf="!self.photoUrl" class="org-initials">{{ self.firstName[0] }}{{ self.lastName[0] }}</span>
+                  </div>
+                  <div class="org-info">
+                    <p class="org-name">{{ self.firstName }} {{ self.lastName }}</p>
+                    <p class="org-position">{{ self.position }}</p>
+                  </div>
+                  <span class="org-tag org-tag-blue">Moi</span>
+                </div>
+
+                <!-- Reports row -->
+                <div *ngIf="directTeam().length > 0" class="flex flex-col items-center">
+                  <div class="org-line-down"></div>
+                  <div class="flex gap-3" style="padding-left: 4px; padding-right: 4px;">
+                    <div *ngFor="let r of directTeam()" class="flex flex-col items-center">
+                      <div class="org-line-up"></div>
+                      <div class="org-card" [routerLink]="['/employees', r.id]">
+                        <div class="org-avatar">
+                          <img *ngIf="r.photoUrl" [src]="apiUrl + '/employees/' + r.id + '/photo/content'" alt="" class="w-full h-full object-cover rounded-full">
+                          <span *ngIf="!r.photoUrl" class="org-initials">{{ r.firstName[0] }}{{ r.lastName[0] }}</span>
+                        </div>
+                        <div class="org-info">
+                          <p class="org-name">{{ r.firstName }} {{ r.lastName }}</p>
+                          <p class="org-position">{{ r.position }}</p>
+                        </div>
+                        <span class="org-tag org-tag-gray">Équipe</span>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div *ngIf="teamFiltered().length === 0" class="mt-4 text-xs text-gray-400">
-                Aucun membre dans votre équipe.
+                <div *ngIf="directTeam().length === 0" class="mt-4 text-xs text-[#9aa5b7]">
+                  Aucun membre dans votre équipe.
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Team Members -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="p-5 border-b border-gray-100 flex justify-between items-center">
-          <h2 class="font-semibold text-gray-800 flex items-center gap-2">
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            Mon équipe
-          </h2>
-          <a routerLink="/employees" class="text-blue-600 text-sm font-medium hover:underline">Voir tout</a>
-        </div>
-        <div *ngIf="teamFiltered().length === 0" class="p-8 text-center text-gray-400 text-sm">
-          Aucun employé dans votre équipe.
-        </div>
-        <div *ngIf="teamFiltered().length > 0" class="divide-y divide-gray-50">
-          <div *ngFor="let emp of teamFiltered()" class="p-4 flex items-center justify-between hover:bg-gray-50">
-            <div class="flex items-center gap-3">
-              <div *ngIf="!emp.photoUrl" class="w-9 h-9 rounded-full bg-white flex items-center justify-center border border-gray-200 shrink-0">
-                <img src="/UserIcon.png" alt="User" class="w-5 h-5 object-contain">
+        <!-- Mon équipe -->
+        <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+          <div class="flex justify-between items-center px-5 py-[18px] border-b border-[#f0f2f5]">
+            <div>
+              <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Équipe</div>
+              <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Mon équipe</h2>
+            </div>
+            <a routerLink="/employees" class="text-[#2563eb] text-[12px] font-semibold hover:underline">Voir tout →</a>
+          </div>
+          <div *ngIf="directTeam().length === 0" class="p-10 text-center text-[#95a1b3] text-sm">Aucun employé dans votre équipe.</div>
+          <div *ngIf="directTeam().length > 0" class="divide-y divide-[#f2f4f7] max-h-[400px] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]">
+            <div *ngFor="let emp of directTeam()" class="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-[#f8fafc] transition-colors group">
+              <div class="flex items-center gap-3 min-w-0">
+                <div *ngIf="!emp.photoUrl" class="w-10 h-10 rounded-full bg-[#f3f6fb] border border-[#e7ebf1] flex items-center justify-center shrink-0">
+                  <img src="/UserIcon.png" alt="User" class="w-6 h-6 object-contain">
+                </div>
+                <img *ngIf="emp.photoUrl" [src]="apiUrl + '/employees/' + emp.id + '/photo/content'" alt="Photo"
+                  class="w-10 h-10 rounded-full object-cover border border-[#e7ebf1] shrink-0">
+                <div class="min-w-0">
+                  <p class="text-[13.5px] font-semibold text-[#15213d] truncate">{{ emp.firstName }} {{ emp.lastName }}</p>
+                  <p class="text-[11.5px] text-[#9aa5b7] truncate">{{ emp.matricule }} · {{ emp.department }} · {{ emp.position }}</p>
+                </div>
               </div>
-              <img *ngIf="emp.photoUrl" [src]="apiUrl + '/employees/' + emp.id + '/photo/content'" alt="Photo"
-                class="w-9 h-9 rounded-full object-cover border border-gray-200 shrink-0">
-              <div>
-                <p class="text-sm font-medium text-gray-900">{{ emp.firstName }} {{ emp.lastName }}</p>
-                <p class="text-xs text-gray-400">{{ emp.matricule }} · {{ emp.department }} · {{ emp.position }}</p>
+              <div class="flex items-center gap-3 shrink-0">
+                <span class="px-2.5 py-1 text-[11px] font-semibold rounded-full"
+                  [ngClass]="{
+                    'bg-[#e9f9ef] text-[#16a34a]': emp.status === 'ACTIVE',
+                    'bg-[#fff5dd] text-[#b45309]': emp.status === 'ON_LEAVE',
+                    'bg-[#fff0f0] text-[#dc2626]': emp.status === 'TERMINATED'
+                  }">{{ statusLabel(emp.status) }}</span>
+                <a [routerLink]="['/employees', emp.id]"
+                  class="flex items-center gap-1 text-[12px] text-[#2563eb] hover:text-[#1d4ed8] font-semibold">
+                  <svg lucideFolderOpen class="w-3.5 h-3.5"></svg>
+                  Dossier
+                </a>
               </div>
             </div>
-            <div class="flex items-center gap-3 shrink-0">
-              <span class="px-2 py-0.5 text-xs rounded-full"
+          </div>
+        </div>
+      </section>
+
+      <!-- Calendar Item Modal -->
+      <div *ngIf="selectedCalendarItem" class="fixed inset-0 z-50 bg-[#15213d]/50 backdrop-blur-[2px] flex items-center justify-center p-4" (click)="selectedCalendarItem = null">
+        <div class="w-full max-w-[540px] bg-white rounded-[18px] shadow-[0_24px_60px_rgba(21,33,61,.28)] overflow-hidden"
+          (click)="$event.stopPropagation()">
+          <div class="px-6 pt-6 pb-4 border-b border-[#f2f4f7] flex items-start justify-between gap-4">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-[46px] h-[46px] rounded-[12px] flex items-center justify-center shrink-0"
+                [ngClass]="selectedCalendarItem.type === 'announcement' ? 'bg-[#eaf2ff]' : 'bg-[#f3ecff]'">
+                <svg *ngIf="selectedCalendarItem.type === 'announcement'" lucideMegaphone class="w-5 h-5 text-[#2563eb]"></svg>
+                <svg *ngIf="selectedCalendarItem.type !== 'announcement'" lucideCalendarDays class="w-5 h-5 text-[#8b5cf6]"></svg>
+              </div>
+              <div class="min-w-0">
+                <div class="text-[10px] font-bold uppercase tracking-[.1em] text-[#9aa5b7] mb-1">
+                  {{ selectedCalendarItem.type === 'announcement' ? 'Annonce' : 'Activité planifiée' }}
+                </div>
+                <h3 class="text-[17px] font-bold text-[#15213d] leading-snug truncate">{{ selectedCalendarItem.title }}</h3>
+              </div>
+            </div>
+            <button (click)="selectedCalendarItem = null"
+              class="w-[34px] h-[34px] rounded-[9px] hover:bg-[#f6f8fb] flex items-center justify-center shrink-0" aria-label="Fermer">
+              <svg lucideX class="w-4.5 h-4.5 text-[#68758a]"></svg>
+            </button>
+          </div>
+          <div class="px-6 py-5">
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div class="bg-[#f8fafc] border border-[#eef1f6] rounded-[11px] px-3.5 py-3">
+                <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1">Date</div>
+                <div class="text-[13px] font-semibold text-[#15213d]">{{ selectedCalendarItem.date | date:'EEEE d MMMM yyyy' }}</div>
+              </div>
+              <div class="bg-[#f8fafc] border border-[#eef1f6] rounded-[11px] px-3.5 py-3">
+                <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1">Heure</div>
+                <div class="text-[13px] font-semibold text-[#15213d]">{{ selectedCalendarItem.startTime ? (selectedCalendarItem.startTime | slice:0:5) : (selectedCalendarItem.date | date:'HH:mm') }}</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 mb-4">
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold"
                 [ngClass]="{
-                  'bg-green-100 text-green-700': emp.status === 'ACTIVE',
-                  'bg-gray-100 text-gray-500': emp.status === 'INACTIVE',
-                  'bg-yellow-100 text-yellow-700': emp.status === 'ON_LEAVE'
-                }">{{ statusLabel(emp.status) }}</span>
-              <a [routerLink]="['/employees', emp.id]"
-                class="flex items-center gap-1 text-xs text-blue-600 hover:underline font-medium">
-                <svg lucideFolderOpen class="w-3.5 h-3.5"></svg>
-                Dossier
-              </a>
+                  'bg-[#fff0f0] text-[#ef4444]': selectedCalendarItem.priority === 'CRITIQUE',
+                  'bg-[#fff5dd] text-[#f59e0b]': selectedCalendarItem.priority === 'HAUTE',
+                  'bg-[#eaf8ef] text-[#16a34a]': selectedCalendarItem.priority === 'FAIBLE',
+                  'bg-[#eef1f6] text-[#68758a]': true
+                }">
+                {{ priorityLabel(selectedCalendarItem.priority) }}
+              </span>
+              <span *ngIf="selectedCalendarItem.raw?.authorName" class="text-[12px] text-[#9aa5b7]">par {{ selectedCalendarItem.raw.authorName }}</span>
+            </div>
+            <div *ngIf="selectedCalendarItem.type === 'announcement' ? (selectedCalendarItem.raw?.content) : (selectedCalendarItem.raw?.description)">
+              <div class="bg-[#f8fafc] border border-[#eef1f6] rounded-[13px] p-4">
+                <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1.5">
+                  {{ selectedCalendarItem.type === 'announcement' ? 'Contenu' : 'Description' }}
+                </div>
+                <p class="text-[13.5px] leading-relaxed text-[#4a5568] whitespace-pre-wrap break-words">
+                  {{ selectedCalendarItem.type === 'announcement' ? selectedCalendarItem.raw.content : selectedCalendarItem.raw.description }}
+                </p>
+              </div>
+            </div>
+            <div class="mt-4 text-[11px] text-[#9aa5b7]">
+              Créé le {{ (selectedCalendarItem.raw?.createdAt || selectedCalendarItem.date) | date:'dd MMMM yyyy' }}
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </ng-container>
+    </ng-container>
+  </div>
 </div>

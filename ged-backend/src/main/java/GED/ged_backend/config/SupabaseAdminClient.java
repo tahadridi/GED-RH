@@ -4,6 +4,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 
@@ -63,5 +64,21 @@ public class SupabaseAdminClient {
         headers.setBearerAuth(serviceRoleKey);
         headers.set("apikey", serviceRoleKey);
         restTemplate.exchange(url, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+    }
+
+    public boolean verifyPassword(String email, String password) {
+        String url = supabaseUrl + "/auth/v1/token?grant_type=password";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("apikey", serviceRoleKey);
+        headers.setBearerAuth(serviceRoleKey);
+        Map<String, Object> body = Map.of("email", email, "password", password);
+        HttpEntity<Map<String, Object>> req = new HttpEntity<>(body, headers);
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(url, req, Map.class);
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

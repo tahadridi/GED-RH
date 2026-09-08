@@ -114,6 +114,20 @@ public class StorageService {
         }
     }
 
+    public Long getFileSize(String fileName) {
+        try {
+            var stat = minioClient.statObject(
+                    StatObjectArgs.builder()
+                            .bucket(minioProperties.getBucketName())
+                            .object(fileName)
+                            .build()
+            );
+            return stat.size();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public void deleteFile(String fileName) {
         try {
             minioClient.removeObject(

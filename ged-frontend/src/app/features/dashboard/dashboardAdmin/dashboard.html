@@ -1,337 +1,245 @@
-<div class="p-6 bg-gray-50 min-h-screen">
-  <!-- Header with dynamic greeting -->
-  <div class="mb-8">
-    <div class="flex justify-between items-start">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900">
-          {{ greeting() }}, {{ (userEmail?.split('@') ?? [])[0] || 'Utilisateur' }}
-        </h1>
-        <p class="text-gray-500 mt-1">Voici ce qui se passe dans votre entreprise aujourd'hui.</p>
-      </div>
+﻿<div class="min-h-screen bg-[#f6f8fb] text-[#15213d] font-[Inter,system-ui,Arial,sans-serif] antialiased" style="--navy:#071334;--blue:#2563eb;--blue-bg:#eaf2ff;--purple:#8b5cf6;--purple-bg:#f2ecff;--green:#16a34a;--green-bg:#e9f9ef;--orange:#f59e0b;--orange-bg:#fff5dd;--red:#ef4444;--red-bg:#fff0f0;--teal:#0d9488;--teal-bg:#e7f8f6;--text:#15213d;--muted:#738097;--border:#e7ebf1;">
+
+  <!-- Breadcrumb (topbar supprimée, juste le fil d'ariane) -->
+  <div class="px-9 pt-6">
+    <div class="flex items-center gap-2.5 text-[13px] text-[#9aa5b7]">
+      <span>GED</span>
+      <span>&rsaquo;</span>
+      <b class="font-semibold text-[#66738a]">Tableau de bord</b>
     </div>
   </div>
 
-  <!-- Gradient divider -->
-  <div class="mb-8 h-px bg-gradient-to-r from-blue-400 via-purple-400 to-transparent"></div>
-
-  <!-- Announcements -->
-  @if (announcements().length > 0) {
-    <div class="mb-8 bg-gradient-to-r from-gray-50 to-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
-        <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
-          <svg class="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 12h-2v-2h2v2zm0-4h-2V6h2v4z"/>
-          </svg>
+  <div class="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-9 pb-14 pt-7">
+    <!-- Hero -->
+    <section class="flex items-end justify-between gap-6 mb-7 flex-wrap">
+      <div class="flex items-center gap-4">
+        
+        <div>
+          <h1 class="text-[30px] font-extrabold leading-[1.2] mb-1.5" style="letter-spacing:-1.1px">{{ greeting() }}, {{ userFirstName }} 👋</h1>
+          <p class="text-[14px] text-[#738097]">Voici un aperçu de votre espace de gestion documentaire.</p>
         </div>
-        <h2 class="font-semibold text-gray-800">Annonces</h2>
-        <a routerLink="/admin/announcements" class="ml-auto text-blue-600 text-sm font-medium hover:underline">Gérer</a>
       </div>
-      <div class="divide-y divide-gray-50">
+      <button (click)="openUpload()"
+         class="h-[42px] px-[17px] rounded-[9px] bg-[#2563eb] text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-[0_4px_12px_rgba(37,99,235,.18)] hover:bg-[#1d4ed8] hover:-translate-y-px transition">
+        ＋ Nouveau document
+      </button>
+    </section>
+
+    <!-- Annonces -->
+    @if (announcements().length > 0) {
+      <section class="space-y-4 mb-7">
         @for (a of announcements(); track a.id) {
-          <div class="border-l-4 transition hover:bg-gray-50/50 px-5 py-4"
+          <div class="flex gap-4 items-start relative bg-white border border-l-[3px] rounded-[13px] px-5 py-[18px] shadow-[0_1px_2px_rgba(16,24,40,.03)]"
             [ngClass]="{
-              'border-l-red-500': a.priority === 'CRITIQUE',
-              'border-l-orange-500': a.priority === 'HAUTE',
-              'border-l-gray-400': a.priority === 'NORMALE'
+              'border-[#f3c9c9] border-l-[#ef4444]': a.priority === 'CRITIQUE',
+              'border-[#f2d9a7] border-l-[#f59e0b]': a.priority === 'HAUTE',
+              'border-[#e1e6ee] border-l-[#9aa5b7]': a.priority === 'NORMALE'
             }">
-            <div class="flex items-center gap-2 mb-1">
-              <svg *ngIf="a.priority === 'CRITIQUE'" class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>
-              </svg>
-              <svg *ngIf="a.priority === 'HAUTE'" class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-              </svg>
-              <svg *ngIf="a.priority === 'NORMALE'" class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              <p class="font-medium text-gray-900">{{ a.title }}</p>
-              <span class="ml-auto px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase shrink-0"
+            <div class="w-[39px] h-[39px] rounded-[10px] flex items-center justify-center text-[17px] shrink-0"
+              [ngClass]="{
+                'bg-[#fff0f0]': a.priority === 'CRITIQUE',
+                'bg-[#fff5dd]': a.priority === 'HAUTE',
+                'bg-[#f1f3f6]': a.priority === 'NORMALE'
+              }">
+              <svg lucideMegaphone class="w-[17px] h-[17px]"
                 [ngClass]="{
-                  'bg-red-100 text-red-700': a.priority === 'CRITIQUE',
-                  'bg-orange-100 text-orange-700': a.priority === 'HAUTE',
-                  'bg-gray-100 text-gray-600': a.priority === 'NORMALE'
-                }">{{ a.priority === 'CRITIQUE' ? 'Critique' : a.priority === 'HAUTE' ? 'Haute' : 'Normale' }}</span>
+                  'text-[#ef4444]': a.priority === 'CRITIQUE',
+                  'text-[#f59e0b]': a.priority === 'HAUTE',
+                  'text-[#68758a]': a.priority === 'NORMALE'
+                }"></svg>
             </div>
-            <p class="text-sm text-gray-600 leading-relaxed line-clamp-2">{{ a.content }}</p>
-            <p class="text-xs text-gray-400 mt-1.5 flex items-center gap-1">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-              </svg>
-              {{ a.authorName }} &middot; {{ a.createdAt | date:'dd/MM/yyyy' }}
-            </p>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between gap-5">
+                <div>
+                  <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">{{ announcementEyebrow(a.priority) }}</div>
+                  <h2 class="text-[20px] font-extrabold mb-1.5 text-[#15213d]" style="letter-spacing:-.3px">{{ a.title }}</h2>
+                </div>
+                <span class="text-[11px] font-bold uppercase rounded-full px-3 py-[6px] h-max shrink-0"
+                  [ngClass]="{
+                    'bg-[#fff0f0] text-[#ef4444]': a.priority === 'CRITIQUE',
+                    'bg-[#fff5dd] text-[#f59e0b]': a.priority === 'HAUTE',
+                    'bg-[#f1f3f6] text-[#68758a]': a.priority === 'NORMALE'
+                  }">
+                  <i class="inline-block w-1.5 h-1.5 rounded-full mr-1"
+                    [ngClass]="{
+                      'bg-[#ef4444]': a.priority === 'CRITIQUE',
+                      'bg-[#f59e0b]': a.priority === 'HAUTE',
+                      'bg-[#9aa5b7]': a.priority === 'NORMALE'
+                    }"></i>
+                  {{ priorityLabel(a.priority) }}
+                </span>
+              </div>
+              <p class="text-[14px] text-[#4a5568] leading-[1.7] line-clamp-2 font-medium" [innerHTML]="a.content | safeHtml"></p>
+              <div class="flex gap-5 mt-2.5 text-[#9aa5b7] text-[11px]">
+                <span class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>{{ a.authorName }}</span>
+                <span class="flex items-center gap-1 px-1.5 py-[2px] rounded-full bg-white text-[#2563eb] border border-[#bfdbfe] text-[10px] font-bold uppercase tracking-wide whitespace-nowrap" *ngIf="a.authorRole === 'DIRECTION_GENERALE'">
+                  <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.87"/></svg>
+                  Direction Générale
+                </span>
+                <span class="flex items-center gap-1 px-1.5 py-[2px] rounded-full bg-white text-[#2563eb] border border-[#bfdbfe] text-[10px] font-bold uppercase tracking-wide whitespace-nowrap" *ngIf="a.authorRole === 'ADMINISTRATOR'">
+                  <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                  Administrateur
+                </span>
+                <span>{{ a.createdAt | date:'dd MMMM yyyy' }}</span>
+              </div>
+            </div>
           </div>
         }
-      </div>
-    </div>
-  }
+      </section>
+    }
 
-  <!-- Stats Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <!-- Card 1 -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm text-gray-500">Employés actifs</p>
-          <p class="text-3xl font-bold text-gray-900 mt-1">{{ totalEmployees() }}</p>
-          <p class="text-xs text-green-600 mt-2 flex items-center gap-1">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-            </svg>
-            +{{ newEmployeesThisMonth() }} ce mois
-          </p>
-        </div>
-        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-        </div>
-      </div>
-    </div>
-
-    <!-- Card 2 -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm text-gray-500">Total documents</p>
-          <p class="text-3xl font-bold text-gray-900 mt-1">{{ totalDocuments() }}</p>
-          <p class="text-xs text-gray-500 mt-2">{{ documentsThisMonth() }} ajoutés ce mois</p>
-        </div>
-        <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
-          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </div>
-      </div>
-    </div>
-
-    <!-- Card 3 -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm text-gray-500">Réclamations en attente</p>
-          <p class="text-3xl font-bold text-gray-900 mt-1">{{ pendingReclamations().length }}</p>
-          <p class="text-xs text-orange-600 mt-2 flex items-center gap-1">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-            {{ reclamations().length }} totale(s)
-          </p>
-        </div>
-        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center">
-          <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-        </div>
-      </div>
-    </div>
-
-    <!-- Card 4 -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <p class="text-sm text-gray-500">Stockage</p>
-          <p class="text-3xl font-bold text-gray-900 mt-1">{{ storageUsed }}</p>
-          <p class="text-xs text-gray-400 mt-0.5">sur {{ storageTotal }}</p>
-        </div>
-        <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
-          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12a8 8 0 11-16 0 8 8 0 0116 0z" />
-          </svg>
-        </div>
-      </div>
-      <div class="w-full bg-gray-100 rounded-full h-2.5">
-        <div class="h-2.5 rounded-full transition-all duration-500" [style.width.%]="storagePercentage"
-          [ngClass]="{
-            'bg-green-500': storagePercentage < 60,
-            'bg-yellow-500': storagePercentage >= 60 && storagePercentage < 85,
-            'bg-red-500': storagePercentage >= 85
-          }"></div>
-      </div>
-      <div class="flex justify-between text-xs text-gray-500 mt-2">
-        <span>{{ storageFree }} libres</span>
-        <span>{{ storagePercentage }}% utilisé</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main Grid: Documents & Employees -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-    <!-- Recent Documents Section -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="p-5 border-b border-gray-100 flex justify-between items-center">
-        <h2 class="font-semibold text-gray-800 flex items-center gap-2">
-          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          Documents récents
-        </h2>
-        <a routerLink="/documents" class="text-blue-600 text-sm font-medium hover:underline">Voir tous</a>
-      </div>
-
-      <!-- Loading State with Skeleton -->
-      @if (loading()) {
-        <div class="p-4 space-y-3">
-          @for (item of [1,2,3]; track item) {
-            <div class="flex items-center gap-3 animate-pulse">
-              <div class="w-9 h-9 bg-gray-200 rounded-lg"></div>
-              <div class="flex-1">
-                <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div class="h-3 bg-gray-200 rounded w-1/2"></div>
-              </div>
-              <div class="h-6 bg-gray-200 rounded w-16"></div>
-            </div>
-          }
-        </div>
-      } @else if (recentDocuments().length === 0) {
-        <div class="p-12 text-center">
-          <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+    <!-- Stats KPI (aucune carte supprimée) -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[14px] mb-7">
+      <article class="bg-white border border-[#e7ebf1] rounded-[16px] px-[19px] py-[18px] min-h-[143px] shadow-[0_1px_2px_rgba(16,24,40,.03)] hover:shadow-[0_8px_22px_rgba(16,24,40,.06)] hover:-translate-y-0.5 transition">
+        <div class="flex justify-between">
+          <div>
+            <span class="text-[13px] text-[#69768b]">Employés actifs</span>
+            <h3 class="text-[32px] font-bold mt-1" style="letter-spacing:-1.3px">{{ totalEmployees() }}</h3>
           </div>
-          <h3 class="text-gray-600 font-medium mb-2">Aucun document</h3>
-          <p class="text-gray-400 text-sm mb-4">Commencez par importer votre premier document</p>
-          <button routerLink="/documents/upload" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition">
-            + Importer un document
-          </button>
+          <div class="w-[42px] h-[42px] rounded-[11px] bg-[#eaf2ff] text-[#2563eb] flex items-center justify-center text-[18px]">
+            <svg lucideUsers class="w-[18px] h-[18px]"></svg>
+          </div>
         </div>
-      } @else {
-        <div class="space-y-3 p-3">
-          @for (group of recentGroups(); track group.employeeId) {
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <!-- Employee header -->
-              <button (click)="toggleRecentGroup(group.employeeId)"
-                class="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors">
-                <div class="flex items-center gap-3">
-                  @if (group.employeeHasPhoto) {
-                    <div class="w-8 h-8 rounded-full overflow-hidden shrink-0">
-                      <img [src]="apiUrl + '/employees/' + group.employeeId + '/photo/content'" alt="Photo"
-                        class="w-full h-full object-cover">
-                    </div>
-                  } @else {
-                    <div class="w-8 h-8 bg-blue-900 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
-                      {{ (group.employeeFirstName || '?').charAt(0) }}{{ (group.employeeLastName || '?').charAt(0) }}
-                    </div>
-                  }
-                  <div class="text-left">
-                    <p class="font-semibold text-gray-900 text-sm">{{ group.employeeFirstName }} {{ group.employeeLastName }}</p>
-                    <p class="text-xs text-gray-500">{{ group.employeeMatricule || '—' }} — {{ group.documents.length }} document(s)</p>
-                  </div>
-                </div>
-                <svg class="w-4 h-4 text-gray-400 transition-transform" [class.rotate-180]="expandedRecentGroups().has(group.employeeId)"
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <!-- Documents -->
-              @if (expandedRecentGroups().has(group.employeeId)) {
-                <div class="divide-y divide-gray-50">
-                  @for (doc of group.documents; track doc.id) {
-                    <div (click)="openDocument(doc)"
-                      class="p-3 flex items-center justify-between hover:bg-blue-50 transition-colors group cursor-pointer">
-                      <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
-                          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                        </div>
-                        <div class="min-w-0">
-                          <p class="text-sm font-medium text-gray-900 truncate">{{ doc.name }}</p>
-                          <p class="text-xs text-gray-400">{{ documentTypeLabel(doc.type) }} • {{ doc.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
-                        </div>
-                      </div>
-                      <div class="flex items-center gap-3 shrink-0">
-                        <span class="px-2 py-1 text-xs rounded-full" [ngClass]="{
-                          'bg-green-100 text-green-700': doc.status === 'validé',
-                          'bg-yellow-100 text-yellow-700': doc.status === 'en attente',
-                          'bg-gray-100 text-gray-700': doc.status === 'brouillon'
-                        }">{{ doc.status }}</span>
-                      </div>
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          }
+        <div class="flex items-center gap-[7px] mt-4 text-[12px] text-[#9aa5b7]">
+          <span class="text-[#16a34a] font-bold">↗ +{{ newEmployeesThisMonth() }}</span>
+          <span>ce mois</span>
         </div>
-      }
-    </div>
+      </article>
 
-    <!-- Recent Employees & Distribution -->
-    <div class="space-y-8">
-      <!-- Recent Employees -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="p-5 border-b border-gray-100 flex justify-between items-center">
-          <h2 class="font-semibold text-gray-800 flex items-center gap-2">
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            Nouveaux employés
-          </h2>
-          <a routerLink="/employees" class="text-blue-600 text-sm font-medium hover:underline">Voir tout</a>
+      <article class="bg-white border border-[#e7ebf1] rounded-[16px] px-[19px] py-[18px] min-h-[143px] shadow-[0_1px_2px_rgba(16,24,40,.03)] hover:shadow-[0_8px_22px_rgba(16,24,40,.06)] hover:-translate-y-0.5 transition">
+        <div class="flex justify-between">
+          <div>
+            <span class="text-[13px] text-[#69768b]">Documents traités</span>
+            <h3 class="text-[32px] font-bold mt-1" style="letter-spacing:-1.3px">{{ totalDocuments() }}</h3>
+          </div>
+          <div class="w-[42px] h-[42px] rounded-[11px] bg-[#f2ecff] text-[#8b5cf6] flex items-center justify-center text-[18px]">
+            <svg lucideFileCheck2 class="w-[18px] h-[18px]"></svg>
+          </div>
         </div>
-        
-        @if (recentEmployees().length === 0) {
-          <div class="p-8 text-center text-gray-400 text-sm">
-            Aucun employé récent
+        <div class="flex items-center gap-[7px] mt-4 text-[12px] text-[#9aa5b7]">
+          <span class="text-[#16a34a] font-bold">↗ +{{ documentsThisMonth() }}</span>
+          <span>ce mois</span>
+        </div>
+      </article>
+
+      <article class="bg-white border border-[#e7ebf1] rounded-[16px] px-[19px] py-[18px] min-h-[143px] shadow-[0_1px_2px_rgba(16,24,40,.03)] hover:shadow-[0_8px_22px_rgba(16,24,40,.06)] hover:-translate-y-0.5 transition">
+        <div class="flex justify-between">
+          <div>
+            <span class="text-[13px] text-[#69768b]">Départements</span>
+            <h3 class="text-[32px] font-bold mt-1" style="letter-spacing:-1.3px">{{ departmentsCount() < 10 ? '0' + departmentsCount() : departmentsCount() }}</h3>
+          </div>
+          <div class="w-[42px] h-[42px] rounded-[11px] bg-[#e9f9ef] text-[#16a34a] flex items-center justify-center text-[18px]">
+            <svg lucideBuilding2 class="w-[18px] h-[18px]"></svg>
+          </div>
+        </div>
+        <div class="flex items-center gap-[7px] mt-4 text-[12px] text-[#9aa5b7]">
+          <span class="text-[#16a34a] font-semibold">✓ Actifs</span>
+          <span>tous opérationnels</span>
+        </div>
+      </article>
+
+      <article class="bg-white border border-[#e7ebf1] rounded-[16px] px-[19px] py-[18px] min-h-[143px] shadow-[0_1px_2px_rgba(16,24,40,.03)] hover:shadow-[0_8px_22px_rgba(16,24,40,.06)] hover:-translate-y-0.5 transition">
+        <div class="flex justify-between">
+          <div>
+            <span class="text-[13px] text-[#69768b]">Stockage utilisé</span>
+            <h3 class="text-[32px] font-bold mt-1" style="letter-spacing:-1.3px">{{ storageUsed }} <small class="text-[15px] font-medium" style="letter-spacing:0">/ {{ storageTotal }}</small></h3>
+          </div>
+          <div class="w-[42px] h-[42px] rounded-[11px] bg-[#e7f8f6] text-[#0d9488] flex items-center justify-center text-[18px]">
+            <svg lucideHardDrive class="w-[18px] h-[18px]"></svg>
+          </div>
+        </div>
+        <div class="mt-3">
+          <div class="flex justify-between text-[#9aa5b7] text-[11px] mb-1">
+            <span>Utilisation</span><b class="text-[#66738a]">{{ storagePercentage }}%</b>
+          </div>
+          <div class="h-[5px] bg-[#edf0f4] rounded-[10px] overflow-hidden">
+            <div class="h-full transition-all duration-500"
+              [style.width.%]="storagePercentage"
+              [ngClass]="{ 'bg-[#0d9488]': storagePercentage < 60, 'bg-[#f59e0b]': storagePercentage >= 60 && storagePercentage < 85, 'bg-[#ef4444]': storagePercentage >= 85 }"></div>
+          </div>
+          <div class="flex justify-between text-[11px] text-[#9aa5b7] mt-1.5">
+            <span>{{ storageTotal }} disponible</span>
+            <span>{{ storageFree }} libres</span>
+          </div>
+        </div>
+      </article>
+    </section>
+    <!-- À venir + Réclamations en attente (sous les cartes KPI) -->
+    <section class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-7">
+      <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+        <div class="flex justify-between items-center px-5 py-[18px] border-b border-[#f0f2f5]">
+          <div>
+            <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Planning</div>
+            <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">À venir</h2>
+          </div>
+          <a routerLink="/calendar" class="icon-btn w-[36px] h-[36px] rounded-[9px] hover:bg-[#f6f8fb] flex items-center justify-center" aria-label="Calendrier">
+            <svg lucideCalendarDays class="w-4 h-4 text-[#68758a]"></svg>
+          </a>
+        </div>
+        @if (calendarEvents().length === 0) {
+          <div class="py-14 text-center">
+            <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <svg lucideCalendarDays class="w-6 h-6 text-gray-400"></svg>
+            </div>
+            <p class="text-[#9aa5b7] text-[12px]">Aucune activité planifiée</p>
           </div>
         } @else {
-          <div class="divide-y divide-gray-50">
-            @for (emp of recentEmployees(); track emp.id) {
-              <div class="p-4 flex items-center gap-3 hover:bg-gray-50 transition">
-                @if (emp.photoUrl) {
-                  <div class="w-10 h-10 rounded-full overflow-hidden shrink-0">
-                    <img [src]="apiUrl + '/employees/' + emp.id + '/photo/content'" alt="Photo"
-                      class="w-full h-full object-cover">
-                  </div>
-                } @else {
-                  <div class="w-10 h-10 bg-blue-900 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
-                    {{ (emp.firstName || '?').charAt(0) }}{{ (emp.lastName || '?').charAt(0) }}
-                  </div>
-                }
-                <div class="flex-1">
-                  <p class="text-sm font-medium text-gray-900">{{ emp.firstName }} {{ emp.lastName }}</p>
-                  <p class="text-xs text-gray-400">{{ emp.position }} • {{ emp.hireDate | date:'dd/MM/yyyy' }}</p>
+          <div class="px-5 py-2.5">
+            @for (event of calendarEvents(); track event.title) {
+              <button (click)="openCalendarItem(event)" class="w-full flex items-center gap-[11px] py-2.5 border-b border-[#f2f4f7] last:border-0 text-left hover:bg-[#f2f6ff] hover:brightness-[0.99] transition-colors cursor-pointer rounded-[9px]">
+                <div class="w-[39px] h-[44px] border border-[#e7ebf1] rounded-[8px] bg-[#fafbfc] flex flex-col items-center justify-center shrink-0"
+                  [ngClass]="{
+                    'bg-[#fff0f0] border-[#f0dada]': event.priority === 'CRITIQUE',
+                    'bg-[#fff5dd] border-[#f5e6c6]': event.priority === 'HAUTE' || event.priority === 'MOYENNE'
+                  }">
+                  <strong class="text-[15px] font-bold leading-none text-[#15213d]">{{ event.date | date:'dd' }}</strong>
+                  <span class="text-[8px] font-bold text-[#9aa5b7] mt-1">{{ event.date | date:'MMM' }}</span>
                 </div>
-                <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">Nouveau</span>
-              </div>
+                <div class="flex-1 min-w-0">
+                  <strong class="block text-[13px] font-semibold text-[#15213d] truncate mb-1">{{ event.title }}</strong>
+                  <span class="text-[11px] text-[#9aa5b7]">{{ event.type === 'event' ? 'Activité' : 'Annonce' }} · {{ event.startTime ? (event.startTime | slice:0:5) : (event.date | date:'HH:mm') }}</span>
+                </div>
+                <span class="w-[7px] h-[7px] rounded-full shrink-0"
+                  [ngClass]="{
+                    'bg-[#ef4444]': event.priority === 'CRITIQUE',
+                    'bg-[#f59e0b]': event.priority === 'HAUTE',
+                    'bg-[#2563eb]': event.type === 'announcement',
+                    'bg-[#16a34a]': true
+                  }"></span>
+              </button>
             }
           </div>
         }
       </div>
 
-      <!-- Pending Reclamations -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="p-5 border-b border-gray-100 flex justify-between items-center">
-          <h2 class="font-semibold text-gray-800 flex items-center gap-2">
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-            Réclamations en attente
-          </h2>
-          <a routerLink="/reclamations" class="text-blue-600 text-sm font-medium hover:underline">Voir tout</a>
-        </div>
-
-        @if (loadingReclamations()) {
-          <div class="p-6 text-center text-gray-400 text-sm">Chargement...</div>
-        } @else if (pendingReclamations().length === 0) {
-          <div class="p-8 text-center text-gray-400 text-sm">
-            Aucune réclamation en attente
+      <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+        <div class="flex justify-between items-center px-5 py-[18px] border-b border-[#f0f2f5]">
+          <div>
+            <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Support</div>
+            <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Réclamations en attente</h2>
           </div>
+          <a routerLink="/reclamations" class="text-[#2563eb] text-[12px] font-semibold hover:underline">Voir tout →</a>
+        </div>
+        @if (loadingReclamations()) {
+          <div class="py-10 text-center text-[#9aa5b7] text-[12px]">Chargement...</div>
+        } @else if (pendingReclamations().length === 0) {
+          <div class="py-10 text-center text-[#9aa5b7] text-[12px]">Aucune réclamation en attente</div>
         } @else {
-          <div class="divide-y divide-gray-50">
+          <div class="px-5 py-2.5">
             @for (r of recentPendingReclamations(); track r.id) {
-              <div class="p-3.5 flex items-center gap-3 hover:bg-gray-50 transition">
+              <div class="flex items-center gap-3 py-2.5 border-b border-[#f2f4f7] last:border-0">
+                <div class="w-[36px] h-[40px] border border-[#f5e6c6] rounded-[8px] bg-[#fff5dd] flex flex-col items-center justify-center shrink-0">
+                  <strong class="text-[13px] font-bold leading-none text-[#15213d]">{{ r.createdAt | date:'dd' }}</strong>
+                  <span class="text-[8px] font-bold text-[#9aa5b7] mt-1">{{ r.createdAt | date:'MMM' }}</span>
+                </div>
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 mb-0.5">
-                    <span class="text-sm font-medium text-gray-900">{{ r.employeeFirstName }} {{ r.employeeLastName }}</span>
-                    <span [class]="'px-1.5 py-0.5 rounded text-xs font-semibold ' + priorityClass(r.priority)">{{ priorityLabel(r.priority) }}</span>
+                    <strong class="text-[13px] font-semibold text-[#15213d] truncate">{{ r.employeeFirstName }} {{ r.employeeLastName }}</strong>
+                    <span [class]="'px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0 ' + priorityClass(r.priority)">{{ priorityLabel(r.priority) }}</span>
                   </div>
-                  <p class="text-xs text-gray-500 truncate">{{ r.title }}</p>
-                  <p class="text-xs text-gray-400 mt-0.5">{{ r.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+                  <p class="text-[12px] text-[#4a5568] truncate">{{ r.title }}</p>
                 </div>
-                <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 shrink-0">
+                <span class="text-[10px] font-semibold px-2 py-1 rounded-full bg-[#fff5dd] text-[#b45309] shrink-0">
                   {{ statusLabel(r.status) }}
                 </span>
               </div>
@@ -339,32 +247,434 @@
           </div>
         }
       </div>
+    </section>
 
-      <!-- Document Type Distribution -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-        <h2 class="font-semibold text-gray-800 flex items-center gap-2 mb-4">
-          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-          Répartition par type
-        </h2>
-        <div class="space-y-3">
-          @for (type of documentDistribution(); track type.name) {
+    <!-- Activité documentaire -->
+    <!-- Documents ajoutés 12 mois (full width) -->
+    <section class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)] mb-7">
+      <div class="flex justify-between items-center px-5 py-[18px] border-b border-[#f0f2f5]">
+        <div>
+          <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">GED / Activité</div>
+          <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Documents ajoutés — 12 mois</h2>
+        </div>
+        <svg lucideFiles class="w-4 h-4 text-[#68758a]"></svg>
+      </div>
+      <div class="px-6 py-6">
+        @if (docsByMonth().every(m => m.count === 0)) {
+          <div class="py-10 text-center text-[#9aa5b7] text-[12px]">Aucun document sur cette période.</div>
+        } @else {
+          <div class="flex items-end gap-[10px]" style="height: 220px;">
+            @for (m of docsByMonth(); track m.month) {
+              <div class="flex-1 flex flex-col items-center justify-end h-full">
+                <span class="text-[10px] text-[#66738a] mb-1 font-semibold" *ngIf="m.count > 0">{{ m.count }}</span>
+                <div class="w-full max-w-[44px] rounded-t-[5px] transition-all duration-700"
+                  [style.height.%]="m.pct"
+                  [ngClass]="{
+                    'bg-[#8b5cf6]': m.isCurrent,
+                    'bg-[#c4b0f8]': !m.isCurrent && m.count > 0,
+                    'bg-[#edf0f4]': !m.isCurrent && m.count === 0
+                  }"
+                  [style.opacity]="m.count === 0 ? '0.6' : '1'"></div>
+                <span class="text-[10px] text-[#9aa5b7] mt-1.5 truncate w-full text-center leading-tight">{{ m.month }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Espace consommé + Documents par employé -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-7">
+      <!-- Espace consommé -->
+      <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+        <div class="px-5 py-[18px] border-b border-[#f0f2f5]">
+          <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Stockage</div>
+          <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Espace consommé par département </h2>
+        </div>
+        <div class="px-5 py-5">
+          <div class="flex items-end justify-between gap-3 mb-3">
             <div>
-              <div class="flex justify-between text-sm mb-1">
-                <span class="text-gray-600">{{ type.name }}</span>
-                <span class="font-medium text-gray-900">{{ type.count }} docs</span>
+              <strong class="text-[26px] font-bold text-[#15213d]" style="letter-spacing:-.7px">{{ docStorageUsedLabel }}</strong>
+              <span class="text-[12px] text-[#9aa5b7] block mb-1.5">documents numérisés</span>
+              <div class="h-[9px] rounded-full bg-[#edf0f4] overflow-hidden mt-2.5">
+                <div class="h-full rounded-full bg-[#0d9488]" [style.width.%]="docStorageOfDiskPct"></div>
               </div>
-              <div class="w-full bg-gray-100 rounded-full h-2">
-                <div class="bg-blue-600 h-2 rounded-full transition-all duration-500" [style.width.%]="type.percentage"></div>
+              <span class="text-[10px] text-[#9aa5b7] mt-1.5 block">{{ docStorageOfDiskPct }}% du disque total ({{ diskTotalLabel }})</span>
+            </div>
+          </div>
+          <div class="mt-4 pt-4 border-t border-[#f0f2f5] space-y-3 max-h-[150px] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] pr-1">
+            @for (s of storageByDepartment(); track s.name) {
+              <div>
+                <div class="flex justify-between text-[12px] mb-1.5">
+                  <strong class="font-semibold text-[#15213d]">{{ s.name }}</strong>
+                  <span class="text-[#66738a]">{{ s.sizeLabel }} · {{ s.pct | number:'1.0-0' }}%</span>
+                </div>
+                <div class="h-[6px] rounded-full bg-[#edf0f4] overflow-hidden">
+                  <div class="h-full rounded-full bg-[#0d9488]" [style.width.%]="s.pct"></div>
+                </div>
               </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Documents par employé -->
+      <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+        <div class="px-5 py-[18px] border-b border-[#f0f2f5]">
+          <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Productivité</div>
+          <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Documents par employé</h2>
+        </div>
+        <div class="px-5 py-5">
+          <div class="grid grid-cols-2 gap-3 mb-5">
+            <div class="rounded-[12px] border border-[#e7ebf1] px-4 py-3.5 bg-[#fafbfd]">
+              <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1">Moyenne / employé</div>
+              <strong class="text-[24px] font-bold text-[#15213d]" style="letter-spacing:-.7px">{{ docsPerEmployee() | number:'1.1-1' }}</strong>
+            </div>
+            <div class="rounded-[12px] border border-[#e7ebf1] px-4 py-3.5 bg-[#fafbfd]">
+              <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1">Sans document</div>
+              <strong class="text-[24px] font-bold text-[#ef4444]" style="letter-spacing:-.7px">{{ employeesWithoutDoc() }}</strong>
+              <span class="text-[10px] text-[#9aa5b7] block">/ {{ allEmployees().length }} employés</span>
+            </div>
+          </div>
+          <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-3">Documents ce mois par département</div>
+          @if (docsThisMonthByDepartment().length === 0) {
+            <div class="text-center text-[#9aa5b7] text-[12px] py-6 border-t border-[#f0f2f5]">Aucun document ce mois.</div>
+          } @else {
+            <div class="space-y-2.5">
+              @for (dept of docsThisMonthByDepartment(); track dept.name) {
+                <div class="flex items-center justify-between gap-2 text-[12px]">
+                  <span class="font-medium text-[#15213d] truncate">{{ dept.name }}</span>
+                  <span class="px-[9px] py-1 rounded-full bg-[#f2ecff] text-[#8b5cf6] text-[11px] font-bold w-max">{{ dept.count }}</span>
+                </div>
+              }
             </div>
           }
         </div>
       </div>
-    </div>
-  </div>
+    </section>
 
-  <!-- Quick Actions -->
-  
+
+    <!-- Documents récents + Répartition -->
+    <section class="grid grid-cols-1 xl:grid-cols-[1.55fr_1fr] gap-4 mb-4">
+      <!-- Documents récents -->
+      <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+        <div class="flex justify-between items-center px-5 py-[18px] border-b border-[#f0f2f5]">
+          <div>
+            <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">GED</div>
+            <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Documents récents</h2>
+          </div>
+          <a routerLink="/documents" class="text-[#2563eb] text-[12px] font-semibold hover:underline">Voir tout →</a>
+        </div>
+
+        @if (loading()) {
+          <div class="p-4 space-y-3">
+            @for (item of [1,2,3]; track item) {
+              <div class="grid grid-cols-[33px_minmax(150px,1fr)_78px_65px_20px] items-center gap-[11px] px-5 py-3 animate-pulse">
+                <div class="w-[33px] h-[33px] bg-gray-200 rounded-lg"></div>
+                <div class="h-3 bg-gray-200 rounded w-3/4"></div>
+                <div class="h-4 bg-gray-200 rounded w-14"></div>
+                <div class="h-3 bg-gray-200 rounded w-8"></div>
+              </div>
+            }
+          </div>
+        } @else if (recentDocuments().length === 0) {
+          <div class="py-12 text-center">
+            <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <svg lucideFiles class="w-6 h-6 text-gray-400"></svg>
+            </div>
+            <p class="text-[11px] text-gray-500">Aucun document récent</p>
+          </div>
+        } @else {
+          <div class="px-4 py-3 space-y-3 max-h-[280px] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]">
+            @for (group of recentGroups(); track group.employeeId; let gi = $index) {
+              <div class="overflow-hidden rounded-[12px] border border-[#e7ebf1] bg-white">
+
+                <!-- En-tête personne -->
+                <button (click)="toggleRecentGroup(group.employeeId)"
+                  class="w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-[#f8fafc]">
+                  <div class="flex items-center gap-3 min-w-0">
+                    @if (group.employeeHasPhoto) {
+                      <div class="w-[38px] h-[38px] rounded-full overflow-hidden shrink-0">
+                        <img [src]="apiUrl + '/employees/' + group.employeeId + '/photo/content'" alt="" class="w-full h-full object-cover">
+                      </div>
+                    } @else {
+                      <div class="w-[38px] h-[38px] rounded-full bg-[#edf0f4] flex items-center justify-center text-[13px] font-bold shrink-0 text-[#66738a]">
+                        {{ (group.employeeFirstName || '?').charAt(0) }}{{ (group.employeeLastName || '?').charAt(0) }}
+                      </div>
+                    }
+                    <div class="min-w-0">
+                      <strong class="block text-[13px] font-semibold text-[#15213d] truncate">{{ group.employeeFirstName }} {{ group.employeeLastName }}</strong>
+                      <span class="text-[11px] text-[#66738a]">{{ group.documents.length }} document(s) · {{ group.employeeMatricule || '—' }}</span>
+                    </div>
+                  </div>
+                  <svg lucideChevronDown class="w-3.5 h-3.5 text-[#68758a] transition-transform duration-200 shrink-0"
+                    [class.rotate-180]="expandedRecentGroups().has(group.employeeId)"></svg>
+                </button>
+
+                @if (expandedRecentGroups().has(group.employeeId)) {
+                  <div class="border-t border-[#f0f2f5]">
+                    @for (doc of group.documents; track doc.id) {
+                      <button (click)="openDocument(doc)"
+                        class="w-full flex items-center gap-3 px-4 py-3 border-b border-[#f0f2f5] last:border-0 transition-colors text-left hover:bg-[#f8fafc]">
+                        <div class="w-[36px] h-[36px] rounded-[8px] bg-[#f1f3f6] flex items-center justify-center shrink-0">
+                          <svg lucideFileText class="w-4 h-4 text-[#66738a]"></svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                          <strong class="block text-[13px] font-medium text-[#15213d] truncate">{{ doc.name }}</strong>
+                          <span class="block text-[11px] text-[#6b7a93]">
+                            {{ documentTypeLabel(doc.type) }} · {{ doc.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                          </span>
+                        </div>
+                        <span class="text-[11px] text-[#66738a] whitespace-nowrap">{{ formatFileSize(doc.fileSize) }}</span>
+                        <span class="text-[11px] font-semibold px-[9px] py-1 rounded-full w-max shrink-0"
+                          [ngClass]="{
+                            'text-[#16a34a] bg-[#e9f9ef]': doc.status === 'validé',
+                            'text-[#f59e0b] bg-[#fff5dd]': doc.status === 'en attente',
+                            'text-[#66738a] bg-[#f1f3f6]': doc.status === 'brouillon',
+                            'text-[#9aa5b7] bg-[#f1f3f6]': true
+                          }">{{ doc.status }}</span>
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Répartition -->
+      <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+        <div class="flex justify-between items-center px-5 py-[18px] border-b border-[#f0f2f5]">
+          <div>
+            <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Analyse</div>
+            <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Répartition des documents</h2>
+          </div>
+        </div>
+        @if (documentDistribution().length === 0) {
+          <div class="py-14 text-center text-[#9aa5b7] text-[12px]">Aucune donnée</div>
+        } @else {
+          <div class="flex items-center gap-6 px-5 py-4 flex-wrap">
+            <div class="relative w-[175px] h-[175px] rounded-full shrink-0"
+              [style.background]="distributionGradient">
+              <div class="absolute inset-0 m-[28px] bg-white rounded-full"></div>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <strong class="text-[28px] font-bold text-[#15213d] leading-none" style="letter-spacing:-1px">{{ totalDocuments() }}</strong>
+                <span class="text-[10px] text-[#9aa5b7] mt-1">documents</span>
+              </div>
+            </div>
+            <div class="flex-1 flex flex-col gap-[11px] min-w-[150px] max-h-[190px] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] pr-1">
+              @for (type of documentDistribution(); track type.name; let i = $index) {
+                <div class="grid grid-cols-[7px_1fr_auto] gap-2 items-center">
+                  <span class="w-[7px] h-[7px] rounded-sm" [style.background]="distributionColors[i % distributionColors.length]"></span>
+                  <div>
+                    <strong class="block text-[12px] font-semibold text-[#15213d] mb-0.5">{{ type.name }}</strong>
+                    <span class="text-[10px] text-[#9aa5b7]">{{ type.count }} documents</span>
+                  </div>
+                  <b class="text-[12px] text-[#66738a]">{{ type.percentage | number:'1.0-0' }}%</b>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Nouveaux employés -->
+    <section class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)] mb-4">
+      <div class="flex justify-between items-center px-5 py-[18px] border-b border-[#f0f2f5]">
+        <div>
+          <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Équipe</div>
+          <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Nouveaux employés</h2>
+        </div>
+        <a routerLink="/employees" class="text-[#2563eb] text-[12px] font-semibold hover:underline">Voir tout →</a>
+      </div>
+      @if (recentEmployees().length === 0) {
+        <div class="py-10 text-center text-[#9aa5b7] text-[12px]">Aucun employé récent</div>
+      } @else {
+        <div class="px-5 py-2.5 grid grid-cols-1 sm:grid-cols-2 gap-1">
+          @for (emp of recentEmployees(); track emp.id) {
+            <button (click)="openEmployee(emp)"
+              class="w-full flex items-center gap-3 py-2.5 border-b border-[#f2f4f7] last:border-0 text-left hover:bg-[#f2f6ff] hover:brightness-[0.99] transition-colors cursor-pointer rounded-[9px]">
+              @if (emp.photoUrl) {
+                <div class="w-[38px] h-[38px] rounded-full overflow-hidden shrink-0">
+                  <img [src]="apiUrl + '/employees/' + emp.id + '/photo/content'" alt="Photo" class="w-full h-full object-cover">
+                </div>
+              } @else {
+                <div class="w-[38px] h-[38px] rounded-full bg-[#071334] flex items-center justify-center text-white text-[12px] font-bold shrink-0">
+                  {{ (emp.firstName || '?').charAt(0) }}{{ (emp.lastName || '?').charAt(0) }}
+                </div>
+              }
+              <div class="flex-1 min-w-0">
+                <strong class="block text-[13px] font-semibold text-[#15213d] truncate">{{ emp.firstName }} {{ emp.lastName }}</strong>
+                <span class="text-[11px] text-[#9aa5b7]">{{ emp.position }} • {{ emp.hireDate | date:'dd/MM/yyyy' }}</span>
+              </div>
+              <span class="text-[10px] text-[#16a34a] bg-[#e9f9ef] px-2 py-1 rounded-full font-semibold shrink-0">Nouveau</span>
+            </button>
+          }
+        </div>
+      }
+    </section>
+
+    @if (selectedCalendarItem) {
+      <div class="fixed inset-0 z-50 bg-[#15213d]/50 backdrop-blur-[2px] flex items-center justify-center p-4" (click)="selectedCalendarItem = null">
+        <div class="w-full max-w-[540px] bg-white rounded-[18px] shadow-[0_24px_60px_rgba(21,33,61,.28)] overflow-hidden"
+          (click)="$event.stopPropagation()">
+          <div class="px-6 pt-6 pb-4 border-b border-[#f2f4f7] flex items-start justify-between gap-4">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-[46px] h-[46px] rounded-[12px] flex items-center justify-center shrink-0"
+                [ngClass]="selectedCalendarItem.type === 'announcement' ? 'bg-[#eaf2ff]' : 'bg-[#f3ecff]'">
+                @if (selectedCalendarItem.type === 'announcement') {
+                  <svg lucideMegaphone class="w-5 h-5 text-[#2563eb]"></svg>
+                } @else {
+                  <svg lucideCalendarDays class="w-5 h-5 text-[#8b5cf6]"></svg>
+                }
+              </div>
+              <div class="min-w-0">
+                <div class="text-[10px] font-bold uppercase tracking-[.1em] text-[#9aa5b7] mb-1">
+                  {{ selectedCalendarItem.type === 'announcement' ? 'Annonce' : 'Activité planifiée' }}
+                </div>
+                <h3 class="text-[17px] font-bold text-[#15213d] leading-snug truncate">{{ selectedCalendarItem.title }}</h3>
+              </div>
+            </div>
+            <button (click)="selectedCalendarItem = null"
+              class="w-[34px] h-[34px] rounded-[9px] hover:bg-[#f6f8fb] flex items-center justify-center shrink-0" aria-label="Fermer">
+              <svg lucideX class="w-4.5 h-4.5 text-[#68758a]"></svg>
+            </button>
+          </div>
+          <div class="px-6 py-5">
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div class="bg-[#f8fafc] border border-[#eef1f6] rounded-[11px] px-3.5 py-3">
+                <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1">Date</div>
+                <div class="text-[13px] font-semibold text-[#15213d]">{{ selectedCalendarItem.date | date:'EEEE d MMMM yyyy' }}</div>
+              </div>
+              <div class="bg-[#f8fafc] border border-[#eef1f6] rounded-[11px] px-3.5 py-3">
+                <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1">Heure</div>
+                <div class="text-[13px] font-semibold text-[#15213d]">{{ selectedCalendarItem.startTime ? (selectedCalendarItem.startTime | slice:0:5) : (selectedCalendarItem.date | date:'HH:mm') }}</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 mb-4">
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold"
+                [ngClass]="{
+                  'bg-[#fff0f0] text-[#ef4444]': selectedCalendarItem.priority === 'CRITIQUE',
+                  'bg-[#fff5dd] text-[#f59e0b]': selectedCalendarItem.priority === 'HAUTE',
+                  'bg-[#eaf8ef] text-[#16a34a]': selectedCalendarItem.priority === 'FAIBLE',
+                  'bg-[#eef1f6] text-[#68758a]': true
+                }">
+                {{ priorityLabel(selectedCalendarItem.priority) }}
+              </span>
+              @if (selectedCalendarItem.raw?.authorName) {
+                <span class="text-[12px] text-[#9aa5b7]">par {{ selectedCalendarItem.raw.authorName }}</span>
+              }
+            </div>
+            @if (selectedCalendarItem.type === 'announcement' ? (selectedCalendarItem.raw?.content) : (selectedCalendarItem.raw?.description)) {
+              <div class="bg-[#f8fafc] border border-[#eef1f6] rounded-[13px] p-4">
+                <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1.5">
+                  {{ selectedCalendarItem.type === 'announcement' ? 'Contenu' : 'Description' }}
+                </div>
+                <p class="text-[13.5px] leading-relaxed text-[#4a5568] whitespace-pre-wrap break-words">
+                  {{ selectedCalendarItem.type === 'announcement' ? selectedCalendarItem.raw.content : selectedCalendarItem.raw.description }}
+                </p>
+              </div>
+            }
+            <div class="mt-4 text-[11px] text-[#9aa5b7]">
+              Créé le {{ (selectedCalendarItem.raw?.createdAt || selectedCalendarItem.date) | date:'dd MMMM yyyy' }}
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Upload Modal -->
+    <div *ngIf="showUpload()" class="fixed inset-0 z-50 bg-[#15213d]/50 backdrop-blur-[2px] flex items-center justify-center p-4" (click)="showUpload.set(false)">
+      <div class="w-full max-w-[540px] bg-white rounded-[18px] shadow-[0_24px_60px_rgba(21,33,61,.28)] overflow-hidden"
+        (click)="$event.stopPropagation()">
+        <div class="px-6 pt-6 pb-4 border-b border-[#f2f4f7] flex items-start justify-between gap-4">
+          <div>
+            <div class="text-[10px] font-bold uppercase tracking-[.1em] text-[#9aa5b7] mb-1">Nouveau document</div>
+            <h3 class="text-[17px] font-bold text-[#15213d]">Étape {{ uploadStep() }} / 2</h3>
+          </div>
+          <button (click)="showUpload.set(false)"
+            class="w-[34px] h-[34px] rounded-[9px] hover:bg-[#f6f8fb] flex items-center justify-center shrink-0" aria-label="Fermer">
+            <svg lucideX class="w-4.5 h-4.5 text-[#68758a]"></svg>
+          </button>
+        </div>
+
+        <div class="px-6 py-5">
+          <!-- Step 1 -->
+          <div *ngIf="uploadStep() === 1" class="space-y-4">
+            <div>
+              <label class="block text-[12px] font-semibold text-[#46536a] mb-1.5">Employé concerné *</label>
+              <select [(ngModel)]="selectedEmployee"
+                class="w-full px-3 py-2.5 border border-[#e1e7ef] rounded-[10px] text-[13px] text-[#15213d] bg-white focus:outline-none focus:border-[#93c5fd] focus:ring-2 focus:ring-[#bfdbfe] transition">
+                <option value="">Sélectionner un employé</option>
+                <option *ngFor="let emp of allEmployees()" [value]="emp.id">
+                  {{ emp.firstName }} {{ emp.lastName }} — {{ emp.matricule }}
+                </option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[12px] font-semibold text-[#46536a] mb-1.5">Type de document *</label>
+              <select [(ngModel)]="uploadType"
+                class="w-full px-3 py-2.5 border border-[#e1e7ef] rounded-[10px] text-[13px] text-[#15213d] bg-white focus:outline-none focus:border-[#93c5fd] focus:ring-2 focus:ring-[#bfdbfe] transition">
+                <option *ngFor="let t of uploadDocTypes" [value]="t">{{ documentTypeLabel(t) }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[12px] font-semibold text-[#46536a] mb-1.5">Fichier * (PDF, JPG, PNG)</label>
+              <input type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="onFileSelected($event)"
+                class="w-full text-[13px] text-[#66738a] file:mr-3 file:py-2 file:px-3 file:rounded-[8px] file:border-0 file:bg-[#eaf2ff] file:text-[#2563eb] file:text-[12px] file:font-semibold hover:file:bg-[#dbeafe] cursor-pointer">
+              <p *ngIf="uploadFile" class="text-[12px] text-[#16a34a] mt-1.5">✓ {{ uploadFile.name }}</p>
+            </div>
+            <div *ngIf="ocrError()" class="text-[13px] text-[#dc2626] bg-[#fff0f0] px-3 py-2 rounded-[9px] border border-[#f0dada]">{{ ocrError() }}</div>
+            <div class="flex justify-end gap-3 pt-2">
+              <button (click)="showUpload.set(false)" class="px-4 py-2 text-[13px] font-medium text-[#66738a] border border-[#e1e7ef] rounded-[9px] hover:bg-[#f7f9fc] transition">Annuler</button>
+              <button (click)="analyzeOcr()" [disabled]="!uploadFile || !selectedEmployee || analyzingOcr()"
+                class="flex items-center gap-2 px-4 py-2 text-[13px] font-semibold bg-[#2563eb] text-white rounded-[9px] hover:bg-[#1d4ed8] disabled:opacity-50 transition shadow-[0_4px_12px_rgba(37,99,235,.18)]">
+                <svg lucideScanText class="w-4 h-4"></svg>
+                {{ analyzingOcr() ? 'Analyse...' : 'Analyser avec OCR' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div *ngIf="uploadStep() === 2" class="space-y-4">
+            <div>
+              <label class="block text-[12px] font-semibold text-[#46536a] mb-1.5">Nom du document *</label>
+              <input [(ngModel)]="uploadName" type="text"
+                class="w-full px-3 py-2.5 border border-[#e1e7ef] rounded-[10px] text-[13px] text-[#15213d] focus:outline-none focus:border-[#93c5fd] focus:ring-2 focus:ring-[#bfdbfe] transition">
+            </div>
+            <div>
+              <label class="block text-[12px] font-semibold text-[#46536a] mb-1.5">Référence</label>
+              <input [(ngModel)]="uploadRef" type="text" placeholder="Auto-générée si vide"
+                class="w-full px-3 py-2.5 border border-[#e1e7ef] rounded-[10px] text-[13px] text-[#15213d] focus:outline-none focus:border-[#93c5fd] focus:ring-2 focus:ring-[#bfdbfe] transition">
+            </div>
+            <div>
+              <label class="block text-[12px] font-semibold text-[#46536a] mb-1.5">
+                Texte OCR extrait
+                <span class="text-[#9aa5b7] font-normal ml-1">(corrigez si nécessaire)</span>
+              </label>
+              <textarea [(ngModel)]="uploadOcrText" rows="5"
+                class="w-full px-3 py-2.5 border border-[#e1e7ef] rounded-[10px] text-[13px] text-[#15213d] font-mono focus:outline-none focus:border-[#93c5fd] focus:ring-2 focus:ring-[#bfdbfe] transition resize-y"
+                placeholder="Aucun texte extrait"></textarea>
+            </div>
+            <div *ngIf="saveError()" class="text-[13px] text-[#dc2626] bg-[#fff0f0] px-3 py-2 rounded-[9px] border border-[#f0dada]">{{ saveError() }}</div>
+            <div class="flex justify-between items-center gap-3 pt-2">
+              <button (click)="uploadStep.set(1)" class="px-4 py-2 text-[13px] font-medium text-[#66738a] border border-[#e1e7ef] rounded-[9px] hover:bg-[#f7f9fc] transition">← Retour</button>
+              <div class="flex gap-3">
+                <button (click)="showUpload.set(false)" class="px-4 py-2 text-[13px] font-medium text-[#66738a] hover:text-[#15213d] transition">Annuler</button>
+                <button (click)="saveDocument()" [disabled]="!uploadName || saving()"
+                  class="flex items-center gap-2 px-4 py-2 text-[13px] font-semibold bg-[#16a34a] text-white rounded-[9px] hover:bg-[#15803d] disabled:opacity-50 transition shadow-[0_4px_12px_rgba(22,163,74,.18)]">
+                  <svg lucideCheck class="w-4 h-4"></svg>
+                  {{ saving() ? 'Enregistrement...' : 'Enregistrer' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="h-6"></div>
+  </div>
 </div>

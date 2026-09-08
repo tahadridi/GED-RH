@@ -3,6 +3,7 @@ package GED.ged_backend.controller;
 import GED.ged_backend.domain.entity.Announcement;
 import GED.ged_backend.domain.entity.SystemUser;
 import GED.ged_backend.domain.enums.AnnouncementPriority;
+import GED.ged_backend.domain.enums.SystemRole;
 import GED.ged_backend.service.AccessControlService;
 import GED.ged_backend.service.AnnouncementService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,10 +33,14 @@ public class AnnouncementController {
 
     @PostMapping
     @Transactional
-    @Operation(summary = "Creer une annonce", description = "Reserve aux administrateurs.")
+    @Operation(summary = "Creer une annonce", description = "Reserve aux administrateurs et a la direction generale.")
     public AnnouncementResponse create(@RequestBody CreateAnnouncementRequest req) {
         SystemUser author = accessControlService.getCurrentUser();
         if (author == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if (!accessControlService.canSendAnnouncements(author)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Seuls l'administrateur et la direction generale peuvent publier des annonces.");
+        }
         Announcement a = announcementService.create(
                 new AnnouncementService.CreateAnnouncementCommand(req.title, req.content, req.priority()), author);
         return AnnouncementResponse.from(a);
@@ -59,6 +64,7 @@ public class AnnouncementController {
     @Transactional
     @Operation(summary = "Modifier une annonce")
     public AnnouncementResponse update(@PathVariable UUID id, @RequestBody CreateAnnouncementRequest req) {
+        requireAnnouncementEditor();
         Announcement a = announcementService.update(id, new AnnouncementService.CreateAnnouncementCommand(req.title, req.content, req.priority()));
         return AnnouncementResponse.from(a);
     }
@@ -66,7 +72,17 @@ public class AnnouncementController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Supprimer une annonce")
     public void delete(@PathVariable UUID id) {
+        requireAnnouncementEditor();
         announcementService.delete(id);
+    }
+
+    private void requireAnnouncementEditor() {
+        SystemUser actor = accessControlService.getCurrentUser();
+        if (actor == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if (!accessControlService.canSendAnnouncements(actor)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Seuls l'administrateur et la direction generale peuvent gerer des annonces.");
+        }
     }
 
     @Schema(description = "Requete de creation d'une annonce")
@@ -83,9 +99,16 @@ public class AnnouncementController {
             @Schema(description = "Priorite") String priority,
             @Schema(description = "Date de creation") LocalDateTime createdAt,
             @Schema(description = "ID de l'auteur") UUID authorId,
-            @Schema(description = "Nom de l'auteur") String authorName) {
+            @Schema(description = "Nom de l'auteur") String authorName,
+            @Schema(description = "Role de l'auteur (ADMINISTRATOR ou DIRECTION_GENERALE)") String authorRole) {
 
         public static AnnouncementResponse from(Announcement a) {
+            String authorRole = "";
+            if (a.getAuthor().getRoles() != null) {
+                authorRole = a.getAuthor().getRoles().contains(SystemRole.DIRECTION_GENERALE)
+                        ? "DIRECTION_GENERALE"
+                        : a.getAuthor().getRoles().contains(SystemRole.ADMINISTRATOR) ? "ADMINISTRATOR" : "";
+            }
             return new AnnouncementResponse(
                     a.getId(),
                     a.getTitle(),
@@ -93,7 +116,8 @@ public class AnnouncementController {
                     a.getPriority().name(),
                     a.getCreatedAt(),
                     a.getAuthor().getId(),
-                    a.getAuthor().getFirstName() + " " + a.getAuthor().getLastName());
+                    a.getAuthor().getFirstName() + " " + a.getAuthor().getLastName(),
+                    authorRole);
         }
     }
 }

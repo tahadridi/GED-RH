@@ -10,3 +10,44 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
 }
+
+.ged-editor {
+  --ngx-editor-border-radius: 0;
+  --ngx-editor-background-color: #fbfcfe;
+  --ngx-editor-text-color: #15213d;
+  --ngx-editor-placeholder-color: #b6c0cf;
+  --ngx-editor-border-color: #e1e7ef;
+  --ngx-editor-wrapper-border-color: transparent;
+  --ngx-editor-menubar-bg-color: #f5f8fc;
+  --ngx-editor-menubar-padding: 6px;
+  --ngx-editor-menubar-height: 36px;
+  --ngx-editor-icon-size: 30px;
+  --ngx-editor-blockquote-color: #cbd5e1;
+  --ngx-editor-popup-bg-color: #ffffff;
+  --ngx-editor-popup-border-radius: 12px;
+  --ngx-editor-popup-shadow: 0 12px 28px rgba(21, 33, 61, 0.12);
+  --ngx-editor-menu-item-border-radius: 8px;
+  --ngx-editor-menu-item-active-color: #2563eb;
+  --ngx-editor-menu-item-hover-bg-color: #e8eef6;
+  --ngx-editor-menu-item-active-bg-color: #e8f0fe;
+  --ngx-editor-seperator-color: #e3e8ef;
+  --ngx-editor-focus-ring-color: #2563eb;
+}
+.ged-editor .NgxEditor__Content {
+  min-height: 140px;
+  font-size: 13.5px;
+  line-height: 1.8;
+  padding: 10px 13px;
+}
+.ged-editor .NgxEditor__Content p {
+  margin: 0 0 8px;
+}
+.ged-editor .NgxEditor__Content ul,
+.ged-editor .NgxEditor__Content ol {
+  padding-left: 1.5rem;
+  margin: 0 0 8px;
+}
+.ged-editor .NgxEditor__Content a {
+  color: #2563eb;
+  text-decoration: underline;
+}

@@ -1,71 +1,77 @@
-<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-  <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
-    <div class="flex items-center justify-between p-5 border-b border-gray-100">
-      <h2 class="text-lg font-semibold text-gray-900">
-        {{ isEdit ? 'Modifier l\'employé' : 'Nouvel employé' }}
-      </h2>
-      <button (click)="cancel()" class="text-gray-400 hover:text-gray-600 transition-colors">
-        <svg lucideX class="w-5 h-5"></svg>
+<div class="fixed inset-0 bg-[#0a1128]/45 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 overflow-y-auto">
+  <div class="bg-white rounded-[18px] shadow-[0_24px_60px_rgba(21,33,61,.28)] w-full max-w-[600px] my-auto overflow-hidden">
+    <div class="flex items-center gap-3.5 px-6 pt-6 pb-5 border-b border-[#f2f4f7]">
+      <div class="w-[46px] h-[46px] rounded-[12px] bg-[#eaf2ff] text-[#2563eb] flex items-center justify-center shrink-0 shadow-[inset_0_0_0_1px_rgba(37,99,235,.08)]">
+        <svg lucideUserPlus class="w-5 h-5"></svg>
+      </div>
+      <div class="min-w-0 flex-1">
+        <div class="text-[10px] font-bold uppercase tracking-[.1em] text-[#9aa5b7] mb-1">Employé</div>
+        <h2 class="text-[18px] font-bold text-[#15213d] leading-snug" style="letter-spacing:-.3px">
+          {{ isEdit ? 'Modifier l\'employé' : 'Nouvel employé' }}
+        </h2>
+      </div>
+      <button (click)="cancel()" aria-label="Fermer" class="w-[34px] h-[34px] rounded-[9px] hover:bg-[#f6f8fb] flex items-center justify-center shrink-0 transition-colors">
+        <svg lucideX class="w-[18px] h-[18px] text-[#68758a]"></svg>
       </button>
     </div>
 
-    <form (ngSubmit)="save()" class="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+    <form (ngSubmit)="save()" class="px-6 py-6 space-y-5 max-h-[70vh] overflow-y-auto">
       <!-- Name -->
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1">Prénom *</label>
+          <label class="block text-[11px] font-bold uppercase tracking-[.08em] text-[#17233c] mb-2">Prénom *</label>
           <input [(ngModel)]="form.firstName" name="firstName" required [readonly]="isEdit && !isAdmin"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" [class.bg-gray-100]="isEdit && !isAdmin">
+            class="w-full px-[13px] h-[44px] bg-[#fbfcfe] border border-[#e1e7ef] rounded-[11px] text-[13.5px] text-[#15213d] placeholder:text-[#b6c0cf] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15 focus:border-[#2563eb] transition-colors" [class.bg-[#eef1f5]]="isEdit && !isAdmin">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1">Nom *</label>
+          <label class="block text-[11px] font-bold uppercase tracking-[.08em] text-[#17233c] mb-2">Nom *</label>
           <input [(ngModel)]="form.lastName" name="lastName" required [readonly]="isEdit && !isAdmin"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" [class.bg-gray-100]="isEdit && !isAdmin">
+            class="w-full px-[13px] h-[44px] bg-[#fbfcfe] border border-[#e1e7ef] rounded-[11px] text-[13.5px] text-[#15213d] placeholder:text-[#b6c0cf] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15 focus:border-[#2563eb] transition-colors" [class.bg-[#eef1f5]]="isEdit && !isAdmin">
         </div>
       </div>
 
       <!-- Email + Phone -->
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1">Email *</label>
+          <label class="block text-[11px] font-bold uppercase tracking-[.08em] text-[#17233c] mb-2">Email *</label>
           <input [(ngModel)]="form.email" name="email" type="email" required [readonly]="isEdit && !isAdmin"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" [class.bg-gray-100]="isEdit && !isAdmin">
+            class="w-full px-[13px] h-[44px] bg-[#fbfcfe] border border-[#e1e7ef] rounded-[11px] text-[13.5px] text-[#15213d] placeholder:text-[#b6c0cf] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15 focus:border-[#2563eb] transition-colors" [class.bg-[#eef1f5]]="isEdit && !isAdmin">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1">Téléphone</label>
+          <label class="block text-[11px] font-bold uppercase tracking-[.08em] text-[#17233c] mb-2">Téléphone</label>
           <input [(ngModel)]="form.phoneNumber" name="phoneNumber" type="tel"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            class="w-full px-[13px] h-[44px] bg-[#fbfcfe] border border-[#e1e7ef] rounded-[11px] text-[13.5px] text-[#15213d] placeholder:text-[#b6c0cf] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15 focus:border-[#2563eb] transition-colors">
         </div>
       </div>
 
       <!-- Address -->
       <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">Adresse</label>
+        <label class="block text-[11px] font-bold uppercase tracking-[.08em] text-[#17233c] mb-2">Adresse</label>
         <input [(ngModel)]="form.address" name="address" type="text"
-          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          class="w-full px-[13px] h-[44px] bg-[#fbfcfe] border border-[#e1e7ef] rounded-[11px] text-[13.5px] text-[#15213d] placeholder:text-[#b6c0cf] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15 focus:border-[#2563eb] transition-colors">
       </div>
 
       <!-- Photo -->
       <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">Photo de profil</label>
-        <div class="flex items-center gap-3">
-          <div *ngIf="photoPreview" class="w-12 h-12 rounded-full overflow-hidden border border-gray-200 shrink-0">
+        <label class="block text-[11px] font-bold uppercase tracking-[.08em] text-[#17233c] mb-2">Photo de profil</label>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div *ngIf="photoPreview" class="w-12 h-12 rounded-full overflow-hidden border border-[#e7ebf1] shrink-0 shadow-[0_0_0_1px_rgba(21,33,61,.05)]">
             <img [src]="photoPreview" class="w-full h-full object-cover">
           </div>
-          <div *ngIf="!photoPreview" class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm shrink-0">
+          <div *ngIf="!photoPreview" class="w-12 h-12 rounded-full bg-[#f1f3f6] flex items-center justify-center text-[#9aa5b7] shrink-0">
             <svg lucideCamera class="w-5 h-5"></svg>
           </div>
           <input type="file" accept="image/png,image/jpeg,image/jpg" (change)="onPhotoSelected($event)"
-            class="flex-1 text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-800 file:text-sm file:font-medium hover:file:bg-blue-100 cursor-pointer">
+            class="flex-1 min-w-0 text-[12.5px] text-[#9aa5b7] file:mr-3 file:h-[40px] file:px-4 file:rounded-[9px] file:border-0 file:bg-[#eaf2ff] file:text-[#2563eb] file:text-[12.5px] file:font-semibold file:cursor-pointer hover:file:bg-[#dce9ff] cursor-pointer transition-colors">
         </div>
       </div>
 
       <!-- Department + Position -->
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1">Département</label>
+          <label class="block text-[11px] font-bold uppercase tracking-[.08em] text-[#17233c] mb-2">Département</label>
           <select [(ngModel)]="form.department" name="department" (change)="onDepartmentChange()"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            class="w-full px-[13px] h-[44px] bg-[#fbfcfe] border border-[#e1e7ef] rounded-[11px] text-[13.5px] text-[#15213d] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15 focus:border-[#2563eb] transition-colors">
             <option value="">Sélectionner</option>
             <option *ngFor="let d of departments()" [value]="d.name">{{ d.name }}</option>
           </select>
@@ -74,9 +80,9 @@
           </p>
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1">Poste</label>
+          <label class="block text-[11px] font-bold uppercase tracking-[.08em] text-[#17233c] mb-2">Poste</label>
           <select [(ngModel)]="form.position" name="position"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            class="w-full px-[13px] h-[44px] bg-[#fbfcfe] border border-[#e1e7ef] rounded-[11px] text-[13.5px] text-[#15213d] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15 focus:border-[#2563eb] transition-colors">
             <option value="">Sélectionner</option>
             <option *ngFor="let p of filteredPositions()" [value]="p">{{ p }}</option>
             <option *ngIf="form.position && !filteredPositions().includes(form.position)" [value]="form.position">{{ form.position }}</option>
@@ -88,133 +94,133 @@
       </div>
 
       <!-- Hire Date + Status -->
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1">Date d'embauche</label>
+          <label class="block text-[11px] font-bold uppercase tracking-[.08em] text-[#17233c] mb-2">Date d'embauche</label>
           <input [(ngModel)]="form.hireDate" name="hireDate" type="date" [readonly]="isEdit && !isAdmin"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" [class.bg-gray-100]="isEdit && !isAdmin">
+            class="w-full px-[13px] h-[44px] bg-[#fbfcfe] border border-[#e1e7ef] rounded-[11px] text-[13.5px] text-[#15213d] placeholder:text-[#b6c0cf] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15 focus:border-[#2563eb] transition-colors" [class.bg-[#eef1f5]]="isEdit && !isAdmin">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1">Statut</label>
+          <label class="block text-[11px] font-bold uppercase tracking-[.08em] text-[#17233c] mb-2">Statut</label>
           <select [(ngModel)]="form.status" name="status"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            class="w-full px-[13px] h-[44px] bg-[#fbfcfe] border border-[#e1e7ef] rounded-[11px] text-[13.5px] text-[#15213d] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15 focus:border-[#2563eb] transition-colors">
             <option *ngFor="let s of statuses" [value]="s">{{ statusLabels[s] }}</option>
           </select>
         </div>
       </div>
 
-      <!-- Manager selection (Refined Style) -->
-      <div class="space-y-3 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100">
-        <label class="block text-xs font-bold text-indigo-800 uppercase tracking-wider">Manager de cet employé</label>
-        
+      <!-- Manager selection -->
+      <div class="space-y-3 p-4 rounded-[13px] border border-[#e7ebf1] bg-[#f8fafc]">
+        <label class="block text-[10px] font-bold text-[#2563eb] uppercase tracking-[.1em]">Manager de cet employé</label>
+
         <div class="relative">
-          <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-indigo-400"></svg>
+          <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9aa5b7]"></svg>
           <input [(ngModel)]="managerSearchQuery" type="text" name="managerSearch" placeholder="Chercher un manager..."
-            class="w-full pl-9 pr-3 py-1.5 bg-white border border-indigo-100 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+            class="w-full pl-9 pr-3 h-[40px] bg-white border border-[#e1e7ef] rounded-[10px] text-[12.5px] text-[#15213d] placeholder:text-[#b6c0cf] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15 focus:border-[#2563eb] transition-colors">
         </div>
 
         <div class="space-y-1 max-h-40 overflow-y-auto pr-2">
           <div (click)="form.managerId = null"
-            class="flex items-center gap-3 p-2 rounded-lg hover:bg-white border border-transparent cursor-pointer transition-all group"
+            class="flex items-center gap-3 p-2 rounded-[9px] hover:bg-white border border-transparent cursor-pointer transition-all group"
             [class.bg-white]="form.managerId === null"
-            [class.border-indigo-100]="form.managerId === null">
+            [class.border-[#e1e7ef]]="form.managerId === null">
             <div class="w-4 h-4 border rounded-full flex items-center justify-center transition-colors"
-              [class.bg-indigo-600]="form.managerId === null"
-              [class.border-indigo-600]="form.managerId === null"
-              [class.border-gray-300]="form.managerId !== null">
+              [class.bg-[#2563eb]]="form.managerId === null"
+              [class.border-[#2563eb]]="form.managerId === null"
+              [class.border-[#cfd6e2]]="form.managerId !== null">
               <div class="w-1.5 h-1.5 bg-white rounded-full" *ngIf="form.managerId === null"></div>
             </div>
-            <span class="text-xs font-medium text-gray-500">Aucun manager</span>
+            <span class="text-xs font-medium text-[#68758a]">Aucun manager</span>
           </div>
 
           <div *ngFor="let m of filteredManagers" (click)="form.managerId = m.id"
-            class="flex items-center gap-3 p-2 rounded-lg hover:bg-white border border-transparent cursor-pointer transition-all group"
+            class="flex items-center gap-3 p-2 rounded-[9px] hover:bg-white border border-transparent cursor-pointer transition-all group"
             [class.bg-white]="form.managerId === m.id"
-            [class.border-indigo-100]="form.managerId === m.id">
+            [class.border-[#e1e7ef]]="form.managerId === m.id">
             <div class="w-4 h-4 border rounded-full flex items-center justify-center transition-colors"
-              [class.bg-indigo-600]="form.managerId === m.id"
-              [class.border-indigo-600]="form.managerId === m.id"
-              [class.border-gray-300]="form.managerId !== m.id">
+              [class.bg-[#2563eb]]="form.managerId === m.id"
+              [class.border-[#2563eb]]="form.managerId === m.id"
+              [class.border-[#cfd6e2]]="form.managerId !== m.id">
               <div class="w-1.5 h-1.5 bg-white rounded-full" *ngIf="form.managerId === m.id"></div>
             </div>
-            <div class="flex-1">
+            <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <p class="text-xs font-medium text-gray-900">{{ m.firstName }} {{ m.lastName }}</p>
-                <span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-indigo-100 text-indigo-700 uppercase">{{ m.position }}</span>
+                <p class="text-xs font-medium text-[#15213d]">{{ m.firstName }} {{ m.lastName }}</p>
+                <span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#eaf2ff] text-[#2563eb] uppercase truncate">{{ m.position }}</span>
               </div>
-              <p class="text-[10px] text-gray-400">{{ m.email }}</p>
+              <p class="text-[10px] text-[#9aa5b7] truncate">{{ m.email }}</p>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Direct Reports Selection -->
-      <div class="space-y-3 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100">
+      <div class="space-y-3 p-4 rounded-[13px] border border-[#e7ebf1] bg-[#f8fafc]">
         <div class="flex items-center justify-between">
-          <label class="block text-xs font-bold text-emerald-800 uppercase tracking-wider">Subordonnés directs</label>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+          <label class="block text-[10px] font-bold text-[#16a34a] uppercase tracking-[.1em]">Subordonnés directs</label>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#e9f9ef] text-[#16a34a]">
             {{ selectedReportIds().size }} sélectionné(s)
           </span>
         </div>
-        
+
         <div class="relative">
-          <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-emerald-400"></svg>
+          <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9aa5b7]"></svg>
           <input [(ngModel)]="reportSearchQuery" type="text" name="reportSearch" placeholder="Chercher un employé..."
-            class="w-full pl-9 pr-3 py-1.5 bg-white border border-emerald-100 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm">
+            class="w-full pl-9 pr-3 h-[40px] bg-white border border-[#e1e7ef] rounded-[10px] text-[12.5px] text-[#15213d] placeholder:text-[#b6c0cf] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15 focus:border-[#2563eb] transition-colors">
         </div>
 
         <div class="space-y-4 max-h-60 overflow-y-auto pr-2">
           <div *ngFor="let group of groupedPotentialReports" class="space-y-1">
-            <div class="flex items-center justify-between sticky top-0 bg-[#f9fefb] py-1 z-10 border-b border-emerald-50">
+            <div class="flex items-center justify-between sticky top-0 bg-[#f8fafc] py-1 z-10 border-b border-[#eef1f5]">
               <div class="flex items-center gap-2">
-                <button type="button" (click)="expandedDepts.has(group.dept) ? expandedDepts.delete(group.dept) : expandedDepts.add(group.dept)" class="text-emerald-600">
+                <button type="button" (click)="expandedDepts.has(group.dept) ? expandedDepts.delete(group.dept) : expandedDepts.add(group.dept)" class="text-[#16a34a]">
                   <svg *ngIf="expandedDepts.has(group.dept)" lucideChevronDown class="w-3.5 h-3.5"></svg>
                   <svg *ngIf="!expandedDepts.has(group.dept)" lucideChevronRight class="w-3.5 h-3.5"></svg>
                 </button>
-                <span class="text-[11px] font-bold text-emerald-900">{{ group.dept }}</span>
+                <span class="text-[11px] font-bold text-[#15213d]">{{ group.dept }}</span>
               </div>
               <button type="button" (click)="toggleDeptReports(group.dept, !isDeptFullySelected(group.dept))"
-                class="text-[9px] font-bold px-2 py-0.5 rounded bg-white border border-emerald-100 text-emerald-700 hover:bg-emerald-50 transition-colors">
+                class="text-[9px] font-bold px-2 py-0.5 rounded bg-white border border-[#e1e7ef] text-[#16a34a] hover:bg-[#e9f9ef] transition-colors">
                 {{ isDeptFullySelected(group.dept) ? 'Désélectionner tout' : 'Tout sélectionner' }}
               </button>
             </div>
 
             <div *ngIf="expandedDepts.has(group.dept)" class="space-y-1 mt-1 ml-4">
               <div *ngFor="let e of group.employees" (click)="toggleReport(e.id)"
-                class="flex items-center gap-3 p-2 rounded-lg hover:bg-white border border-transparent cursor-pointer transition-all group"
+                class="flex items-center gap-3 p-2 rounded-[9px] hover:bg-white border border-transparent cursor-pointer transition-all group"
                 [class.bg-white]="selectedReportIds().has(e.id)"
-                [class.border-emerald-100]="selectedReportIds().has(e.id)">
+                [class.border-[#e1e7ef]]="selectedReportIds().has(e.id)">
                 <div class="w-4 h-4 border rounded flex items-center justify-center transition-colors"
-                  [class.bg-emerald-600]="selectedReportIds().has(e.id)"
-                  [class.border-emerald-600]="selectedReportIds().has(e.id)"
-                  [class.border-gray-300]="!selectedReportIds().has(e.id)">
+                  [class.bg-[#16a34a]]="selectedReportIds().has(e.id)"
+                  [class.border-[#16a34a]]="selectedReportIds().has(e.id)"
+                  [class.border-[#cfd6e2]]="!selectedReportIds().has(e.id)">
                   <svg lucideCheck class="w-3 h-3 text-white" *ngIf="selectedReportIds().has(e.id)"></svg>
                 </div>
-                <div class="flex-1">
+                <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
-                    <p class="text-xs font-medium text-gray-900">{{ e.firstName }} {{ e.lastName }}</p>
-                    <span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-gray-100 text-gray-600 uppercase">{{ e.position }}</span>
+                    <p class="text-xs font-medium text-[#15213d]">{{ e.firstName }} {{ e.lastName }}</p>
+                    <span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#f1f3f6] text-[#68758a] uppercase truncate">{{ e.position }}</span>
                   </div>
-                  <p class="text-[10px] text-gray-400">{{ e.email }}</p>
+                  <p class="text-[10px] text-[#9aa5b7] truncate">{{ e.email }}</p>
                 </div>
               </div>
             </div>
           </div>
-          <div *ngIf="groupedPotentialReports.length === 0" class="text-center py-4 text-xs text-gray-400">
+          <div *ngIf="groupedPotentialReports.length === 0" class="text-center py-4 text-xs text-[#9aa5b7]">
             Aucun employé trouvé.
           </div>
         </div>
       </div>
 
-      <div *ngIf="error" class="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{{ error }}</div>
+      <div *ngIf="error" class="flex items-center gap-2.5 text-[#dc2626] text-[13px] bg-[#fdeaea] px-3.5 py-2.5 rounded-[10px]">{{ error }}</div>
 
       <div class="flex justify-end gap-3 pt-2">
         <button type="button" (click)="cancel()"
-          class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors">
+          class="h-[42px] px-[18px] rounded-[11px] bg-white border border-[#e7ecf2] text-[#17233c] text-[13px] font-semibold hover:bg-[#f8fafc] transition-colors">
           Annuler
         </button>
         <button type="submit" [disabled]="saving"
-          class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium">
+          class="h-[42px] px-[18px] rounded-[11px] bg-[#2563eb] text-white text-[13px] font-bold shadow-[0_4px_12px_rgba(37,99,235,.18)] hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
           {{ saving ? 'Enregistrement...' : (isEdit ? 'Enregistrer' : 'Créer') }}
         </button>
       </div>

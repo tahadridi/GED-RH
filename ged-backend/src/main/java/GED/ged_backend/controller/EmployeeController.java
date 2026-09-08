@@ -63,11 +63,19 @@ public class EmployeeController {
     public Page<EmployeeResponse> list(
             @Parameter(description = "Recherche textuelle (nom, prenom, matricule)") @RequestParam(required = false) String search,
             @Parameter(description = "Filtrer par departement") @RequestParam(required = false) String department,
-            @Parameter(description = "Filtrer par statut (ACTIVE, INACTIVE, ON_LEAVE, TERMINATED)") @RequestParam(required = false) EmployeeStatus status,
+            @Parameter(description = "Filtrer par statut (ACTIVE, ON_LEAVE, TERMINATED)") @RequestParam(required = false) EmployeeStatus status,
             @Parameter(description = "Pagination : page, size, sort (ex: sort=matricule,asc)") @PageableDefault(size = Integer.MAX_VALUE, sort = "matricule", direction = Sort.Direction.ASC) Pageable pageable) {
         SystemUser actor = accessControlService.getCurrentUser();
         Page<Employee> page = employeeService.listEmployeesPaginated(actor, search, department, status, pageable);
         return page.map(EmployeeResponse::fromList);
+    }
+
+    @GetMapping("/stats")
+    @Transactional(readOnly = true)
+    @Operation(summary = "Statistiques des employés", description = "Retourne les effectifs totaux, par statut et le nombre de départements, restreints à ce que l'utilisateur peut voir (admins/RH : tout, managers : leur équipe, employés : eux-mêmes).")
+    public java.util.Map<String, Long> stats() {
+        SystemUser actor = accessControlService.getCurrentUser();
+        return employeeService.getStatsForActor(actor);
     }
 
     @GetMapping("/{id}")
@@ -252,6 +260,7 @@ public class EmployeeController {
             @Schema(description = "Departement", example = "Ressources Humaines") String department,
             @Schema(description = "Poste", example = "Chef RH") String position,
             @Schema(description = "Date d'embauche") LocalDate hireDate,
+            @Schema(description = "Date de départ (statut TERMINATED)") LocalDate terminationDate,
             @Schema(description = "Statut", example = "ACTIVE") EmployeeStatus status,
             @Schema(description = "ID du manager") UUID managerId,
             @Schema(description = "Nom du manager") String managerName,
@@ -262,7 +271,7 @@ public class EmployeeController {
             return new EmployeeResponse(
                     e.getId(), e.getMatricule(), e.getFirstName(), e.getLastName(), e.getEmail(),
                     e.getPhoneNumber(), e.getAddress(),
-                    e.getDepartment(), e.getPosition(), e.getHireDate(), e.getStatus(),
+                    e.getDepartment(), e.getPosition(), e.getHireDate(), e.getTerminationDate(), e.getStatus(),
                     e.getManager() == null ? null : e.getManager().getId(),
                     e.getManager() == null ? null : e.getManager().getFirstName() + " " + e.getManager().getLastName(),
                     e.getDirectReports().stream().map(Employee::getId).collect(Collectors.toSet()),
@@ -273,7 +282,7 @@ public class EmployeeController {
             return new EmployeeResponse(
                     e.getId(), e.getMatricule(), e.getFirstName(), e.getLastName(), e.getEmail(),
                     e.getPhoneNumber(), e.getAddress(),
-                    e.getDepartment(), e.getPosition(), e.getHireDate(), e.getStatus(),
+                    e.getDepartment(), e.getPosition(), e.getHireDate(), e.getTerminationDate(), e.getStatus(),
                     e.getManager() == null ? null : e.getManager().getId(),
                     e.getManager() == null ? null : e.getManager().getFirstName() + " " + e.getManager().getLastName(),
                     Set.of(),

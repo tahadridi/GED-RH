@@ -74,7 +74,10 @@ import { getErrorMessage } from '../../../core/utils/error.utils';
   `,
   styles: [`
     .reclamations-container {
-      padding: 2rem;
+      padding: 1.25rem;
+    }
+    @media (min-width: 768px) {
+      .reclamations-container { padding: 2rem; }
     }
     .header {
       display: flex;

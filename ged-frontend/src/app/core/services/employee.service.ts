@@ -20,12 +20,24 @@ export interface EmployeeTreeNode {
   children: EmployeeTreeNode[];
 }
 
+export interface EmployeeStats {
+  total: number;
+  ACTIVE: number;
+  ON_LEAVE: number;
+  TERMINATED: number;
+  departments: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class EmployeeService {
   constructor(private api: ApiService) {}
 
   list(params?: Record<string, string>): Promise<Employee[]> {
     return this.api.get<Page<Employee>>('/employees', params).then(p => p.content);
+  }
+
+  stats(): Promise<EmployeeStats> {
+    return this.api.get<EmployeeStats>('/employees/stats');
   }
 
   listPaginated(params: Record<string, string>): Promise<Page<Employee>> {

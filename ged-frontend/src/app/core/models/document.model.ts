@@ -11,6 +11,7 @@ export interface EmployeeDocument {
   currentVersion: number;
   createdAt: string;
   updatedAt: string;
+  fileSize?: number | null;
   author: string;
   storagePath: string;
   ocrText: string;

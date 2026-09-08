@@ -10,14 +10,15 @@ import { environment } from '../../../../environments/environment';
 import { EmployeeDocument } from '../../../core/models/document.model';
 import { DocumentType } from '../../../core/models/user.model';
 import { getErrorMessage } from '../../../core/utils/error.utils';
+import { UiService } from '../../../core/services/ui.service';
 import { EmployeeForm } from '../employee-form/employee-form';
 import {
   LucideUpload, LucideDownload, LucideFileText,
-  LucideTrash2, LucideHistory, LucideX, LucideScanText,
-  LucidePencil, LucideChevronDown, LucideChevronRight,
+  LucideTrash2, LucideLayers, LucideX, LucideScanText,
+  LucideMoreVertical, LucideArrowLeft, LucidePencil, LucideChevronDown,
   LucideCheck, LucideEye, LucideSearch,
   LucideMail, LucidePhone, LucideBuilding, LucideBriefcase,
-  LucideCalendar, LucideUser
+  LucideCalendar, LucideUser, LucideInfo
 } from '@lucide/angular';
 
 @Component({
@@ -26,11 +27,10 @@ import {
   imports: [
     CommonModule, RouterModule, FormsModule, EmployeeForm,
     LucideUpload, LucideDownload, LucideFileText,
-    LucidePencil, LucideTrash2, LucideHistory, LucideX, LucideScanText,
-    LucideChevronDown, LucideChevronRight,
-    LucideCheck, LucideEye, LucideSearch,
+    LucideMoreVertical, LucideArrowLeft, LucidePencil, LucideTrash2,
+    LucideLayers, LucideX, LucideScanText, LucideChevronDown,    LucideCheck, LucideEye, LucideSearch,
     LucideMail, LucidePhone, LucideBuilding, LucideBriefcase,
-    LucideCalendar, LucideUser
+    LucideCalendar, LucideUser, LucideInfo
   ],
   templateUrl: './employee-detail.html'
 })
@@ -44,6 +44,8 @@ export class EmployeeDetail implements OnInit {
   showEditForm = signal(false);
   showUploadModal = signal(false);
   showVersionsModal = signal(false);
+  showProfileMenu = signal(false);
+  docTypeFilter = signal('');
 
   // Upload wizard — step 1
   uploadStep = signal<1 | 2>(1);
@@ -88,36 +90,36 @@ export class EmployeeDetail implements OnInit {
   };
 
   typeColors: Record<string, string> = {
-    PERSONAL_FILE: 'bg-blue-800 text-white',
-    EMPLOYMENT_CONTRACT: 'bg-blue-800 text-white',
-    PAYSLIP: 'bg-blue-800 text-white',
-    LEAVE_REQUEST: 'bg-blue-800 text-white',
-    EVALUATION: 'bg-blue-800 text-white',
-    TRAINING: 'bg-blue-800 text-white',
-    ADMINISTRATIVE: 'bg-blue-800 text-white',
-    OTHER: 'bg-blue-600 text-white'
+    PERSONAL_FILE: 'bg-[#edf4ff] text-[#2563eb]',
+    EMPLOYMENT_CONTRACT: 'bg-[#edf4ff] text-[#2563eb]',
+    PAYSLIP: 'bg-[#edf4ff] text-[#2563eb]',
+    LEAVE_REQUEST: 'bg-[#edf4ff] text-[#2563eb]',
+    EVALUATION: 'bg-[#edf4ff] text-[#2563eb]',
+    TRAINING: 'bg-[#edf4ff] text-[#2563eb]',
+    ADMINISTRATIVE: 'bg-[#edf4ff] text-[#2563eb]',
+    OTHER: 'bg-[#edf4ff] text-[#2563eb]'
   };
 
   typeIconColors: Record<string, string> = {
-    PERSONAL_FILE: 'text-blue-800',
-    EMPLOYMENT_CONTRACT: 'text-blue-800',
-    PAYSLIP: 'text-blue-800',
-    LEAVE_REQUEST: 'text-blue-800',
-    EVALUATION: 'text-blue-800',
-    TRAINING: 'text-blue-800',
-    ADMINISTRATIVE: 'text-blue-800',
-    OTHER: 'text-blue-600'
+    PERSONAL_FILE: 'text-[#2563eb]',
+    EMPLOYMENT_CONTRACT: 'text-[#2563eb]',
+    PAYSLIP: 'text-[#2563eb]',
+    LEAVE_REQUEST: 'text-[#2563eb]',
+    EVALUATION: 'text-[#2563eb]',
+    TRAINING: 'text-[#2563eb]',
+    ADMINISTRATIVE: 'text-[#2563eb]',
+    OTHER: 'text-[#2563eb]'
   };
 
   typeIconBgs: Record<string, string> = {
-    PERSONAL_FILE: 'bg-blue-50',
-    EMPLOYMENT_CONTRACT: 'bg-blue-50',
-    PAYSLIP: 'bg-blue-50',
-    LEAVE_REQUEST: 'bg-blue-50',
-    EVALUATION: 'bg-blue-50',
-    TRAINING: 'bg-blue-50',
-    ADMINISTRATIVE: 'bg-blue-50',
-    OTHER: 'bg-blue-50'
+    PERSONAL_FILE: 'bg-[#edf4ff]',
+    EMPLOYMENT_CONTRACT: 'bg-[#edf4ff]',
+    PAYSLIP: 'bg-[#edf4ff]',
+    LEAVE_REQUEST: 'bg-[#edf4ff]',
+    EVALUATION: 'bg-[#edf4ff]',
+    TRAINING: 'bg-[#edf4ff]',
+    ADMINISTRATIVE: 'bg-[#edf4ff]',
+    OTHER: 'bg-[#edf4ff]'
   };
 
   docGroups = computed(() => {
@@ -133,26 +135,35 @@ export class EmployeeDetail implements OnInit {
   });
 
   filteredDocGroups = computed(() => {
-    if (!this.docSearchQuery.trim()) return this.docGroups();
-    const q = this.docSearchQuery.toLowerCase().trim();
-    return this.docGroups()
-      .map(g => ({ ...g, docs: g.docs.filter(d => d.name.toLowerCase().includes(q)) }))
-      .filter(g => g.docs.length > 0);
+    let docs = this.documents();
+    if (this.docTypeFilter()) docs = docs.filter(d => d.type === this.docTypeFilter());
+    if (this.docSearchQuery.trim()) {
+      const q = this.docSearchQuery.toLowerCase().trim();
+      docs = docs.filter(d => d.name.toLowerCase().includes(q));
+    }
+    const groups = new Map<string, EmployeeDocument[]>();
+    for (const doc of docs) {
+      const type = doc.type || 'OTHER';
+      if (!groups.has(type)) groups.set(type, []);
+      groups.get(type)!.push(doc);
+    }
+    return Array.from(groups.entries())
+      .map(([type, groupedDocs]) => ({ type, label: this.docTypeLabels[type] || type, docs: groupedDocs }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   });
 
   statusLabel(s: string | undefined): string {
-    const m: Record<string, string> = { ACTIVE: 'Actif', INACTIVE: 'Inactif', ON_LEAVE: 'En congé', TERMINATED: 'Terminé' };
+    const m: Record<string, string> = { ACTIVE: 'Actif', ON_LEAVE: 'En congé', TERMINATED: 'Terminé' };
     return m[s ?? ''] ?? s ?? '—';
   }
 
   statusClass(s: string | undefined): string {
     const m: Record<string, string> = {
-      ACTIVE: 'bg-green-100 text-green-700 border-green-200',
-      INACTIVE: 'bg-gray-100 text-gray-600 border-gray-200',
-      ON_LEAVE: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-      TERMINATED: 'bg-red-100 text-red-600 border-red-200'
+      ACTIVE: 'bg-[#eaf8ef] text-[#16a34a] border-[#d5efe0]',
+      ON_LEAVE: 'bg-[#fff5dd] text-[#b45309] border-[#f5e6c6]',
+      TERMINATED: 'bg-[#fff0f0] text-[#dc2626] border-[#f0dada]'
     };
-    return m[s ?? ''] ?? 'bg-gray-100 text-gray-600';
+    return m[s ?? ''] ?? 'bg-[#f1f5f9] text-[#64748b]';
   }
 
   get lastActivityDate(): string {
@@ -165,11 +176,25 @@ export class EmployeeDetail implements OnInit {
     return new Date(dates[0]).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
+  toggleProfileMenu() {
+    this.showProfileMenu.set(!this.showProfileMenu());
+  }
+
+  closeProfileMenu() {
+    this.showProfileMenu.set(false);
+  }
+
+  goBack() {
+    if (window.history.length > 1) window.history.back();
+    else window.location.href = '/employees';
+  }
+
   constructor(
     private route: ActivatedRoute,
     private employeeService: EmployeeService,
     private documentService: DocumentService,
-    private authService: AuthService
+    private authService: AuthService,
+    private ui: UiService
   ) {}
 
   get canManageDocs(): boolean {
@@ -355,7 +380,7 @@ export class EmployeeDetail implements OnInit {
       this.showVersionsModal.set(true);
     } catch (e: any) {
       console.error('Failed to load versions', e);
-      alert('Impossible de charger les versions. Vérifiez votre connexion ou réessayez.');
+      this.ui.toast('Impossible de charger les versions. Vérifiez votre connexion ou réessayez.', 'error');
     }
   }
 
@@ -367,14 +392,48 @@ export class EmployeeDetail implements OnInit {
     await this.documentService.downloadVersion(v.id, `v${v.versionNumber}_${this.selectedDoc()?.name}`);
   }
 
+  async deleteVersion(v: any) {
+    const doc = this.selectedDoc();
+    if (!doc) return;
+    if (!(await this.ui.confirm({
+      title: 'Supprimer la version',
+      message: `Voulez-vous vraiment supprimer la version v${v.versionNumber} de "${doc.name}" ?`,
+      danger: true,
+      confirmLabel: 'Supprimer'
+    }))) return;
+    try {
+      await this.documentService.deleteVersion(v.id);
+      let remaining: any[] = [];
+      try { remaining = await this.documentService.listVersions(doc.id); } catch { remaining = []; }
+      if (remaining.length === 0) {
+        this.showVersionsModal.set(false);
+        try { await this.documentService.delete(doc.id); } catch (e: any) {
+          if (this.documents().some(d => d.id === doc.id)) {
+            this.ui.toast(getErrorMessage(e, 'Erreur lors de la suppression'), 'error');
+          }
+        }
+      } else {
+        this.versions.set(remaining);
+      }
+      await this.load(this.employee()!.id);
+    } catch (e: any) {
+      this.ui.toast(getErrorMessage(e, 'Erreur lors de la suppression'), 'error');
+    }
+  }
+
   async deleteDoc(doc: EmployeeDocument) {
-    if (!confirm(`Supprimer "${doc.name}" ?`)) return;
+    if (!(await this.ui.confirm({
+      title: 'Supprimer le document',
+      message: `Voulez-vous vraiment supprimer "${doc.name}" ?`,
+      danger: true,
+      confirmLabel: 'Supprimer'
+    }))) return;
     try {
       await this.documentService.delete(doc.id);
       this.documents.set(this.documents().filter(d => d.id !== doc.id));
       await this.load(this.employee()!.id);
     } catch (e: any) {
-      alert(getErrorMessage(e, 'Erreur lors de la suppression'));
+      this.ui.toast(getErrorMessage(e, 'Erreur lors de la suppression'), 'error');
     }
   }
 

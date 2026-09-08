@@ -22,11 +22,10 @@ public class DocumentSpecifications {
 
             // 1. Security Filtering (Database Level)
             if (actor != null) {
-                if (!actor.getRoles().contains(SystemRole.ADMINISTRATOR) && !actor.getRoles().contains(SystemRole.DIRECTION_GENERALE)) {
-                    if (actor.getRoles().contains(SystemRole.RH)) {
-                        // RH can see documents they are responsible for
-                        predicates.add(root.get("type").in(actor.getRhResponsibilities()));
-                    } else if (actor.getRoles().contains(SystemRole.MANAGER)) {
+                if (!actor.getRoles().contains(SystemRole.ADMINISTRATOR)
+                        && !actor.getRoles().contains(SystemRole.DIRECTION_GENERALE)
+                        && !actor.getRoles().contains(SystemRole.RH)) {
+                    if (actor.getRoles().contains(SystemRole.MANAGER)) {
                         // Manager can see own and direct reports' documents
                         if (actor.getEmployeeProfile() != null) {
                             predicates.add(cb.or(
@@ -52,7 +51,10 @@ public class DocumentSpecifications {
                 String pattern = "%" + criteria.query().toLowerCase() + "%";
                 predicates.add(cb.or(
                     cb.like(cb.lower(root.get("name")), pattern),
-                    cb.like(cb.lower(root.get("documentReference")), pattern)
+                    cb.like(cb.lower(root.get("documentReference")), pattern),
+                    cb.like(cb.lower(root.get("employee").get("firstName")), pattern),
+                    cb.like(cb.lower(root.get("employee").get("lastName")), pattern),
+                    cb.like(cb.lower(root.get("employee").get("matricule")), pattern)
                 ));
             }
             if (criteria.type() != null) {

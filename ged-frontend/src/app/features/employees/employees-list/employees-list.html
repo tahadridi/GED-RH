@@ -1,229 +1,303 @@
-<div class="p-8">
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Employés</h1>
-    <button *ngIf="canManageEmployees" (click)="openCreate()"
-      class="flex items-center gap-2 px-4 py-2 bg-blue-800 text-white rounded-lg hover:bg-blue-900 text-sm font-medium transition-colors">
-      <svg lucideUserPlus class="w-4 h-4"></svg>
-      Nouvel employé
-    </button>
+<div class="min-h-screen bg-[#f7f9fc] text-[#17233c] font-[Inter,system-ui,Arial,sans-serif]">
+
+  <!-- Breadcrumb -->
+  <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+    <div class="flex items-center gap-2.5 text-[14px] text-[#9aa5b7]">
+      <span>GED</span>
+      <span>&rsaquo;</span>
+      <b class="font-semibold text-[#66738a]">Employés</b>
+    </div>
   </div>
 
-  <!-- Gradient divider -->
-  <div class="mb-5 h-px bg-gradient-to-r from-blue-400 via-purple-400 to-transparent"></div>
+  <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-6">
 
-  <!-- Filters bar (unchanged) -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-5 flex flex-wrap gap-3 items-end">
-    <div class="flex-1 min-w-48">
-      <label class="block text-xs font-medium text-gray-500 mb-1">Recherche</label>
-      <div class="relative">
-        <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></svg>
-        <input [(ngModel)]="searchQuery" (ngModelChange)="applyFilter()" type="text"
-          placeholder="Nom, matricule, email..."
-          class="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+    <!-- Heading -->
+    <section class="flex justify-between items-end gap-6 flex-wrap pb-7 mb-6" style="border-bottom:1px solid #e7ecf2">
+      <div class="flex items-center gap-4">
+        <div class="w-[50px] h-[50px] rounded-[15px] bg-[#edf4ff] text-[#2563eb] flex items-center justify-center shrink-0 shadow-[inset_0_0_0_1px_rgba(37,99,235,.08)]">
+          <svg lucideUsers class="w-[22px] h-[22px]"></svg>
+        </div>
+        <div>
+          <h1 class="text-[29px] font-extrabold mb-2" style="letter-spacing:-1px">Employés</h1>
+          <p class="text-[14px] text-[#8793a6]">Gérez les fiches, les postes et les équipes de votre organisation.</p>
+        </div>
       </div>
+      <button *ngIf="canManageEmployees" (click)="openCreate()"
+        class="h-[42px] px-[17px] rounded-[9px] bg-[#2563eb] text-white text-[13px] font-bold shadow-[0_5px_14px_rgba(37,99,235,.13)] hover:bg-[#1d4ed8] transition-colors inline-flex items-center gap-2">
+        <svg lucideUserPlus class="w-4 h-4"></svg>
+        Nouvel employé
+      </button>
+    </section>
+
+    <!-- Stats KPI -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[13px] mb-6">
+      <article class="bg-white border border-[#e7ecf2] rounded-[14px] p-[17px] shadow-[0_6px_22px_rgba(19,35,68,.03)]">
+        <div class="flex justify-between">
+          <div>
+            <label class="text-[13px] text-[#748197]">Total employés</label>
+            <h2 class="text-[28px] font-bold mt-1" style="letter-spacing:-.8px">{{ stats().total ?? 0 }}</h2>
+          </div>
+          <div class="w-[37px] h-[37px] rounded-[10px] bg-[#edf4ff] text-[#2563eb] flex items-center justify-center">
+            <svg lucideUsers class="w-4 h-4"></svg>
+          </div>
+        </div>
+        <div class="text-[12px] text-[#a0aabb] mt-2.5">Tous les employés</div>
+      </article>
+
+      <article class="bg-white border border-[#e7ecf2] rounded-[14px] p-[17px] shadow-[0_6px_22px_rgba(19,35,68,.03)]">
+        <div class="flex justify-between">
+          <div>
+            <label class="text-[13px] text-[#748197]">Actifs</label>
+            <h2 class="text-[28px] font-bold mt-1" style="letter-spacing:-.8px">{{ stats().ACTIVE ?? 0 }}</h2>
+          </div>
+          <div class="w-[37px] h-[37px] rounded-[10px] bg-[#eaf8ef] text-[#16a34a] flex items-center justify-center">
+            <svg lucideUserCheck class="w-4 h-4"></svg>
+          </div>
+        </div>
+        <div class="text-[12px] text-[#a0aabb] mt-2.5">En poste</div>
+      </article>
+
+      <article class="bg-white border border-[#e7ecf2] rounded-[14px] p-[17px] shadow-[0_6px_22px_rgba(19,35,68,.03)]">
+        <div class="flex justify-between">
+          <div>
+            <label class="text-[13px] text-[#748197]">En congé</label>
+            <h2 class="text-[28px] font-bold mt-1" style="letter-spacing:-.8px">{{ stats().ON_LEAVE ?? 0 }}</h2>
+          </div>
+          <div class="w-[37px] h-[37px] rounded-[10px] bg-[#fff5dd] text-[#b45309] flex items-center justify-center">
+            <svg lucideClock class="w-4 h-4"></svg>
+          </div>
+        </div>
+        <div class="text-[12px] text-[#a0aabb] mt-2.5">Absents temporairement</div>
+      </article>
+
+      <article class="bg-white border border-[#e7ecf2] rounded-[14px] p-[17px] shadow-[0_6px_22px_rgba(19,35,68,.03)]">
+        <div class="flex justify-between">
+          <div>
+            <label class="text-[13px] text-[#748197]">Terminés</label>
+            <h2 class="text-[28px] font-bold mt-1" style="letter-spacing:-.8px">{{ stats().TERMINATED ?? 0 }}</h2>
+          </div>
+          <div class="w-[37px] h-[37px] rounded-[10px] bg-[#fdeaea] text-[#dc2626] flex items-center justify-center">
+            <svg lucideUserX class="w-4 h-4"></svg>
+          </div>
+        </div>
+        <div class="text-[12px] text-[#a0aabb] mt-2.5">Ne font plus partie de l'entreprise</div>
+      </article>
+    </section>
+
+    <!-- Filters -->
+    <section class="bg-white border border-[#e7ecf2] rounded-[14px] shadow-[0_6px_22px_rgba(19,35,68,.03)] p-[17px] mb-5 flex flex-wrap gap-3 items-end">
+      <div class="flex-1 min-w-48">
+        <label class="block text-[12px] font-bold text-[#56647b] uppercase tracking-wider mb-1.5">Recherche</label>
+        <div class="relative">
+          <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></svg>
+          <input [(ngModel)]="searchQuery" (ngModelChange)="applyFilter()" type="text"
+            placeholder="Nom, matricule, email..."
+            class="w-full h-10 pl-9 pr-3 border border-[#e0e6ee] rounded-[9px] text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-[#2563eb]/5 focus:border-[#8eaff0]">
+        </div>
+      </div>
+
+      <div class="min-w-44">
+        <label class="block text-[12px] font-bold text-[#56647b] uppercase tracking-wider mb-1.5">Département</label>
+        <select [(ngModel)]="filterDepartment" (ngModelChange)="applyFilter()"
+          class="w-full h-10 px-3 border border-[#e0e6ee] rounded-[9px] text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-[#2563eb]/5 focus:border-[#8eaff0]">
+          <option value="">Tous</option>
+          <option *ngFor="let d of departments" [value]="d">{{ d }}</option>
+        </select>
+      </div>
+
+      <div class="min-w-36">
+        <label class="block text-[12px] font-bold text-[#56647b] uppercase tracking-wider mb-1.5">Statut</label>
+        <select [(ngModel)]="filterStatus" (ngModelChange)="applyFilter()"
+          class="w-full h-10 px-3 border border-[#e0e6ee] rounded-[9px] text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-[#2563eb]/5 focus:border-[#8eaff0]">
+          <option value="">Tous</option>
+          <option *ngFor="let s of statuses" [value]="s">{{ statusLabels[s] }}</option>
+        </select>
+      </div>
+
+      <button (click)="clearFilters()"
+        class="h-10 px-4 border border-[#d1d5db] text-[#374151] rounded-[9px] text-[13px] hover:bg-[#f3f4f6] transition-colors flex items-center gap-1.5">
+        <svg lucideFilter class="w-3.5 h-3.5"></svg>
+        Effacer
+      </button>
+    </section>
+
+    <!-- Count and pagination info -->
+    <div class="flex items-center justify-between mb-4">
+      <p class="text-[13px] text-[#8793a6]">{{ employees().length }} / {{ totalElements() }} employé(s) affiché(s)</p>
+      <p class="text-[13px] text-[#8793a6]">Page {{ currentPage() }} / {{ totalPages() }}</p>
     </div>
 
-    <div class="min-w-44">
-      <label class="block text-xs font-medium text-gray-500 mb-1">Département</label>
-      <select [(ngModel)]="filterDepartment" (ngModelChange)="applyFilter()"
-        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
-        <option value="">Tous</option>
-        <option *ngFor="let d of departments" [value]="d">{{ d }}</option>
-      </select>
-    </div>
+    <!-- Table -->
+    <section class="bg-white border border-[#e7ecf2] rounded-[14px] shadow-[0_6px_22px_rgba(19,35,68,.03)] overflow-hidden">
+      <div *ngIf="loading()" class="p-12 text-center text-[#8d99aa] text-[13px]">Chargement...</div>
+      <div *ngIf="!loading() && page().empty" class="p-12 text-center text-[#8d99aa] text-[13px]">
+        Aucun employé trouvé.
+      </div>
 
-    <div class="min-w-36">
-      <label class="block text-xs font-medium text-gray-500 mb-1">Statut</label>
-      <select [(ngModel)]="filterStatus" (ngModelChange)="applyFilter()"
-        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
-        <option value="">Tous</option>
-        <option *ngFor="let s of statuses" [value]="s">{{ statusLabels[s] }}</option>
-      </select>
-    </div>
+      <div *ngIf="!loading() && !page().empty" class="overflow-x-auto">
+        <table class="w-full text-sm" style="border-collapse:collapse">
+          <thead>
+            <tr class="bg-[#fcfdff]" style="border-bottom:1px solid #e7ecf2">
+              <th class="text-left px-[18px] py-[13px] text-[12px] font-extrabold tracking-[.05em] text-[#7b8799]">
+                <button (click)="sortBy('matricule')" class="flex items-center gap-1 hover:text-[#2563eb]">
+                  Matricule
+                  <span class="inline-flex flex-col">
+                    <svg *ngIf="sortField === 'matricule' && sortDir === 'asc'" lucideChevronUp class="w-3 h-3"></svg>
+                    <svg *ngIf="sortField === 'matricule' && sortDir === 'desc'" lucideChevronDown class="w-3 h-3"></svg>
+                    <svg *ngIf="sortField !== 'matricule'" lucideChevronsUpDown class="w-3 h-3 text-gray-300"></svg>
+                  </span>
+                </button>
+              </th>
+              <th class="text-left px-[18px] py-[13px] text-[12px] font-extrabold tracking-[.05em] text-[#7b8799]">
+                <button (click)="sortBy('firstName')" class="flex items-center gap-1 hover:text-[#2563eb]">
+                  Employé
+                  <span class="inline-flex flex-col">
+                    <svg *ngIf="sortField === 'firstName' && sortDir === 'asc'" lucideChevronUp class="w-3 h-3"></svg>
+                    <svg *ngIf="sortField === 'firstName' && sortDir === 'desc'" lucideChevronDown class="w-3 h-3"></svg>
+                    <svg *ngIf="sortField !== 'firstName'" lucideChevronsUpDown class="w-3 h-3 text-gray-300"></svg>
+                  </span>
+                </button>
+              </th>
+              <th class="text-left px-[18px] py-[13px] text-[12px] font-extrabold tracking-[.05em] text-[#7b8799]">Contact</th>
+              <th class="text-left px-[18px] py-[13px] text-[12px] font-extrabold tracking-[.05em] text-[#7b8799]">Département</th>
+              <th class="text-left px-[18px] py-[13px] text-[12px] font-extrabold tracking-[.05em] text-[#7b8799]">Poste</th>
+              <th class="text-left px-[18px] py-[13px] text-[12px] font-extrabold tracking-[.05em] text-[#7b8799]">Manager</th>
+              <th class="text-left px-[18px] py-[13px] text-[12px] font-extrabold tracking-[.05em] text-[#7b8799]">
+                <button (click)="sortBy('hireDate')" class="flex items-center gap-1 hover:text-[#2563eb]">
+                  Embauche
+                  <span class="inline-flex flex-col">
+                    <svg *ngIf="sortField === 'hireDate' && sortDir === 'asc'" lucideChevronUp class="w-3 h-3"></svg>
+                    <svg *ngIf="sortField === 'hireDate' && sortDir === 'desc'" lucideChevronDown class="w-3 h-3"></svg>
+                    <svg *ngIf="sortField !== 'hireDate'" lucideChevronsUpDown class="w-3 h-3 text-gray-300"></svg>
+                  </span>
+                </button>
+              </th>
+              <th class="text-left px-[18px] py-[13px] text-[12px] font-extrabold tracking-[.05em] text-[#7b8799]">Statut</th>
+              <th class="text-right px-[18px] py-[13px] text-[12px] font-extrabold tracking-[.05em] text-[#7b8799]">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let emp of employees()" (click)="openEmployee(emp)"
+              class="hover:bg-[#f2f6ff] hover:brightness-[0.99] transition-colors cursor-pointer"
+              style="border-bottom:1px solid #f0f3f7">
+              <!-- Matricule -->
+              <td class="px-[18px] py-[14px] font-mono text-[12px] font-medium text-[#68768c]">{{ emp.matricule }}</td>
 
-    <button (click)="clearFilters()"
-      class="px-4 py-2 border border-gray-200 text-gray-500 rounded-lg text-sm hover:bg-gray-50 transition-colors flex items-center gap-1.5">
-      <svg lucideFilter class="w-3.5 h-3.5"></svg>
-      Effacer
-    </button>
-  </div>
-
-  <!-- Count and pagination info -->
-  <div class="flex items-center justify-between mb-4">
-    <p class="text-xs text-gray-400">{{ employees().length }} / {{ totalElements() }} employé(s) affiché(s)</p>
-    <p class="text-xs text-gray-400">Page {{ currentPage() }} / {{ totalPages() }}</p>
-  </div>
-
-  <!-- Modern Table -->
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-    <div *ngIf="loading()" class="p-12 text-center text-gray-400 text-sm">Chargement...</div>
-    <div *ngIf="!loading() && page().empty" class="p-12 text-center text-gray-400 text-sm">
-      Aucun employé trouvé.
-    </div>
-
-    <div *ngIf="!loading() && !page().empty" class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="bg-gray-50 border-b border-gray-200">
-            <th class="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              <button (click)="sortBy('matricule')" class="flex items-center gap-1 hover:text-blue-800">
-                Matricule
-                <span class="inline-flex flex-col">
-                  <svg *ngIf="sortField === 'matricule' && sortDir === 'asc'" lucideChevronUp class="w-3 h-3"></svg>
-                  <svg *ngIf="sortField === 'matricule' && sortDir === 'desc'" lucideChevronDown class="w-3 h-3"></svg>
-                  <svg *ngIf="sortField !== 'matricule'" lucideChevronsUpDown class="w-3 h-3 text-gray-300"></svg>
-                </span>
-              </button>
-            </th>
-            <th class="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              <button (click)="sortBy('firstName')" class="flex items-center gap-1 hover:text-blue-800">
-                Employé
-                <span class="inline-flex flex-col">
-                  <svg *ngIf="sortField === 'firstName' && sortDir === 'asc'" lucideChevronUp class="w-3 h-3"></svg>
-                  <svg *ngIf="sortField === 'firstName' && sortDir === 'desc'" lucideChevronDown class="w-3 h-3"></svg>
-                  <svg *ngIf="sortField !== 'firstName'" lucideChevronsUpDown class="w-3 h-3 text-gray-300"></svg>
-                </span>
-              </button>
-            </th>
-            <th class="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
-            <th class="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Département</th>
-            <th class="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Poste</th>
-            <th class="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Manager</th>
-            <th class="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              <button (click)="sortBy('hireDate')" class="flex items-center gap-1 hover:text-blue-800">
-                Embauche
-                <span class="inline-flex flex-col">
-                  <svg *ngIf="sortField === 'hireDate' && sortDir === 'asc'" lucideChevronUp class="w-3 h-3"></svg>
-                  <svg *ngIf="sortField === 'hireDate' && sortDir === 'desc'" lucideChevronDown class="w-3 h-3"></svg>
-                  <svg *ngIf="sortField !== 'hireDate'" lucideChevronsUpDown class="w-3 h-3 text-gray-300"></svg>
-                </span>
-              </button>
-            </th>
-            <th class="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
-            <th class="text-right px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          <tr *ngFor="let emp of employees()" class="hover:bg-gray-50/70 transition-colors duration-150 group">
-            <!-- Matricule -->
-            <td class="px-5 py-3.5 font-mono text-xs font-medium text-gray-500">{{ emp.matricule }}</td>
-
-            <!-- Employee name + avatar -->
-            <td class="px-5 py-3.5">
-              <div class="flex items-center gap-3">
-                <div *ngIf="!emp.photoUrl" class="w-9 h-9 rounded-full bg-white flex items-center justify-center border border-gray-200">
-                  <img src="/UserIcon.png" alt="User" class="w-5 h-5 object-contain">
+              <!-- Employee name + avatar -->
+              <td class="px-[18px] py-[14px]">
+                <div class="flex items-center gap-3">
+                  <div *ngIf="!emp.photoUrl" class="w-9 h-9 rounded-full bg-white flex items-center justify-center border border-gray-200">
+                    <img src="/UserIcon.png" alt="User" class="w-5 h-5 object-contain">
+                  </div>
+                  <img *ngIf="emp.photoUrl" [src]="apiUrl + '/employees/' + emp.id + '/photo/content'" alt="Photo"
+                    class="w-9 h-9 rounded-full object-cover border border-gray-200">
+                  <div>
+                    <p class="font-semibold text-[#293751]">{{ emp.firstName }} {{ emp.lastName }}</p>
+                    <p class="text-[11px] text-gray-400 truncate max-w-[200px]" [title]="emp.address || ''">{{ emp.address || 'Adresse non renseignée' }}</p>
+                  </div>
                 </div>
-                <img *ngIf="emp.photoUrl" [src]="apiUrl + '/employees/' + emp.id + '/photo/content'" alt="Photo"
-                  class="w-9 h-9 rounded-full object-cover border border-gray-200">
-                <div>
-                  <p class="font-semibold text-gray-800">{{ emp.firstName }} {{ emp.lastName }}</p>
-                  <p class="text-[11px] text-gray-400 truncate max-w-[200px]" [title]="emp.address || ''">{{ emp.address || 'Adresse non renseignée' }}</p>
+              </td>
+
+              <!-- Contact -->
+              <td class="px-[18px] py-[14px]">
+                <div class="space-y-0.5">
+                  <p class="text-[#53627a] text-[12px] flex items-center gap-1">
+                    <svg lucideMail class="w-3 h-3 text-gray-400"></svg>
+                    {{ emp.email }}
+                  </p>
+                  <p class="text-gray-400 text-[11px] flex items-center gap-1" *ngIf="emp.phoneNumber">
+                    <svg lucidePhone class="w-3 h-3 text-gray-400"></svg>
+                    {{ emp.phoneNumber }}
+                  </p>
+                  <p class="text-gray-400 text-[11px]" *ngIf="!emp.phoneNumber">—</p>
                 </div>
-              </div>
-            </td>
+              </td>
 
-            <!-- Contact -->
-            <td class="px-5 py-3.5">
-              <div class="space-y-0.5">
-                <p class="text-gray-700 text-xs flex items-center gap-1">
-                  <svg lucideMail class="w-3 h-3 text-gray-400"></svg>
-                  {{ emp.email }}
-                </p>
-                <p class="text-gray-400 text-[11px] flex items-center gap-1" *ngIf="emp.phoneNumber">
-                  <svg lucidePhone class="w-3 h-3 text-gray-400"></svg>
-                  {{ emp.phoneNumber || 'Numero non renseigné' }}
-                </p>
-                <p class="text-gray-400 text-[11px]" *ngIf="!emp.phoneNumber">—</p>
-              </div>
-            </td>
+              <!-- Department -->
+              <td class="px-[18px] py-[14px]">
+                <span class="inline-flex items-center px-[9px] py-[5px] rounded-full text-[11px] font-bold bg-[#f1f3f6] text-[#53627a] whitespace-nowrap">
+                  {{ emp.department || '—' }}
+                </span>
+              </td>
 
-            <!-- Department -->
-            <td class="px-5 py-3.5">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                {{ emp.department || '—' }}
-              </span>
-            </td>
+              <!-- Position -->
+              <td class="px-[18px] py-[14px] text-[#53627a] text-[12px]">{{ emp.position || '—' }}</td>
 
-            <!-- Position -->
-            <td class="px-5 py-3.5 text-gray-600 text-xs">{{ emp.position || '—' }}</td>
+              <!-- Manager -->
+              <td class="px-[18px] py-[14px] text-[#53627a] text-[12px]">{{ emp.managerName || '—' }}</td>
 
-            <!-- Manager -->
-            <td class="px-5 py-3.5 text-gray-600 text-xs">{{ emp.managerName || '—' }}</td>
+              <!-- Hire Date -->
+              <td class="px-[18px] py-[14px] text-[#68768c] text-[12px] whitespace-nowrap">{{ emp.hireDate | date:'dd/MM/yyyy' }}</td>
 
-            <!-- Hire Date -->
-            <td class="px-5 py-3.5 text-gray-500 text-xs whitespace-nowrap">{{ emp.hireDate | date:'dd/MM/yyyy' }}</td>
-
-            <!-- Status badge with dot -->
-            <td class="px-5 py-3.5">
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium"
-                [ngClass]="{
-                  'bg-green-100 text-green-700': emp.status === 'ACTIVE',
-                  'bg-gray-100 text-gray-600': emp.status === 'INACTIVE',
-                  'bg-yellow-100 text-yellow-700': emp.status === 'ON_LEAVE',
-                  'bg-red-100 text-red-600': emp.status === 'TERMINATED'
-                }">
-                <span class="w-1.5 h-1.5 rounded-full"
+              <!-- Status badge with dot -->
+              <td class="px-[18px] py-[14px]">
+                <span class="inline-flex items-center gap-1.5 px-[9px] py-[5px] rounded-full text-[11px] font-bold whitespace-nowrap"
                   [ngClass]="{
-                    'bg-green-500': emp.status === 'ACTIVE',
-                    'bg-gray-400': emp.status === 'INACTIVE',
-                    'bg-yellow-500': emp.status === 'ON_LEAVE',
-                    'bg-red-500': emp.status === 'TERMINATED'
-                  }"></span>
-                {{ statusLabels[emp.status] }}
-              </span>
-            </td>
+                    'bg-[#eaf8ef] text-[#16a34a]': emp.status === 'ACTIVE',
+                    'bg-[#fff5dd] text-[#b45309]': emp.status === 'ON_LEAVE',
+                    'bg-[#fff0f0] text-[#dc2626]': emp.status === 'TERMINATED'
+                  }">
+                  <span class="w-1.5 h-1.5 rounded-full"
+                    [ngClass]="{
+                      'bg-green-500': emp.status === 'ACTIVE',
+                      'bg-yellow-500': emp.status === 'ON_LEAVE',
+                      'bg-red-500': emp.status === 'TERMINATED'
+                    }"></span>
+                  {{ statusLabels[emp.status] }}
+                </span>
+              </td>
 
-            <!-- Actions -->
-            <td class="px-5 py-3.5">
-              <div class="flex items-center justify-end gap-1.5">
-                <a [routerLink]="['/employees', emp.id]"
-                  class="p-1.5 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors" title="Dossier">
-                  <svg lucideFolderOpen class="w-4 h-4"></svg>
-                </a>
-                <button *ngIf="canManageEmployees" (click)="openEdit(emp)"
-                  class="p-1.5 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors" title="Modifier">
-                  <svg lucidePencil class="w-4 h-4"></svg>
-                </button>
-                <button *ngIf="canManageEmployees" (click)="deactivate(emp.id)"
-                  class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Désactiver">
-                  <svg lucideTrash2 class="w-4 h-4"></svg>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+              <!-- Actions -->
+              <td class="px-[18px] py-[14px]">
+                <div class="flex items-center justify-end gap-1.5">
+                  <a [routerLink]="['/employees', emp.id]" (click)="$event.stopPropagation()"
+                    class="p-1.5 text-gray-400 hover:text-[#2563eb] hover:bg-[#edf4ff] rounded-lg transition-colors" title="Dossier">
+                    <svg lucideFolderOpen class="w-4 h-4"></svg>
+                  </a>
+                  <button *ngIf="canManageEmployees" (click)="openEdit(emp); $event.stopPropagation()"
+                    class="p-1.5 text-gray-400 hover:text-[#2563eb] hover:bg-[#edf4ff] rounded-lg transition-colors" title="Modifier">
+                    <svg lucidePencil class="w-4 h-4"></svg>
+                  </button>
+                  <button *ngIf="canManageEmployees" (click)="deactivate(emp.id); $event.stopPropagation()"
+                    class="p-1.5 text-gray-400 hover:text-[#dc2626] hover:bg-[#fff0f0] rounded-lg transition-colors" title="Désactiver">
+                    <svg lucideTrash2 class="w-4 h-4"></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-  <!-- Pagination (previous/next + numbered pages) -->
-  <div *ngIf="!loading() && !page().empty" class="flex items-center justify-between mt-5">
-    <div class="text-xs text-gray-500">
-      Page {{ currentPage() }} sur {{ totalPages() }}
-    </div>
-    <div class="flex gap-1">
-      <button (click)="prevPage()" [disabled]="currentPage() === 1"
-        class="px-3 py-1.5 text-xs border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center gap-1">
-        <svg lucideChevronLeft class="w-3.5 h-3.5"></svg>
-        Précédent
-      </button>
-
-      <ng-container *ngFor="let page of visiblePages()">
-        <button (click)="goToPage(page)"
-          [class.bg-blue-800]="currentPage() === page"
-          [class.text-white]="currentPage() === page"
-          [class.border-blue-800]="currentPage() === page"
-          class="px-3 py-1.5 text-xs border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
-          {{ page }}
+    <!-- Pagination -->
+    <div *ngIf="!loading() && !page().empty" class="flex items-center justify-between mt-5">
+      <div class="text-[13px] text-[#8793a6]">
+        Page {{ currentPage() }} sur {{ totalPages() }}
+      </div>
+      <div class="flex gap-1">
+        <button (click)="prevPage()" [disabled]="currentPage() === 1"
+          class="h-10 px-3.5 text-[13px] border border-[#d1d5db] rounded-[9px] hover:bg-[#f3f4f6] disabled:opacity-50 transition-colors flex items-center gap-1">
+          <svg lucideChevronLeft class="w-3.5 h-3.5"></svg>
+          Précédent
         </button>
-      </ng-container>
 
-      <button (click)="nextPage()" [disabled]="currentPage() === totalPages()"
-        class="px-3 py-1.5 text-xs border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center gap-1">
-        Suivant
-        <svg lucideChevronRight class="w-3.5 h-3.5"></svg>
-      </button>
+        <ng-container *ngFor="let page of visiblePages()">
+          <button (click)="goToPage(page)"
+            [class.bg-[#2563eb]]="currentPage() === page"
+            [class.text-white]="currentPage() === page"
+            [class.border-[#2563eb]]="currentPage() === page"
+            class="h-10 w-10 text-[13px] border border-[#d1d5db] rounded-[9px] hover:bg-[#f3f4f6] transition-colors">
+            {{ page }}
+          </button>
+        </ng-container>
+
+        <button (click)="nextPage()" [disabled]="currentPage() === totalPages()"
+          class="h-10 px-3.5 text-[13px] border border-[#d1d5db] rounded-[9px] hover:bg-[#f3f4f6] disabled:opacity-50 transition-colors flex items-center gap-1">
+          Suivant
+          <svg lucideChevronRight class="w-3.5 h-3.5"></svg>
+        </button>
+      </div>
     </div>
   </div>
 </div>

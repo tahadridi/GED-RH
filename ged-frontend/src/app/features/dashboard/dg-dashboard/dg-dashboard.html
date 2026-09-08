@@ -1,294 +1,575 @@
-<div class="p-8 bg-gray-50 min-h-screen">
-  <!-- Header -->
-  <div class="mb-8">
-    <h1 class="text-2xl font-bold text-gray-900">Tableau de Bord — Direction Générale</h1>
-    <p class="text-sm text-gray-500 mt-1">Bienvenue, {{ userName }} — vue d'ensemble de l'entreprise</p>
-    <div class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
-      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-      </svg>
-      Accès lecture seule — aucune modification autorisée
+<div class="min-h-screen bg-[#f7f9fc] text-[#15213d] font-[Inter,system-ui,Arial,sans-serif] antialiased" style="--navy:#071334;--blue:#2563eb;--blue-bg:#eaf2ff;--purple:#8b5cf6;--purple-bg:#f2ecff;--green:#16a34a;--green-bg:#e9f9ef;--orange:#f59e0b;--orange-bg:#fff5dd;--red:#ef4444;--red-bg:#fff0f0;--teal:#0d9488;--teal-bg:#e7f8f6;--text:#15213d;--muted:#738097;--border:#e7ebf1;">
+
+  <!-- Breadcrumb -->
+  <div class="px-9 pt-6">
+    <div class="flex items-center gap-2.5 text-[13px] text-[#9aa5b7]">
+      <span>GED</span>
+      <span>&rsaquo;</span>
+      <b class="font-semibold text-[#66738a]">Tableau de bord</b>
     </div>
   </div>
 
-  <!-- Gradient divider -->
-  <div class="mb-8 h-px bg-gradient-to-r from-blue-400 via-purple-400 to-transparent"></div>
+  <div class="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-9 pb-14 pt-7">
+    <!-- Hero -->
+    <section class="flex justify-between items-center gap-6 mb-7 flex-wrap">
+      <div class="flex items-center gap-4">
+        
+        <div>
+          <h1 class="text-[30px] font-extrabold leading-[1.2] mb-1.5" style="letter-spacing:-1.1px">Tableau de bord — Direction Générale</h1>
+          <p class="text-[14px] text-[#738097]">Bienvenue, {{ userName }} — vue d'ensemble de l'entreprise.</p>
+        </div>
+      </div>
+      <span class="inline-flex items-center gap-2 px-[13px] py-[8px] bg-[#e9f9ef] text-[#16a34a] rounded-full text-[12px] font-semibold">
+        <span class="w-[7px] h-[7px] rounded-full bg-[#16a34a]"></span>
+        Accès lecture seule
+      </span>
+    </section>
 
-  <!-- Announcements -->
-  <div *ngIf="announcements().length > 0" class="mb-8 bg-gradient-to-r from-gray-50 to-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-    <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
-      <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
-        <svg class="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 12h-2v-2h2v2zm0-4h-2V6h2v4z"/>
-        </svg>
-      </div>
-      <h2 class="font-semibold text-gray-800">Annonces</h2>
-    </div>
-    <div class="divide-y divide-gray-50">
-      <div *ngFor="let a of announcements()" class="border-l-4 transition hover:bg-gray-50/50 px-5 py-4"
-        [ngClass]="{
-          'border-l-red-500': a.priority === 'CRITIQUE',
-          'border-l-orange-500': a.priority === 'HAUTE',
-          'border-l-gray-400': a.priority === 'NORMALE'
-        }">
-        <div class="flex items-center gap-2 mb-1">
-          <svg *ngIf="a.priority === 'CRITIQUE'" class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>
-          </svg>
-          <svg *ngIf="a.priority === 'HAUTE'" class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-          </svg>
-          <svg *ngIf="a.priority === 'NORMALE'" class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          <p class="font-medium text-gray-900">{{ a.title }}</p>
-          <span class="ml-auto px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase shrink-0"
-            [ngClass]="{
-              'bg-red-100 text-red-700': a.priority === 'CRITIQUE',
-              'bg-orange-100 text-orange-700': a.priority === 'HAUTE',
-              'bg-gray-100 text-gray-600': a.priority === 'NORMALE'
-            }">{{ a.priority === 'CRITIQUE' ? 'Critique' : a.priority === 'HAUTE' ? 'Haute' : 'Normale' }}</span>
-        </div>
-        <p class="text-sm text-gray-600 leading-relaxed line-clamp-2">{{ a.content }}</p>
-        <p class="text-xs text-gray-400 mt-1.5 flex items-center gap-1">
-          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-          </svg>
-          {{ a.authorName }} &middot; {{ a.createdAt | date:'dd/MM/yyyy' }}
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <div *ngIf="loading()" class="text-center py-20 text-gray-400 text-sm">Chargement du tableau de bord...</div>
-
-  <ng-container *ngIf="!loading()">
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition">
-        <div class="flex items-center justify-between">
+    <!-- Annonces -->
+    @if (announcements().length > 0) {
+      <section class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)] mb-6">
+        <div class="flex items-center gap-3 px-5 py-[16px] border-b border-[#f0f2f5]">
+          <div class="w-[38px] h-[38px] rounded-[10px] bg-[#1e3a8a] text-white flex items-center justify-center shrink-0">
+            <svg lucideMegaphone class="w-[17px] h-[17px]"></svg>
+          </div>
           <div>
-            <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Employés</p>
-            <p class="text-2xl font-bold text-gray-900 mt-1">{{ totalActiveEmployees() }}</p>
-          
+            <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase leading-none">Communication</div>
+            <h2 class="text-[17px] font-bold mt-1" style="letter-spacing:-.25px">Annonces</h2>
           </div>
-          <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-            <svg lucideUsers class="w-5 h-5 text-blue-600"></svg>
-          </div>
+          <a routerLink="/admin/announcements" class="ml-auto text-[#2563eb] text-[12px] font-semibold hover:underline shrink-0">Voir tout →</a>
         </div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Documents</p>
-            <p class="text-2xl font-bold text-gray-900 mt-1">{{ totalDocuments() }}</p>
-            <p class="text-xs text-gray-400 mt-1">+{{ documentsThisMonth() }} ce mois</p>
-          </div>
-          <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-            <svg lucideFileText class="w-5 h-5 text-indigo-600"></svg>
-          </div>
-        </div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">En attente</p>
-            <p class="text-2xl font-bold text-amber-600 mt-1">{{ pendingReclamations().length }}</p>
-            <p class="text-xs text-gray-400 mt-1">/ {{ reclamations().length }} total</p>
-          </div>
-          <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
-            <svg lucideAlertCircle class="w-5 h-5 text-amber-600"></svg>
-          </div>
-        </div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Réclamations</p>
-            <p class="text-2xl font-bold text-gray-900 mt-1">{{ reclamations().length }}</p>
-          </div>
-          <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
-            <svg lucideAlertCircle class="w-5 h-5 text-amber-600"></svg>
-          </div>
-        </div>
-      </div>
-      <a routerLink="/admin/organization"
-        class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md hover:border-cyan-200 transition-all block group cursor-pointer">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Départements</p>
-            <p class="text-2xl font-bold text-gray-900 mt-1">{{ departmentsCount() }}</p>
-          </div>
-          <div class="w-10 h-10 bg-cyan-50 rounded-xl flex items-center justify-center group-hover:bg-cyan-100 transition-colors">
-            <svg class="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-            </svg>
-          </div>
-        </div>
-      </a>
-
-    </div>
-
-    <!-- Visual Charts Row -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-      <!-- Department Breakdown -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="px-5 py-4 border-b border-gray-100">
-          <h2 class="font-semibold text-gray-800 flex items-center gap-2">
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-            </svg>
-            Répartition par département
-          </h2>
-        </div>
-        <div class="p-5 space-y-4">
-          <div *ngFor="let dept of departmentBreakdown()" class="group">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-sm font-medium text-gray-700">{{ dept.name }}</span>
-              <span class="text-xs text-gray-500">{{ dept.employeeCount }} empl. · {{ dept.docCount }} doc.</span>
-            </div>
-            <div class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
-              <div class="h-full rounded-full transition-all duration-500"
-                [style.width.%]="dept.pct"
+        <div class="divide-y divide-[#f2f4f7]">
+          @for (a of announcements(); track a.id) {
+            <div class="flex gap-4 px-5 py-4">
+              <div class="w-[8px] self-stretch rounded-full shrink-0"
                 [ngClass]="{
-                  'bg-blue-600': dept.employeeCount === Math.max(...departmentBreakdown().map(d => d.employeeCount)),
-                  'bg-blue-500': dept.employeeCount !== Math.max(...departmentBreakdown().map(d => d.employeeCount))
-                }">
-              </div>
-            </div>
-          </div>
-          <div *ngIf="departmentBreakdown().length === 0" class="text-center py-6 text-gray-400 text-sm">
-            Aucun département renseigné.
-          </div>
-        </div>
-      </div>
-
-      <!-- Document Type Distribution -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="px-5 py-4 border-b border-gray-100">
-          <h2 class="font-semibold text-gray-800 flex items-center gap-2">
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-            </svg>
-            Types de documents
-          </h2>
-        </div>
-        <div class="p-5 space-y-4">
-          <div *ngFor="let dt of docTypeDistribution()" class="group">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-sm font-medium text-gray-700">{{ dt.label }}</span>
-              <span class="text-xs text-gray-500">{{ dt.count }} doc. ({{ dt.pct.toFixed(1) }}%)</span>
-            </div>
-            <div class="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-              <div class="h-full rounded-full transition-all duration-500"
-                [style.width.%]="dt.pct"
-                [ngClass]="{
-                  'bg-indigo-600': dt.count === Math.max(...docTypeDistribution().map(d => d.count)),
-                  'bg-indigo-500': dt.count !== Math.max(...docTypeDistribution().map(d => d.count))
-                }">
-              </div>
-            </div>
-          </div>
-          <div *ngIf="docTypeDistribution().length === 0" class="text-center py-6 text-gray-400 text-sm">
-            Aucun document trouvé.
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Recent Documents + Reclamations -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-      <!-- Recent Documents (all employees, grouped) -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center">
-          <h2 class="font-semibold text-gray-800 flex items-center gap-2">
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.293.707l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Documents récents
-          </h2>
-          <a routerLink="/documents/list" class="text-blue-600 text-xs font-medium hover:underline">Voir tout</a>
-        </div>
-        <div *ngIf="recentDocGroups().length === 0" class="p-8 text-center text-gray-400 text-sm">
-          Aucun document récent.
-        </div>
-        <div *ngIf="recentDocGroups().length > 0" class="space-y-2 p-3">
-          <div *ngFor="let group of recentDocGroups()" class="bg-white rounded-lg border border-gray-100 overflow-hidden">
-            <button (click)="toggleRecentGroup(group.employeeId)"
-              class="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors">
-              <div class="flex items-center gap-3">
-                <div *ngIf="!group.employeeHasPhoto" class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
-                  <img src="/UserIcon.png" alt="User" class="w-4 h-4 object-contain">
+                  'bg-[#ef4444]': a.priority === 'CRITIQUE',
+                  'bg-[#f59e0b]': a.priority === 'HAUTE',
+                  'bg-[#9aa5b7]': a.priority === 'NORMALE'
+                }"></div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between gap-3">
+                  <h3 class="text-[15px] font-bold text-[#15213d]">{{ a.title }}</h3>
+                  <span class="px-2.5 py-[5px] rounded-full text-[10px] font-bold uppercase shrink-0"
+                    [ngClass]="{
+                      'bg-[#fff0f0] text-[#ef4444]': a.priority === 'CRITIQUE',
+                      'bg-[#fff5dd] text-[#f59e0b]': a.priority === 'HAUTE',
+                      'bg-[#f1f3f6] text-[#68758a]': a.priority === 'NORMALE'
+                    }">
+                    {{ a.priority === 'CRITIQUE' ? 'Critique' : a.priority === 'HAUTE' ? 'Haute' : 'Normale' }}
+                  </span>
                 </div>
-                <img *ngIf="group.employeeHasPhoto" [src]="apiUrl + '/employees/' + group.employeeId + '/photo/content'" alt="Photo"
-                  class="w-8 h-8 rounded-full object-cover border border-gray-200 shrink-0">
-                <div class="text-left">
-                  <p class="font-semibold text-gray-900 text-sm">{{ group.employeeFirstName }} {{ group.employeeLastName }}</p>
-                  <p class="text-xs text-gray-500">{{ group.employeeMatricule || '—' }} — {{ group.documents.length }} document(s)</p>
-                </div>
-              </div>
-              <svg [class.rotate-180]="expandedRecentGroups().has(group.employeeId)"
-                class="w-4 h-4 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            <div *ngIf="expandedRecentGroups().has(group.employeeId)" class="divide-y divide-gray-50">
-              <div *ngFor="let doc of group.documents" (click)="openDocument(doc)"
-                class="p-3 flex items-center justify-between hover:bg-blue-50 transition-colors group cursor-pointer">
-                <div class="flex items-center gap-3 min-w-0">
-                  <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.293.707l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <p class="text-[13.5px] text-[#4a5568] leading-[1.7] mt-1 line-clamp-2" [innerHTML]="a.content | safeHtml"></p>
+                <div class="flex items-center gap-4 mt-2 text-[11px] text-[#9aa5b7]">
+                  <span class="flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                     </svg>
-                  </div>
-                  <div class="min-w-0">
-                    <p class="text-sm font-medium text-gray-900 truncate">{{ doc.name }}</p>
-                    <p class="text-xs text-gray-400">{{ documentTypeLabel(doc.type) }} · {{ formatDate(doc.createdAt) }}</p>
+                    {{ a.authorName }}
+                    <span *ngIf="isDirectionGenerale(a)" class="flex items-center gap-1 px-1.5 py-[2px] rounded-full bg-white text-[#2563eb] border border-[#bfdbfe] text-[10px] font-bold uppercase tracking-wide">
+                      <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.87"/>
+                      </svg>
+                      Direction Générale
+                    </span>
+                    <span *ngIf="a.authorRole === 'ADMINISTRATOR'" class="flex items-center gap-1 px-1.5 py-[2px] rounded-full bg-white text-[#2563eb] border border-[#bfdbfe] text-[10px] font-bold uppercase tracking-wide">
+                      <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+                      </svg>
+                      Administrateur
+                    </span>
+                  </span>
+                  <span>{{ a.createdAt | date:'dd MMM yyyy' }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    @if (loading()) {
+      <div class="py-24 text-center">
+        <div class="w-12 h-12 rounded-xl bg-white border border-[#bfdbfe] flex items-center justify-center mx-auto mb-3">
+          <svg lucideBuilding2 class="w-6 h-6 text-[#2563eb] animate-pulse"></svg>
+        </div>
+        <p class="text-[#9aa5b7] text-[13px]">Chargement du tableau de bord...</p>
+      </div>
+    }
+
+    <ng-container *ngIf="!loading()">
+      <!-- Stats KPI -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-[14px] mb-7">
+        <article class="bg-white border border-[#e7ebf1] rounded-[16px] px-[19px] py-[18px] min-h-[143px] shadow-[0_1px_2px_rgba(16,24,40,.03)] hover:shadow-[0_8px_22px_rgba(16,24,40,.06)] hover:-translate-y-0.5 transition">
+          <div class="flex justify-between">
+            <div>
+              <span class="text-[13px] text-[#69768b]">Employés actifs</span>
+              <h3 class="text-[32px] font-bold mt-1" style="letter-spacing:-1.3px">{{ totalActiveEmployees() }}</h3>
+            </div>
+            <div class="w-[42px] h-[42px] rounded-[11px] bg-white text-[#2563eb] border border-[#bfdbfe] flex items-center justify-center">
+              <svg lucideUsers class="w-[18px] h-[18px]"></svg>
+            </div>
+          </div>
+          <div class="flex items-center gap-[7px] mt-4 text-[12px] text-[#9aa5b7]">
+            <span class="text-[#16a34a] font-bold">✓ Actif</span>
+            <span>/ {{ totalEmployees() }} au total</span>
+          </div>
+        </article>
+
+        <article class="bg-white border border-[#e7ebf1] rounded-[16px] px-[19px] py-[18px] min-h-[143px] shadow-[0_1px_2px_rgba(16,24,40,.03)] hover:shadow-[0_8px_22px_rgba(16,24,40,.06)] hover:-translate-y-0.5 transition">
+          <div class="flex justify-between">
+            <div>
+              <span class="text-[13px] text-[#69768b]">Documents</span>
+              <h3 class="text-[32px] font-bold mt-1" style="letter-spacing:-1.3px">{{ totalDocuments() }}</h3>
+            </div>
+            <div class="w-[42px] h-[42px] rounded-[11px] bg-white text-[#2563eb] border border-[#bfdbfe] flex items-center justify-center">
+              <svg lucideFileText class="w-[18px] h-[18px]"></svg>
+            </div>
+          </div>
+          <div class="flex items-center gap-[7px] mt-4 text-[12px] text-[#9aa5b7]">
+            <span class="text-[#16a34a] font-bold">↗ +{{ documentsThisMonth() }}</span>
+            <span>ce mois</span>
+          </div>
+        </article>
+
+        <article class="bg-white border border-[#e7ebf1] rounded-[16px] px-[19px] py-[18px] min-h-[143px] shadow-[0_1px_2px_rgba(16,24,40,.03)] hover:shadow-[0_8px_22px_rgba(16,24,40,.06)] hover:-translate-y-0.5 transition">
+          <div class="flex justify-between">
+            <div>
+              <span class="text-[13px] text-[#69768b]">Réclamations</span>
+              <h3 class="text-[32px] font-bold mt-1" style="letter-spacing:-1.3px">{{ reclamations().length }}</h3>
+            </div>
+            <div class="w-[42px] h-[42px] rounded-[11px] bg-white text-[#2563eb] border border-[#bfdbfe] flex items-center justify-center">
+              <svg lucideAlertCircle class="w-[18px] h-[18px]"></svg>
+            </div>
+          </div>
+          <div class="flex items-center gap-[7px] mt-4 text-[12px] text-[#9aa5b7]">
+            <span>total enregistrées</span>
+          </div>
+        </article>
+
+        <article class="bg-white border border-[#e7ebf1] rounded-[16px] px-[19px] py-[18px] min-h-[143px] shadow-[0_1px_2px_rgba(16,24,40,.03)] hover:shadow-[0_8px_22px_rgba(16,24,40,.06)] hover:-translate-y-0.5 transition">
+          <div class="flex justify-between">
+            <div>
+              <span class="text-[13px] text-[#69768b]">Réclamations en attente</span>
+              <h3 class="text-[32px] font-bold mt-1" style="letter-spacing:-1.3px">{{ pendingReclamations().length }}</h3>
+            </div>
+            <div class="w-[42px] h-[42px] rounded-[11px] bg-white text-[#2563eb] border border-[#bfdbfe] flex items-center justify-center">
+              <svg lucideClock class="w-[18px] h-[18px]"></svg>
+            </div>
+          </div>
+          <div class="flex items-center gap-[7px] mt-4 text-[12px] text-[#9aa5b7]">
+            <span>/ {{ reclamations().length }} à traiter</span>
+          </div>
+        </article>
+
+        <a 
+          class="bg-white border border-[#e7ebf1] rounded-[16px] px-[19px] py-[18px] min-h-[143px] shadow-[0_1px_2px_rgba(16,24,40,.03)] hover:shadow-[0_8px_22px_rgba(16,24,40,.06)] hover:-translate-y-0.5 transition block group">
+          <div class="flex justify-between">
+            <div>
+              <span class="text-[13px] text-[#69768b]">Départements</span>
+              <h3 class="text-[32px] font-bold mt-1" style="letter-spacing:-1.3px">{{ departmentsCount() < 10 ? '0' + departmentsCount() : departmentsCount() }}</h3>
+            </div>
+            <div class="w-[42px] h-[42px] rounded-[11px] bg-white text-[#2563eb] border border-[#bfdbfe] flex items-center justify-center group-hover:scale-105 transition">
+              <svg lucideBuilding2 class="w-[18px] h-[18px]"></svg>
+            </div>
+          </div>
+        </a>
+      </section>
+
+      <!-- RH / Effectifs -->
+      <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-7">
+        <!-- Effectif par statut -->
+        <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+          <div class="px-5 py-[18px] border-b border-[#f0f2f5]">
+            <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">RH / Effectifs</div>
+            <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Effectif par statut</h2>
+          </div>
+          <div class="px-5 py-4 space-y-3.5">
+            @if (statusBreakdown().length === 0) {
+              <div class="py-10 text-center text-[#9aa5b7] text-[12px]">Aucun employé.</div>
+            } @else {
+              @for (s of statusBreakdown(); track s.status) {
+                <div class="flex items-center gap-3">
+                  <span class="w-[9px] h-[9px] rounded-full shrink-0"
+                    [ngClass]="{
+                      'bg-[#16a34a]': s.status === 'ACTIVE',
+                      'bg-[#ef4444]': s.status === 'TERMINATED',
+                      'bg-[#f59e0b]': s.status === 'ON_LEAVE'
+                    }"></span>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex justify-between text-[12px] mb-1.5">
+                      <strong class="font-semibold text-[#15213d]">{{ s.label }}</strong>
+                      <span class="text-[#66738a]">{{ s.count }} · {{ s.pct | number:'1.0-0' }}%</span>
+                    </div>
+                    <div class="h-[5px] rounded-full bg-[#edf0f4] overflow-hidden">
+                      <div class="h-full rounded-full" [style.width.%]="s.pct"
+                        [ngClass]="{
+                          'bg-[#16a34a]': s.status === 'ACTIVE',
+                          'bg-[#ef4444]': s.status === 'TERMINATED',
+                          'bg-[#f59e0b]': s.status === 'ON_LEAVE'
+                        }"></div>
+                    </div>
                   </div>
                 </div>
-                <span class="px-2 py-1 text-xs rounded-full shrink-0 whitespace-nowrap"
-                  [ngClass]="{
-                    'bg-green-100 text-green-700': doc.status === 'validé',
-                    'bg-yellow-100 text-yellow-700': doc.status === 'en attente',
-                    'bg-gray-100 text-gray-700': doc.status === 'brouillon'
-                  }">{{ doc.status || '—' }}</span>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Embauches & Départs 12 mois -->
+        <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)] lg:col-span-2">
+          <div class="px-5 py-[18px] border-b border-[#f0f2f5]">
+            <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Croissance & rotation du personnel</div>
+            <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Embauches & Départs — 12 mois</h2>
+          </div>
+          <div class="grid grid-cols-1 xl:grid-cols-2 divide-y xl:divide-y-0 xl:divide-x divide-[#f0f2f5]">
+            <div class="px-5 pt-5 pb-4">
+              <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.05em] uppercase mb-3">Embauches</div>
+              <div #hiresScroll class="overflow-x-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]">
+                <div class="flex items-end gap-[8px] min-w-[420px]" style="height: 120px;">
+                  @for (m of hiresByMonth(); track m.month) {
+                    <div class="flex-none w-[38px] flex flex-col items-center justify-end h-full">
+                      <span class="text-[10px] text-[#66738a] mb-1 font-semibold" *ngIf="m.count > 0">{{ m.count }}</span>
+                      <div class="w-full min-w-[6px] rounded-t-[4px] transition-all duration-700"
+                        [style.height.%]="m.pct"
+                        [ngClass]="{
+                          'bg-[#2563eb]': m.isCurrent,
+                          'bg-[#93b4f8]': !m.isCurrent && m.count > 0,
+                          'bg-[#edf0f4]': !m.isCurrent && m.count === 0
+                        }"
+                        [style.opacity]="m.count === 0 ? '0.6' : '1'"></div>
+                      <span class="text-[9px] text-[#9aa5b7] mt-1.5 truncate w-full text-center leading-tight">{{ m.month }}</span>
+                    </div>
+                  }
+                </div>
               </div>
+            </div>
+
+            <div class="px-5 pt-5 pb-4">
+              <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.05em] uppercase mb-3">Départs</div>
+              @if (totalDepartures() === 0) {
+                <div class="h-[120px] flex items-center justify-center text-[12px] text-[#9aa5b7]">Aucun départ enregistré.</div>
+              } @else {
+                <div #departuresScroll class="overflow-x-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]">
+                  <div class="flex items-end gap-[8px] min-w-[420px]" style="height: 120px;">
+                    @for (m of departuresByMonth(); track m.month) {
+                      <div class="flex-none w-[38px] flex flex-col items-center justify-end h-full">
+                        <span class="text-[10px] text-[#66738a] mb-1 font-semibold" *ngIf="m.count > 0">{{ m.count }}</span>
+                        <div class="w-full min-w-[6px] rounded-t-[4px] transition-all duration-700"
+                          [style.height.%]="m.pct"
+                          [ngClass]="{
+                            'bg-[#ef4444]': m.isCurrent,
+                            'bg-[#f8a1a1]': !m.isCurrent && m.count > 0,
+                            'bg-[#edf0f4]': !m.isCurrent && m.count === 0
+                          }"
+                          [style.opacity]="m.count === 0 ? '0.6' : '1'"></div>
+                        <span class="text-[9px] text-[#9aa5b7] mt-1.5 truncate w-full text-center leading-tight">{{ m.month }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+                
+              }
+            </div>
+          </div>
+          <div class="flex items-center justify-between px-5 pt-4 pb-5 border-t border-[#f0f2f5]">
+            <div>
+              <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1">Ancienneté moyenne</div>
+              <strong class="text-[22px] font-bold text-[#15213d]" style="letter-spacing:-.7px">{{ averageTenureYears() | number:'1.1-1' }} ans</strong>
+            </div>
+            <div class="text-center">
+              <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1">Employés actifs</div>
+              <strong class="text-[22px] font-bold text-[#15213d]" style="letter-spacing:-.7px">{{ totalActiveEmployees() }}</strong>
+            </div>
+            <div class="text-right">
+              <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1">Total départs</div>
+              <strong class="text-[22px] font-bold text-[#15213d]" style="letter-spacing:-.7px">{{ totalDepartures() }}</strong>
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- Réclamations par jour -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="px-5 py-4 border-b border-gray-100">
-          <h2 class="font-semibold text-gray-800 flex items-center gap-2">
-            <svg lucideAlertCircle class="w-5 h-5 text-gray-600"></svg>
-            Réclamations par jour (14 jours)
-          </h2>
-        </div>
-        <div class="p-5">
-          <div *ngIf="reclamationsByDay().length === 0" class="text-center py-6 text-gray-400 text-sm">
-            Aucune réclamation.
+      </section>
+      <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-7">
+        <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+          <div class="flex justify-between items-center px-5 py-[18px] border-b border-[#f0f2f5]">
+            <div>
+              <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Orga</div>
+              <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Répartition par département</h2>
+            </div>
           </div>
-          <div *ngIf="reclamationsByDay().length > 0" class="flex items-end gap-1.5" style="height: 180px;">
-            <div *ngFor="let day of reclamationsByDay()" class="flex-1 flex flex-col items-center justify-end h-full">
-              <span class="text-[10px] text-gray-500 mb-1 font-medium" *ngIf="day.count > 0">{{ day.count }}</span>
-              <div class="w-full rounded-t-sm transition-all duration-700"
-                [style.height.%]="day.pct"
-                [ngClass]="{
-                  'bg-amber-500': day.count === Math.max(...reclamationsByDay().map(d => d.count)) && day.count > 0,
-                  'bg-amber-300': day.count > 0 && day.count < Math.max(...reclamationsByDay().map(d => d.count)),
-                  'bg-gray-100': day.count === 0
-                }">
+          @if (departmentBreakdown().length === 0) {
+            <div class="py-14 text-center text-[#9aa5b7] text-[12px]">Aucun département renseigné.</div>
+          } @else {
+            <div class="flex items-center gap-6 px-5 py-5 flex-wrap">
+              <div class="relative w-[180px] h-[180px] rounded-full shrink-0 mx-auto lg:mx-0"
+                [style.background]="deptGradient">
+                <div class="absolute inset-0 m-[30px] bg-white rounded-full"></div>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <strong class="text-[26px] font-bold text-[#15213d] leading-none" style="letter-spacing:-1px">{{ departmentsCount() }}</strong>
+                  <span class="text-[10px] text-[#9aa5b7] mt-1">départements</span>
+                </div>
               </div>
-              <span class="text-[9px] text-gray-400 mt-1.5 truncate w-full text-center leading-tight">{{ day.date }}</span>
+              <div class="flex-1 flex flex-col gap-[12px] min-w-[170px] max-h-[200px] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] pr-1">
+                @for (dept of departmentBreakdown(); track dept.name; let i = $index) {
+                  <div class="grid grid-cols-[7px_1fr_auto] gap-2 items-center">
+                    <span class="w-[7px] h-[7px] rounded-sm shrink-0" [style.background]="docTypeColors[i % docTypeColors.length]"></span>
+                    <div>
+                      <strong class="block text-[12px] font-semibold text-[#15213d] mb-0.5">{{ dept.name }}</strong>
+                      <span class="text-[10px] text-[#9aa5b7]">{{ dept.employeeCount }} empl. · {{ dept.docCount }} doc.</span>
+                    </div>
+                    <b class="text-[12px] text-[#66738a]">{{ (dept.employeeCount / (departmentBreakdownTotal() || 1) * 100) | number:'1.0-0' }}%</b>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+          <div class="flex justify-between items-center px-5 py-[18px] border-b border-[#f0f2f5]">
+            <div>
+              <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Analyse</div>
+              <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Types de documents</h2>
+            </div>
+          </div>
+          @if (docTypeDistribution().length === 0) {
+            <div class="py-14 text-center text-[#9aa5b7] text-[12px]">Aucun document trouvé.</div>
+          } @else {
+            <div class="flex items-center gap-6 px-5 py-5 flex-wrap">
+              <div class="relative w-[180px] h-[180px] rounded-full shrink-0 mx-auto lg:mx-0"
+                [style.background]="docTypeGradient">
+                <div class="absolute inset-0 m-[30px] bg-white rounded-full"></div>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <strong class="text-[26px] font-bold text-[#15213d] leading-none" style="letter-spacing:-1px">{{ totalDocuments() }}</strong>
+                  <span class="text-[10px] text-[#9aa5b7] mt-1">documents</span>
+                </div>
+              </div>
+              <div class="flex-1 flex flex-col gap-[12px] min-w-[170px] max-h-[200px] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] pr-1">
+                @for (dt of docTypeDistribution(); track dt.type; let i = $index) {
+                  <div class="grid grid-cols-[7px_1fr_auto] gap-2 items-center">
+                    <span class="w-[7px] h-[7px] rounded-sm shrink-0" [style.background]="docTypeColors[i % docTypeColors.length]"></span>
+                    <div>
+                      <strong class="block text-[12px] font-semibold text-[#15213d] mb-0.5">{{ dt.label }}</strong>
+                      <span class="text-[10px] text-[#9aa5b7]">{{ dt.count }} doc. · {{ dt.sizeLabel }}</span>
+                    </div>
+                    <b class="text-[12px] text-[#66738a]">{{ dt.pct | number:'1.0-0' }}%</b>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- Activité documentaire -->
+      <!-- Documents ajoutés 12 mois (full width) -->
+      <section class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)] mb-7">
+        <div class="flex justify-between items-center px-5 py-[18px] border-b border-[#f0f2f5]">
+          <div>
+            <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">GED / Activité</div>
+            <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Documents ajoutés par mois — 12 mois</h2>
+          </div>
+          
+        </div>
+        <div class="px-6 py-6">
+          @if (docsByMonth().every(m => m.count === 0)) {
+            <div class="py-10 text-center text-[#9aa5b7] text-[12px]">Aucun document sur cette période.</div>
+          } @else {
+            <div class="flex items-end gap-[10px]" style="height: 260px;">
+              @for (m of docsByMonth(); track m.month) {
+                <div class="flex-1 flex flex-col items-center justify-end h-full">
+                  <span class="text-[11px] text-[#66738a] mb-1.5 font-semibold" *ngIf="m.count > 0">{{ m.count }}</span>
+<div class="w-full max-w-[52px] rounded-t-[5px] transition-all duration-700"
+                      [style.height.%]="m.pct"
+                      [ngClass]="{
+                        'bg-[#8b5cf6]': m.isCurrent,
+                        'bg-[#c4b0f8]': !m.isCurrent && m.count > 0,
+                        'bg-[#edf0f4]': !m.isCurrent && m.count === 0
+                      }"
+                      [style.opacity]="m.count === 0 ? '0.6' : '1'"></div>
+                  <span class="text-[11px] text-[#9aa5b7] mt-2 truncate w-full text-center leading-tight">{{ m.month }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- Stockage + Richesse documentaire -->
+      <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-7">
+        <!-- Stockage consommé -->
+        <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+          <div class="px-5 py-[18px] border-b border-[#f0f2f5]">
+            <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Stockage</div>
+            <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Espace consommé</h2>
+          </div>
+          <div class="px-5 py-5">
+            <div class="flex items-end justify-between gap-3 mb-3">
+              <div>
+                <strong class="text-[26px] font-bold text-[#15213d]" style="letter-spacing:-.7px">{{ docStorageUsedLabel }}</strong>
+                <span class="text-[12px] text-[#9aa5b7] block mb-1.5">documents numérisés</span>
+                <div class="h-[9px] rounded-full bg-[#edf0f4] overflow-hidden mt-2.5">
+                  <div class="h-full rounded-full bg-[#0d9488]" [style.width.%]="docStorageOfDiskPct"></div>
+                </div>
+                <span class="text-[10px] text-[#9aa5b7] mt-1.5 block">{{ docStorageOfDiskPct }}% du disque total ({{ diskTotalLabel }})</span>
+              </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-[#f0f2f5] space-y-3 max-h-[150px] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] pr-1">
+              @for (s of storageByDepartment(); track s.name) {
+                <div>
+                  <div class="flex justify-between text-[12px] mb-1.5">
+                    <strong class="font-semibold text-[#15213d]">{{ s.name }}</strong>
+                    <span class="text-[#66738a]">{{ s.sizeLabel }} · {{ s.pct | number:'1.0-0' }}%</span>
+                  </div>
+                  <div class="h-[6px] rounded-full bg-[#edf0f4] overflow-hidden">
+                    <div class="h-full rounded-full bg-[#0d9488]" [style.width.%]="s.pct"></div>
+                  </div>
+                </div>
+              }
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
+        <!-- Richesse documentaire -->
+        <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+          <div class="px-5 py-[18px] border-b border-[#f0f2f5]">
+            <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Productivité</div>
+            <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Documents par employé</h2>
+          </div>
+          <div class="px-5 py-5">
+            <div class="grid grid-cols-2 gap-3 mb-5">
+              <div class="rounded-[12px] border border-[#e7ebf1] px-4 py-3.5 bg-[#fafbfd]">
+                <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1">Moyenne / employé</div>
+                <strong class="text-[24px] font-bold text-[#15213d]" style="letter-spacing:-.7px">{{ docsPerEmployee() | number:'1.1-1' }}</strong>
+              </div>
+              <div class="rounded-[12px] border border-[#e7ebf1] px-4 py-3.5 bg-[#fafbfd]">
+                <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1">Sans document</div>
+                <strong class="text-[24px] font-bold text-[#ef4444]" style="letter-spacing:-.7px">{{ employeesWithoutDoc() }}</strong>
+                <span class="text-[10px] text-[#9aa5b7] block">/ {{ totalEmployees() }} employés</span>
+              </div>
+            </div>
+            <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-3">Documents ce mois par département</div>
+            @if (docsThisMonthByDepartment().length === 0) {
+              <div class="text-center text-[#9aa5b7] text-[12px] py-6 border-t border-[#f0f2f5]">Aucun document ce mois.</div>
+            } @else {
+              <div class="space-y-2.5">
+                @for (dept of docsThisMonthByDepartment(); track dept.name) {
+                  <div class="flex items-center justify-between gap-2 text-[12px]">
+                    <span class="font-medium text-[#15213d] truncate">{{ dept.name }}</span>
+                    <span class="px-[9px] py-1 rounded-full bg-[#f2ecff] text-[#8b5cf6] text-[11px] font-bold w-max">{{ dept.count }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </section>
 
-  </ng-container>
+      <!-- Documents récents + Réclamations par jour -->
+      <section class="grid grid-cols-1 xl:grid-cols-[1.55fr_1fr] gap-4 mb-4">
+        <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+          <div class="flex justify-between items-center px-5 py-[18px] border-b border-[#f0f2f5]">
+            <div>
+              <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">GED</div>
+              <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Documents récents</h2>
+            </div>
+            <a routerLink="/documents" class="text-[#2563eb] text-[12px] font-semibold hover:underline">Voir tout →</a>
+          </div>
+
+          @if (recentDocGroups().length === 0) {
+            <div class="py-14 text-center">
+              <div class="w-12 h-12 rounded-xl bg-[#f1f3f6] flex items-center justify-center mx-auto mb-3">
+                <svg lucideFiles class="w-6 h-6 text-[#9aa5b7]"></svg>
+              </div>
+              <p class="text-[#9aa5b7] text-[12px]">Aucun document récent.</p>
+            </div>
+          } @else {
+            <div class="px-4 py-3 space-y-3 h-[320px] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]">
+              @for (group of recentDocGroups(); track group.employeeId) {
+                <div class="overflow-hidden rounded-[12px] border border-[#e7ebf1] bg-white">
+                  <button (click)="toggleRecentGroup(group.employeeId)"
+                    class="w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-[#f8fafc]">
+                    <div class="flex items-center gap-3 min-w-0">
+                      @if (group.employeeHasPhoto) {
+                        <img [src]="apiUrl + '/employees/' + group.employeeId + '/photo/content'" alt=""
+                          class="w-[38px] h-[38px] rounded-full object-cover border border-[#e7ebf1] shrink-0">
+                      } @else {
+                        <div class="w-[38px] h-[38px] rounded-full bg-[#edf0f4] flex items-center justify-center text-[13px] font-bold text-[#66738a] shrink-0">
+                          {{ (group.employeeFirstName || '?').charAt(0) }}{{ (group.employeeLastName || '?').charAt(0) }}
+                        </div>
+                      }
+                      <div class="min-w-0">
+                        <strong class="block text-[13px] font-semibold text-[#15213d] truncate">{{ group.employeeFirstName }} {{ group.employeeLastName }}</strong>
+                        <span class="text-[11px] text-[#66738a]">{{ group.employeeMatricule || '—' }} · {{ group.documents.length }} document(s)</span>
+                      </div>
+                    </div>
+                    <svg lucideChevronDown class="w-3.5 h-3.5 text-[#68758a] transition-transform duration-200 shrink-0"
+                      [class.rotate-180]="expandedRecentGroups().has(group.employeeId)"></svg>
+                  </button>
+
+                  @if (expandedRecentGroups().has(group.employeeId)) {
+                    <div class="border-t border-[#f0f2f5]">
+                      @for (doc of group.documents; track doc.id) {
+                        <button (click)="openDocument(doc)"
+                          class="w-full flex items-center gap-3 px-4 py-3 border-b border-[#f0f2f5] last:border-0 text-left transition-colors hover:bg-[#f8fafc]">
+                          <div class="w-[36px] h-[36px] rounded-[8px] bg-[#f1f3f6] flex items-center justify-center shrink-0">
+                            <svg lucideFileText class="w-4 h-4 text-[#66738a]"></svg>
+                          </div>
+                          <div class="flex-1 min-w-0">
+                            <strong class="block text-[13px] font-medium text-[#15213d] truncate">{{ doc.name }}</strong>
+                            <span class="block text-[11px] text-[#6b7a93]">{{ documentTypeLabel(doc.type) }} · {{ formatDate(doc.createdAt) }}</span>
+                          </div>
+                          <span class="text-[11px] font-semibold px-[9px] py-1 rounded-full w-max shrink-0"
+                            [ngClass]="{
+                              'text-[#16a34a] bg-[#e9f9ef]': doc.status === 'validé',
+                              'text-[#f59e0b] bg-[#fff5dd]': doc.status === 'en attente',
+                              'text-[#66738a] bg-[#f1f3f6]': doc.status === 'brouillon'
+                            }">{{ doc.status || '—' }}</span>
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Réclamations par jour -->
+        <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+          <div class="flex justify-between items-center px-5 py-[18px] border-b border-[#f0f2f5]">
+            <div>
+              <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Tendance</div>
+              <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Réclamations — 12 mois</h2>
+            </div>
+            <svg lucideAlertCircle class="w-4 h-4 text-[#68758a]"></svg>
+          </div>
+          <div class="px-5 py-6">
+            @if (reclamationsByMonth().length === 0) {
+              <div class="py-10 text-center text-[#9aa5b7] text-[12px]">Aucune réclamation.</div>
+            } @else {
+              <div #reclScroll class="overflow-x-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]">
+                <div class="flex items-end gap-[6px] min-w-[500px]" style="height: 200px;">
+                  @for (m of reclamationsByMonth(); track m.month) {
+                    <div class="flex-none w-[42px] flex flex-col items-center justify-end h-full"
+                      [attr.data-current]="m.isCurrent ? 'true' : null">
+                      <span class="text-[10px] text-[#66738a] mb-1 font-semibold" *ngIf="m.count > 0">{{ m.count }}</span>
+                      <div class="w-full min-w-[6px] rounded-t-[4px] transition-all duration-700"
+                        [style.height.%]="m.pct"
+                        [ngClass]="{
+                          'bg-[#2563eb]': m.isCurrent,
+                          'bg-[#93b4f8]': !m.isCurrent && m.count > 0,
+                          'bg-[#edf0f4]': !m.isCurrent && m.count === 0
+                        }"
+                        [style.opacity]="m.count === 0 ? '0.6' : '1'"></div>
+                      <span class="text-[9px] text-[#9aa5b7] mt-1.5 leading-tight truncate w-full text-center">{{ m.month }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+    </ng-container>
+  </div>
 </div>

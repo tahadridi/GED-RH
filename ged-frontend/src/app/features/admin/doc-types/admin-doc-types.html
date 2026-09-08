@@ -1,58 +1,114 @@
-<div class="p-8">
-  <div class="mb-8">
-    <h1 class="text-2xl font-bold text-black-900">Types de documents</h1>
-    <p class="text-sm text-gray-500 mt-1">Gérez les types de documents disponibles dans l'application.</p>
+<div class="min-h-screen bg-[#f7f9fc] text-[#17233c] font-[Inter,system-ui,Arial,sans-serif]">
+
+  <!-- Breadcrumb -->
+  <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+    <div class="flex items-center gap-2.5 text-[14px] text-[#9aa5b7]">
+      <span>GED</span>
+      <span>&rsaquo;</span>
+      
+      <b class="font-semibold text-[#66738a]">Types de documents</b>
+    </div>
   </div>
 
-  <!-- Gradient divider -->
-  <div class="mb-8 h-px bg-gradient-to-r from-blue-400 via-purple-400 to-transparent"></div>
+  <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-6">
 
-  <div class="space-y-8">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4">Nouveau type</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">Nom</label>
-          <input [(ngModel)]="newName" placeholder="Ex: Attestation de travail"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+    <!-- Heading -->
+    <section class="flex justify-between items-end gap-6 flex-wrap pb-7 mb-6" style="border-bottom:1px solid #e7ecf2">
+      <div class="flex items-center gap-4">
+        <div class="w-[50px] h-[50px] rounded-[15px] bg-[#edf4ff] text-[#2563eb] flex items-center justify-center shrink-0 shadow-[inset_0_0_0_1px_rgba(37,99,235,.08)]">
+          <svg lucideFileText class="w-[22px] h-[22px]"></svg>
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">Description</label>
+          <h1 class="text-[29px] font-extrabold mb-2" style="letter-spacing:-1px">Types de documents</h1>
+          <p class="text-[14px] text-[#8793a6]">Gérez les types de documents disponibles dans l'application.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Add Type -->
+    <section class="bg-white border border-[#e7ecf2] rounded-[14px] p-[19px] shadow-[0_6px_22px_rgba(19,35,68,.03)] mb-6">
+      <h2 class="text-[13.5px] font-bold uppercase tracking-wide text-[#7a879b] mb-4">Nouveau type</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-[12px] font-semibold text-[#7a879b] mb-1.5 uppercase tracking-wide">Nom</label>
+          <input [(ngModel)]="newName" placeholder="Ex: Attestation de travail"
+            class="w-full px-3 py-[9px] border border-[#e1e7ef] rounded-[9px] text-[13.5px] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 focus:border-[#2563eb]">
+        </div>
+        <div>
+          <label class="block text-[12px] font-semibold text-[#7a879b] mb-1.5 uppercase tracking-wide">Description</label>
           <input [(ngModel)]="newDescription" placeholder="Description courte"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+            class="w-full px-3 py-[9px] border border-[#e1e7ef] rounded-[9px] text-[13.5px] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 focus:border-[#2563eb]">
         </div>
         <div class="flex items-end">
           <button (click)="add()" [disabled]="!newName.trim()"
-            class="w-full py-2 bg-blue-800 text-white rounded-lg text-sm font-medium hover:bg-blue-900 disabled:opacity-50 transition-colors">
+            class="w-full h-[40px] px-[17px] bg-[#2563eb] text-white rounded-[9px] text-[13px] font-bold shadow-[0_5px_14px_rgba(37,99,235,.13)] hover:bg-[#1d4ed8] disabled:opacity-50 transition-colors inline-flex items-center justify-center gap-2">
+            <svg lucidePlus class="w-4 h-4"></svg>
             Ajouter
           </button>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div *ngIf="loading()" class="text-center text-gray-400 text-sm py-8">Chargement...</div>
+    <!-- Search -->
+    <section class="bg-white border border-[#e7ecf2] rounded-[14px] p-[17px] shadow-[0_6px_22px_rgba(19,35,68,.03)] mb-6">
+      <label class="block text-[12px] font-semibold text-[#7a879b] mb-1.5 uppercase tracking-wide">Recherche</label>
+      <div class="relative">
+        <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9aa5b7]"></svg>
+        <input [(ngModel)]="searchQuery" type="text" placeholder="Nom ou description du type..."
+          class="w-full pl-9 pr-9 py-[9px] border border-[#e1e7ef] rounded-[9px] text-[13.5px] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 focus:border-[#2563eb]">
+        <button *ngIf="searchQuery()" (click)="clearSearch()"
+          class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#9aa5b7] hover:text-[#17233c] rounded transition-colors">
+          <svg lucideX class="w-4 h-4"></svg>
+        </button>
+      </div>
+    </section>
 
-    <div *ngIf="!loading() && docTypes().length === 0" class="text-center text-gray-400 text-sm py-8">
-      Aucun type de document défini.
-    </div>
+    <!-- Loading -->
+    <div *ngIf="loading()" class="p-8 text-center text-[#95a1b3] text-sm">Chargement...</div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div *ngFor="let t of docTypes()" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="p-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-blue-900 rounded-lg flex items-center justify-center">
+    <!-- Types List -->
+    <div *ngIf="!loading() && filteredTypes().length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div *ngFor="let t of filteredTypes()" class="bg-white border border-[#e7ecf2] rounded-[14px] overflow-hidden shadow-[0_6px_22px_rgba(19,35,68,.03)] flex flex-col">
+        <div class="p-4 border-b border-[#eaeff5] bg-[#fcfdff] flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 bg-[#3b5bdb] rounded-[10px] flex items-center justify-center">
               <svg lucideFileText class="w-4 h-4 text-white"></svg>
             </div>
-            <h3 class="font-bold text-gray-900">{{ t.name }}</h3>
+            <h3 class="font-bold text-[14.5px] text-[#17233c]">{{ t.name }}</h3>
           </div>
-          <button (click)="delete(t.id)" class="p-1.5 text-gray-400 hover:text-red-600 transition-colors">
+          <button (click)="askDelete(t.id, t.name)" class="p-1.5 text-[#9aa5b7] hover:text-[#dc2626] transition-colors" title="Supprimer">
             <svg lucideTrash2 class="w-4 h-4"></svg>
           </button>
         </div>
         <div class="p-4">
-          <p class="text-sm text-gray-500">{{ t.description || 'Aucune description' }}</p>
+          <p class="text-[13px] text-[#66738a]">{{ t.description || 'Aucune description' }}</p>
         </div>
       </div>
+    </div>
+
+    <div *ngIf="!loading() && filteredTypes().length === 0" class="p-8 text-center text-[#95a1b3] text-sm">
+      {{ docTypes().length === 0 ? 'Aucun type de document défini.' : 'Aucun résultat pour cette recherche.' }}
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div *ngIf="confirmState()" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" (click)="closeConfirm()">
+  <div class="bg-white rounded-[14px] shadow-xl w-full max-w-sm mx-4 p-6" (click)="$event.stopPropagation()">
+    <div class="w-[42px] h-[42px] rounded-full bg-[#fdeaea] text-[#dc2626] flex items-center justify-center mb-4">
+      <svg lucideAlertTriangle class="w-5 h-5"></svg>
+    </div>
+    <h3 class="text-[16px] font-bold text-[#17233c]" style="letter-spacing:-.3px">Confirmer la suppression</h3>
+    <p class="text-[13.5px] text-[#66738a] mt-1.5 leading-relaxed">{{ confirmState()?.message }}</p>
+    <div class="flex gap-2.5 mt-6">
+      <button (click)="closeConfirm()"
+        class="flex-1 h-[40px] rounded-[9px] border border-[#e1e7ef] text-[13px] font-bold text-[#66738a] hover:bg-[#f7f9fc] transition-colors">
+        Annuler
+      </button>
+      <button (click)="confirmAction()"
+        class="flex-1 h-[40px] rounded-[9px] bg-[#dc2626] text-white text-[13px] font-bold hover:bg-[#b91c1c] transition-colors">
+        Supprimer
+      </button>
     </div>
   </div>
 </div>

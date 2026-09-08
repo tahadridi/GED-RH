@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -177,6 +178,14 @@ public class DocumentController {
         return documentService.searchDocuments(criteria, actor);
     }
 
+    @GetMapping("/stats")
+    @Transactional(readOnly = true)
+    @Operation(summary = "Statistiques des documents", description = "Total, taille stockee, documents du mois et repartition par type, restreints à ce que l'utilisateur peut voir.")
+    public ResponseEntity<Map<String, Object>> stats() {
+        SystemUser actor = accessControlService.getCurrentUser();
+        return ResponseEntity.ok(documentService.getStatsForActor(actor));
+    }
+
     @GetMapping("/employee/{employeeId}")
     @Transactional(readOnly = true)
     @Operation(summary = "Lister les documents d'un employe")
@@ -229,6 +238,18 @@ public class DocumentController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         documentService.deleteDocument(id);
+    }
+
+    @DeleteMapping("/versions/{versionId}")
+    @Operation(summary = "Supprimer une version specifique")
+    public void deleteVersion(@Parameter(description = "ID de la version") @PathVariable UUID versionId) {
+        SystemUser actor = accessControlService.getCurrentUser();
+        if (actor == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        DocumentVersion v = documentService.getVersion(versionId);
+        if (!accessControlService.canManageDocument(actor, v.getDocument().getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        documentService.deleteVersion(versionId);
     }
 
     // ---- Request/Response classes ----

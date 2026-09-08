@@ -5,13 +5,13 @@ import { EmployeeService } from '../../../core/services/employee.service';
 import { OrganizationService, Department } from '../../../core/services/organization.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Employee, EmployeeStatus } from '../../../core/models/employee.model';
-import { LucideX, LucideSearch, LucideCheck, LucideChevronDown, LucideChevronRight, LucideCamera } from '@lucide/angular';
+import { LucideX, LucideSearch, LucideCheck, LucideChevronDown, LucideChevronRight, LucideCamera, LucideUserPlus } from '@lucide/angular';
 import { getErrorMessage } from '../../../core/utils/error.utils';
 
 @Component({
   selector: 'app-employee-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideX, LucideSearch, LucideCheck, LucideChevronDown, LucideChevronRight, LucideCamera],
+  imports: [CommonModule, FormsModule, LucideX, LucideSearch, LucideCheck, LucideChevronDown, LucideChevronRight, LucideCamera, LucideUserPlus],
   templateUrl: './employee-form.html'
 })
 export class EmployeeForm implements OnInit {
@@ -47,9 +47,9 @@ export class EmployeeForm implements OnInit {
   reportSearchQuery = '';
   expandedDepts = new Set<string>();
 
-  statuses: EmployeeStatus[] = ['ACTIVE', 'INACTIVE', 'ON_LEAVE', 'TERMINATED'];
+  statuses: EmployeeStatus[] = ['ACTIVE', 'ON_LEAVE', 'TERMINATED'];
   statusLabels: Record<string, string> = {
-    ACTIVE: 'Actif', INACTIVE: 'Inactif', ON_LEAVE: 'En congé', TERMINATED: 'Terminé'
+    ACTIVE: 'Actif', ON_LEAVE: 'En congé', TERMINATED: 'Terminé'
   };
 
   constructor(
