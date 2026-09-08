@@ -335,6 +335,169 @@
       </div>
     </section>
 
+    <!-- RH / Effectifs (style DG) -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+      <!-- Effectif par statut -->
+      <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+        <div class="px-5 py-[18px] border-b border-[#f0f2f5]">
+          <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">RH / Effectifs</div>
+          <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Effectif par statut</h2>
+        </div>
+        <div class="px-5 py-4 space-y-3.5">
+          <div *ngIf="employees().length === 0" class="py-10 text-center text-[#9aa5b7] text-[12px]">Aucun employé.</div>
+          <div *ngFor="let s of statusBreakdown()" class="flex items-center gap-3">
+            <span class="w-[9px] h-[9px] rounded-full shrink-0"
+              [ngClass]="{
+                'bg-[#16a34a]': s.status === 'ACTIVE',
+                'bg-[#ef4444]': s.status === 'TERMINATED',
+                'bg-[#f59e0b]': s.status === 'ON_LEAVE'
+              }"></span>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between text-[12px] mb-1.5">
+                <strong class="font-semibold text-[#15213d]">{{ s.label }}</strong>
+                <span class="text-[#66738a]">{{ s.count }} · {{ s.pct | number:'1.0-0' }}%</span>
+              </div>
+              <div class="h-[5px] rounded-full bg-[#edf0f4] overflow-hidden">
+                <div class="h-full rounded-full" [style.width.%]="s.pct"
+                  [ngClass]="{
+                    'bg-[#16a34a]': s.status === 'ACTIVE',
+                    'bg-[#ef4444]': s.status === 'TERMINATED',
+                    'bg-[#f59e0b]': s.status === 'ON_LEAVE'
+                  }"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Embauches & Départs 12 mois -->
+      <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)] lg:col-span-2">
+        <div class="px-5 py-[18px] border-b border-[#f0f2f5]">
+          <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Croissance & rotation du personnel</div>
+          <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Embauches & Départs — 12 mois</h2>
+        </div>
+        <div class="grid grid-cols-1 xl:grid-cols-2 divide-y xl:divide-y-0 xl:divide-x divide-[#f0f2f5]">
+          <div class="px-5 pt-5 pb-4">
+            <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.05em] uppercase mb-3">Embauches</div>
+            <div class="overflow-x-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]">
+              <div class="flex items-end gap-[8px] min-w-[420px]" style="height: 120px;">
+                <div *ngFor="let m of hiresByMonth()" class="flex-none w-[38px] flex flex-col items-center justify-end h-full">
+                  <span class="text-[10px] text-[#66738a] mb-1 font-semibold" *ngIf="m.count > 0">{{ m.count }}</span>
+                  <div class="w-full min-w-[6px] rounded-t-[4px] transition-all duration-700"
+                    [style.height.%]="m.pct"
+                    [ngClass]="{
+                      'bg-[#2563eb]': m.isCurrent,
+                      'bg-[#93b4f8]': !m.isCurrent && m.count > 0,
+                      'bg-[#edf0f4]': !m.isCurrent && m.count === 0
+                    }"
+                    [style.opacity]="m.count === 0 ? '0.6' : '1'"></div>
+                  <span class="text-[9px] text-[#9aa5b7] mt-1.5 truncate w-full text-center leading-tight">{{ m.month }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="px-5 pt-5 pb-4">
+            <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.05em] uppercase mb-3">Départs</div>
+            <div *ngIf="totalDepartures() === 0" class="h-[120px] flex items-center justify-center text-[12px] text-[#9aa5b7]">Aucun départ enregistré.</div>
+            <div *ngIf="totalDepartures() > 0" class="overflow-x-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]">
+              <div class="flex items-end gap-[8px] min-w-[420px]" style="height: 120px;">
+                <div *ngFor="let m of departuresByMonth()" class="flex-none w-[38px] flex flex-col items-center justify-end h-full">
+                  <span class="text-[10px] text-[#66738a] mb-1 font-semibold" *ngIf="m.count > 0">{{ m.count }}</span>
+                  <div class="w-full min-w-[6px] rounded-t-[4px] transition-all duration-700"
+                    [style.height.%]="m.pct"
+                    [ngClass]="{
+                      'bg-[#ef4444]': m.isCurrent,
+                      'bg-[#f8a1a1]': !m.isCurrent && m.count > 0,
+                      'bg-[#edf0f4]': !m.isCurrent && m.count === 0
+                    }"
+                    [style.opacity]="m.count === 0 ? '0.6' : '1'"></div>
+                  <span class="text-[9px] text-[#9aa5b7] mt-1.5 truncate w-full text-center leading-tight">{{ m.month }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between px-5 pt-4 pb-5 border-t border-[#f0f2f5]">
+          <div>
+            <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1">Ancienneté moyenne</div>
+            <strong class="text-[22px] font-bold text-[#15213d]" style="letter-spacing:-.7px">{{ averageTenureYears() | number:'1.1-1' }} ans</strong>
+          </div>
+          <div class="text-center">
+            <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1">Employés actifs</div>
+            <strong class="text-[22px] font-bold text-[#15213d]" style="letter-spacing:-.7px">{{ totalActiveEmployees() }}</strong>
+          </div>
+          <div class="text-right">
+            <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1">Total départs</div>
+            <strong class="text-[22px] font-bold text-[#15213d]" style="letter-spacing:-.7px">{{ totalDepartures() }}</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stockage + Richesse documentaire (style DG) -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-7">
+      <!-- Stockage consommé -->
+      <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+        <div class="px-5 py-[18px] border-b border-[#f0f2f5]">
+          <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Stockage</div>
+          <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Espace consommé</h2>
+        </div>
+        <div class="px-5 py-5">
+          <div class="flex items-end justify-between gap-3 mb-3">
+            <div>
+              <strong class="text-[26px] font-bold text-[#15213d]" style="letter-spacing:-.7px">{{ docStorageUsedLabel }}</strong>
+              <span class="text-[12px] text-[#9aa5b7] block mb-1.5">documents numérisés</span>
+              <div class="h-[9px] rounded-full bg-[#edf0f4] overflow-hidden mt-2.5">
+                <div class="h-full rounded-full bg-[#0d9488]" [style.width.%]="docStorageOfDiskPct"></div>
+              </div>
+              <span class="text-[10px] text-[#9aa5b7] mt-1.5 block">{{ docStorageOfDiskPct }}% du disque total ({{ diskTotalLabel }})</span>
+            </div>
+          </div>
+          <div class="mt-4 pt-4 border-t border-[#f0f2f5] space-y-3 max-h-[150px] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] pr-1">
+            <div *ngFor="let s of storageByDepartment()">
+              <div class="flex justify-between text-[12px] mb-1.5">
+                <strong class="font-semibold text-[#15213d]">{{ s.name }}</strong>
+                <span class="text-[#66738a]">{{ s.sizeLabel }} · {{ s.pct | number:'1.0-0' }}%</span>
+              </div>
+              <div class="h-[6px] rounded-full bg-[#edf0f4] overflow-hidden">
+                <div class="h-full rounded-full bg-[#0d9488]" [style.width.%]="s.pct"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Documents par employé -->
+      <div class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)]">
+        <div class="px-5 py-[18px] border-b border-[#f0f2f5]">
+          <div class="text-[11px] text-[#9aa5b7] font-bold tracking-[.1em] uppercase mb-1">Productivité</div>
+          <h2 class="text-[18px] font-bold" style="letter-spacing:-.25px">Documents par employé</h2>
+        </div>
+        <div class="px-5 py-5">
+          <div class="grid grid-cols-2 gap-3 mb-5">
+            <div class="rounded-[12px] border border-[#e7ebf1] px-4 py-3.5 bg-[#fafbfd]">
+              <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1">Moyenne / employé</div>
+              <strong class="text-[24px] font-bold text-[#15213d]" style="letter-spacing:-.7px">{{ docsPerEmployee() | number:'1.1-1' }}</strong>
+            </div>
+            <div class="rounded-[12px] border border-[#e7ebf1] px-4 py-3.5 bg-[#fafbfd]">
+              <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-1">Sans document</div>
+              <strong class="text-[24px] font-bold text-[#ef4444]" style="letter-spacing:-.7px">{{ employeesWithoutDoc() }}</strong>
+              <span class="text-[10px] text-[#9aa5b7] block">/ {{ totalEmployees() }} employés</span>
+            </div>
+          </div>
+          <div class="text-[10px] font-bold uppercase tracking-[.08em] text-[#9aa5b7] mb-3">Documents ce mois par département</div>
+          <div *ngIf="docsThisMonthByDepartment().length === 0" class="text-center text-[#9aa5b7] text-[12px] py-6 border-t border-[#f0f2f5]">Aucun document ce mois.</div>
+          <div *ngIf="docsThisMonthByDepartment().length > 0" class="space-y-2.5">
+            <div *ngFor="let dept of docsThisMonthByDepartment()" class="flex items-center justify-between gap-2 text-[12px]">
+              <span class="font-medium text-[#15213d] truncate">{{ dept.name }}</span>
+              <span class="px-[9px] py-1 rounded-full bg-[#f2ecff] text-[#8b5cf6] text-[11px] font-bold w-max">{{ dept.count }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Employés (compact) -->
     <section #employesSection class="bg-white border border-[#e7ebf1] rounded-[16px] overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,.03)] mb-4">
       <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-[16px] border-b border-[#f0f2f5]">

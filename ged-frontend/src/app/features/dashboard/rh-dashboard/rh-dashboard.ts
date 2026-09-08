@@ -148,6 +148,111 @@ export class RhDashboard implements OnInit, AfterViewInit, OnDestroy {
   distributionLoading = signal(true);
   allDocuments = signal<any[]>([]); // store all docs for client-side stats
 
+  // RH / Effectifs analytics (style DG)
+  totalActiveEmployees = computed(() => this.employees().filter(e => e.status === 'ACTIVE').length);
+  totalDepartures = computed(() => this.employees().filter(e => e.status === 'TERMINATED').length);
+
+  statusBreakdown = computed(() => {
+    const labels: Record<string, string> = { ACTIVE: 'Actif', ON_LEAVE: 'En congé', TERMINATED: 'Terminé' };
+    const order = ['ACTIVE', 'ON_LEAVE', 'TERMINATED'];
+    const counts = new Map<string, number>();
+    for (const e of this.employees()) {
+      const s = e.status || 'ACTIVE';
+      counts.set(s, (counts.get(s) || 0) + 1);
+    }
+    const total = this.employees().length || 1;
+    return order
+      .filter(s => counts.has(s))
+      .map(s => ({
+        status: s,
+        label: labels[s] ?? s,
+        count: counts.get(s) || 0,
+        pct: ((counts.get(s) || 0) / total) * 100
+      }));
+  });
+
+  averageTenureYears = computed(() => {
+    const emps = this.employees().filter(e => e.hireDate && e.status !== 'TERMINATED');
+    if (emps.length === 0) return 0;
+    let totalDays = 0;
+    for (const e of emps) {
+      totalDays += (Date.now() - new Date(e.hireDate).getTime()) / 86400000;
+    }
+    return totalDays / 365.25 / emps.length;
+  });
+
+  hiresByMonth = computed(() => this.monthSeries(this.employees(), 12, (e: any) => e.hireDate));
+  departuresByMonth = computed(() => this.monthSeries(this.employees().filter(e => (e as any).terminationDate && e.status === 'TERMINATED'), 12, (e: any) => e.terminationDate));
+  docsByMonth = computed(() => this.monthSeries(this.allDocuments(), 12, (d: any) => d.createdAt));
+
+  totalDocuments = computed(() => this.allDocuments().length);
+
+  documentsThisMonth = computed(() => {
+    const now = new Date();
+    const m = now.getMonth();
+    const y = now.getFullYear();
+    return this.allDocuments().filter(d => {
+      const dt = new Date(d.createdAt);
+      return dt.getMonth() === m && dt.getFullYear() === y;
+    }).length;
+  });
+
+  docsThisMonthPct = computed(() => {
+    const total = this.totalDocuments();
+    if (total === 0) return 0;
+    return Math.min(100, +((this.documentsThisMonth() / total) * 100).toFixed(1));
+  });
+
+  docsPerEmployee = computed(() => {
+    const total = this.employees().length || 1;
+    return this.allDocuments().length / total;
+  });
+
+  employeesWithoutDoc = computed(() => {
+    const ids = new Set(this.allDocuments().map(d => d.employeeId));
+    return this.employees().filter(e => !ids.has(e.id)).length;
+  });
+
+  docsThisMonthByDepartment = computed(() => {
+    const now = new Date();
+    const m = now.getMonth();
+    const y = now.getFullYear();
+    const empIdToDept = new Map<string, string>();
+    for (const e of this.employees()) empIdToDept.set(e.id, e.department || 'Sans département');
+    const counts = new Map<string, number>();
+    for (const d of this.allDocuments()) {
+      const dt = new Date(d.createdAt);
+      if (dt.getMonth() !== m || dt.getFullYear() !== y) continue;
+      const dept = empIdToDept.get(d.employeeId) || 'Sans département';
+      counts.set(dept, (counts.get(dept) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
+  });
+
+  docSizeTotal = computed(() => this.allDocuments().reduce((s, d) => s + (d.fileSize || 0), 0));
+
+  storageByDepartment = computed(() => {
+    const empIdToDept = new Map<string, string>();
+    for (const e of this.employees()) empIdToDept.set(e.id, e.department || 'Sans département');
+    const deptSize = new Map<string, number>();
+    for (const d of this.allDocuments()) {
+      const dept = empIdToDept.get(d.employeeId) || 'Sans département';
+      deptSize.set(dept, (deptSize.get(dept) || 0) + (d.fileSize || 0));
+    }
+    const total = this.docSizeTotal() || 1;
+    return Array.from(deptSize.entries())
+      .map(([name, sizeBytes]) => ({
+        name,
+        sizeBytes,
+        sizeLabel: this.formatBytes(sizeBytes),
+        pct: (sizeBytes / total) * 100
+      }))
+      .sort((a, b) => b.sizeBytes - a.sizeBytes);
+  });
+
   // Employee search
   employeeSearch = signal('');
 
@@ -250,6 +355,28 @@ export class RhDashboard implements OnInit, AfterViewInit, OnDestroy {
     return Math.min(100, +(this.storageBytes() / total * 100).toFixed(1));
   }
 
+  get docStorageUsedLabel(): string {
+    return this.formatBytes(this.docSizeTotal());
+  }
+
+  get docStorageOfDiskPct(): number {
+    const total = this.diskTotal();
+    if (total <= 0) return 0;
+    return Math.min(100, +((this.docSizeTotal() / total) * 100).toFixed(1));
+  }
+
+  get diskTotalLabel(): string {
+    return this.formatBytes(this.diskTotal());
+  }
+
+  formatBytes(bytes?: number | null): string {
+    if (bytes == null || isNaN(bytes) || bytes < 0) return '0 o';
+    if (bytes < 1024) return `${bytes} o`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} Go`;
+  }
+
   distributionColors = ['#3b82f6', '#8b5cf6', '#22c55e', '#f97316', '#ef4444', '#06b6d4', '#ec4899', '#eab308'];
 
   get distributionGradient(): string {
@@ -266,6 +393,25 @@ export class RhDashboard implements OnInit, AfterViewInit, OnDestroy {
 
   // Helper for template
   Math = Math;
+
+  private monthSeries<T>(items: T[], months: number, dateOf: (t: T) => string): { month: string; count: number; pct: number; isCurrent: boolean }[] {
+    const counts = new Map<string, number>();
+    const now = new Date();
+    for (let i = months - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      counts.set(d.toLocaleDateString('fr-FR', { month: 'short' }) + ' ' + String(d.getFullYear()).slice(2), 0);
+    }
+    for (const it of items) {
+      const v = dateOf(it);
+      if (!v) continue;
+      const d = new Date(v);
+      const key = d.toLocaleDateString('fr-FR', { month: 'short' }) + ' ' + String(d.getFullYear()).slice(2);
+      if (counts.has(key)) counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    const max = Math.max(...Array.from(counts.values()), 1);
+    const currentKey = now.toLocaleDateString('fr-FR', { month: 'short' }) + ' ' + String(now.getFullYear()).slice(2);
+    return Array.from(counts.entries()).map(([month, count]) => ({ month, count, pct: (count / max) * 100, isCurrent: month === currentKey }));
+  }
 
   respColors: Array<{ bg: string; text: string }> = [
     { bg: '#eaf2ff', text: '#2563eb' },
