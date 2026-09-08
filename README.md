@@ -11,8 +11,7 @@ Elle s'adresse à différents profils avec des droits d'accès adaptés :
 - **Administrateur** : gestion des utilisateurs, rôles, types de documents et de l'organisation.
 - **Direction Générale** : vue globale et tableaux de bord (employés, réclamations, documents).
 - **RH** : accès complet aux dossiers documents de tous les employés et validation des réclamations.
-- **Manager** : gestion de son équipe (employés, documents, réclamations, calendrier).
-- **Employé** : consultation de ses documents, dépôt de réclamations.
+- **Manager** : gestion de son équipe (employés, documents, réclamations).
 
 ## Technologies
 
@@ -31,8 +30,7 @@ cd ged-backend
 
 # Frontend
 cd ged-frontend
-npm install
-npm start                     # App : http://localhost:4200
+ng serve                     # App : http://localhost:4200
 ```
 
 ### Avec Docker
