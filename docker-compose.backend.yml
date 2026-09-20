@@ -4,8 +4,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: Gestion_Administratif
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD:LOCAL_DEV_CREDENTIALS
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     # Port hôte 5433 pour ne pas entrer en conflit avec un Postgres local sur 5432
     ports:
       - "5433:5432"
@@ -13,7 +13,7 @@ services:
       # Postgres 18+ exige le montage sur /var/lib/postgresql (donnees dans un sous-dossier versionne)
       - postgres-data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,8 +23,8 @@ services:
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: LOCAL_DEV_CREDENTIALS
-      MINIO_ROOT_PASSWORD: LOCAL_DEV_CREDENTIALS
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     # Ports hôtes 9002/9003 pour ne pas entrer en conflit avec un MinIO local sur 9000
     ports:
       - "9002:9000"
@@ -42,11 +42,11 @@ services:
       - ./ged-backend/.env
     environment:
       DB_URL: jdbc:postgresql://postgres:5432/Gestion_Administratif
-      DB_USERNAME: postgres
-      DB_PASSWORD:LOCAL_DEV_CREDENTIALS
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
       MINIO_URL: http://minio:9000
-      MINIO_ACCESS_KEY: LOCAL_DEV_CREDENTIALS
-      MINIO_SECRET_KEY: LOCAL_DEV_CREDENTIALS
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
       MINIO_BUCKET: ged-rh
       TESSDATA_PATH: /usr/share/tesseract-ocr/5/tessdata
       APP_SECURITY_ALLOWED_ORIGINS: http://localhost:4200,http://localhost:8081

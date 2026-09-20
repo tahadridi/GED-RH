@@ -44,3 +44,5 @@ __screenshots__/
 Thumbs.db
 
 .env
+# Clés Supabase réelles (côté frontend) — non commitées
+src/environments/supabase.config.ts

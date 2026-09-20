@@ -1,3 +1,6 @@
 # Documentation interne / rapport de stage (ne pas pousser)
 rapport/
 ARCHITECTURE.md
+
+# Secrets / config locale (ne pas pousser)
+.env
