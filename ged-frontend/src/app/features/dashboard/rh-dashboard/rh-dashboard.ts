@@ -14,6 +14,19 @@ import { environment } from '../../../../environments/environment';
 import { getErrorMessage } from '../../../core/utils/error.utils';
 import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe';
 import {
+  buildRecentGroups,
+  buildMonthSeries,
+  computeStorageAnalytics,
+  buildStatusBreakdown,
+  computeAverageTenure,
+  countDepartments,
+  countDocsThisMonth,
+  buildCalendarEvents,
+  currentGreeting,
+  formatBytesBinary
+} from '../../../shared/analytics';
+import { announcementPriorityLabel, announcementEyebrow as announcementEyebrowFn, formatBytesFrench } from '../../../shared/document-types';
+import {
   LucideUpload,
   LucideScanText,
   LucideCheck,
@@ -44,15 +57,6 @@ interface DocumentItem {
   employeeId: string;
   type: DocumentType;
   createdAt: Date;
-}
-
-interface EmployeeGroup {
-  employeeId: string;
-  employeeFirstName: string;
-  employeeLastName: string;
-  employeeMatricule: string;
-  employeeHasPhoto: boolean;
-  documents: DocumentItem[];
 }
 
 interface DistributionItem {
@@ -127,23 +131,7 @@ export class RhDashboard implements OnInit, AfterViewInit, OnDestroy {
   recentDocuments = signal<DocumentItem[]>([]);
   recentDocsLoading = signal(true);
   expandedRecentGroups = signal<Set<string>>(new Set());
-  recentGroups = computed(() => {
-    const map = new Map<string, EmployeeGroup>();
-    for (const doc of this.recentDocuments()) {
-      if (!map.has(doc.employeeId)) {
-        map.set(doc.employeeId, {
-          employeeId: doc.employeeId,
-          employeeFirstName: doc.employeeFirstName,
-          employeeLastName: doc.employeeLastName,
-          employeeMatricule: doc.employeeMatricule,
-          employeeHasPhoto: doc.employeeHasPhoto,
-          documents: []
-        });
-      }
-      map.get(doc.employeeId)!.documents.push(doc);
-    }
-    return Array.from(map.values());
-  });
+  recentGroups = computed(() => buildRecentGroups(this.recentDocuments()));
   docDistribution = signal<DistributionItem[]>([]);
   distributionLoading = signal(true);
   allDocuments = signal<any[]>([]); // store all docs for client-side stats
@@ -152,50 +140,17 @@ export class RhDashboard implements OnInit, AfterViewInit, OnDestroy {
   totalActiveEmployees = computed(() => this.employees().filter(e => e.status === 'ACTIVE').length);
   totalDepartures = computed(() => this.employees().filter(e => e.status === 'TERMINATED').length);
 
-  statusBreakdown = computed(() => {
-    const labels: Record<string, string> = { ACTIVE: 'Actif', ON_LEAVE: 'En congé', TERMINATED: 'Terminé' };
-    const order = ['ACTIVE', 'ON_LEAVE', 'TERMINATED'];
-    const counts = new Map<string, number>();
-    for (const e of this.employees()) {
-      const s = e.status || 'ACTIVE';
-      counts.set(s, (counts.get(s) || 0) + 1);
-    }
-    const total = this.employees().length || 1;
-    return order
-      .filter(s => counts.has(s))
-      .map(s => ({
-        status: s,
-        label: labels[s] ?? s,
-        count: counts.get(s) || 0,
-        pct: ((counts.get(s) || 0) / total) * 100
-      }));
-  });
+  statusBreakdown = computed(() => buildStatusBreakdown(this.employees()));
 
-  averageTenureYears = computed(() => {
-    const emps = this.employees().filter(e => e.hireDate && e.status !== 'TERMINATED');
-    if (emps.length === 0) return 0;
-    let totalDays = 0;
-    for (const e of emps) {
-      totalDays += (Date.now() - new Date(e.hireDate).getTime()) / 86400000;
-    }
-    return totalDays / 365.25 / emps.length;
-  });
+  averageTenureYears = computed(() => computeAverageTenure(this.employees()));
 
-  hiresByMonth = computed(() => this.monthSeries(this.employees(), 12, (e: any) => e.hireDate));
-  departuresByMonth = computed(() => this.monthSeries(this.employees().filter(e => (e as any).terminationDate && e.status === 'TERMINATED'), 12, (e: any) => e.terminationDate));
-  docsByMonth = computed(() => this.monthSeries(this.allDocuments(), 12, (d: any) => d.createdAt));
+  hiresByMonth = computed(() => buildMonthSeries(this.employees(), 12, (e: any) => e.hireDate));
+  departuresByMonth = computed(() => buildMonthSeries(this.employees().filter(e => (e as any).terminationDate && e.status === 'TERMINATED'), 12, (e: any) => e.terminationDate));
+  docsByMonth = computed(() => buildMonthSeries(this.allDocuments(), 12, (d: any) => d.createdAt));
 
   totalDocuments = computed(() => this.allDocuments().length);
 
-  documentsThisMonth = computed(() => {
-    const now = new Date();
-    const m = now.getMonth();
-    const y = now.getFullYear();
-    return this.allDocuments().filter(d => {
-      const dt = new Date(d.createdAt);
-      return dt.getMonth() === m && dt.getFullYear() === y;
-    }).length;
-  });
+  documentsThisMonth = computed(() => countDocsThisMonth(this.allDocuments()));
 
   docsThisMonthPct = computed(() => {
     const total = this.totalDocuments();
@@ -203,55 +158,18 @@ export class RhDashboard implements OnInit, AfterViewInit, OnDestroy {
     return Math.min(100, +((this.documentsThisMonth() / total) * 100).toFixed(1));
   });
 
-  docsPerEmployee = computed(() => {
-    const total = this.employees().length || 1;
-    return this.allDocuments().length / total;
-  });
+  private storageAnalytics = computed(() => computeStorageAnalytics(
+    this.employees(),
+    this.allDocuments(),
+    this.diskTotal(),
+    b => this.formatBytes(b)
+  ));
 
-  employeesWithoutDoc = computed(() => {
-    const ids = new Set(this.allDocuments().map(d => d.employeeId));
-    return this.employees().filter(e => !ids.has(e.id)).length;
-  });
-
-  docsThisMonthByDepartment = computed(() => {
-    const now = new Date();
-    const m = now.getMonth();
-    const y = now.getFullYear();
-    const empIdToDept = new Map<string, string>();
-    for (const e of this.employees()) empIdToDept.set(e.id, e.department || 'Sans département');
-    const counts = new Map<string, number>();
-    for (const d of this.allDocuments()) {
-      const dt = new Date(d.createdAt);
-      if (dt.getMonth() !== m || dt.getFullYear() !== y) continue;
-      const dept = empIdToDept.get(d.employeeId) || 'Sans département';
-      counts.set(dept, (counts.get(dept) || 0) + 1);
-    }
-    return Array.from(counts.entries())
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 6);
-  });
-
-  docSizeTotal = computed(() => this.allDocuments().reduce((s, d) => s + (d.fileSize || 0), 0));
-
-  storageByDepartment = computed(() => {
-    const empIdToDept = new Map<string, string>();
-    for (const e of this.employees()) empIdToDept.set(e.id, e.department || 'Sans département');
-    const deptSize = new Map<string, number>();
-    for (const d of this.allDocuments()) {
-      const dept = empIdToDept.get(d.employeeId) || 'Sans département';
-      deptSize.set(dept, (deptSize.get(dept) || 0) + (d.fileSize || 0));
-    }
-    const total = this.docSizeTotal() || 1;
-    return Array.from(deptSize.entries())
-      .map(([name, sizeBytes]) => ({
-        name,
-        sizeBytes,
-        sizeLabel: this.formatBytes(sizeBytes),
-        pct: (sizeBytes / total) * 100
-      }))
-      .sort((a, b) => b.sizeBytes - a.sizeBytes);
-  });
+  docsPerEmployee = computed(() => this.storageAnalytics().docsPerEmployee);
+  employeesWithoutDoc = computed(() => this.storageAnalytics().employeesWithoutDoc);
+  docsThisMonthByDepartment = computed(() => this.storageAnalytics().docsThisMonthByDepartment);
+  docSizeTotal = computed(() => this.storageAnalytics().docSizeTotal);
+  storageByDepartment = computed(() => this.storageAnalytics().storageByDepartment);
 
   // Employee search
   employeeSearch = signal('');
@@ -278,10 +196,7 @@ export class RhDashboard implements OnInit, AfterViewInit, OnDestroy {
   // Computed signals – general
   totalEmployees = computed(() => this.employees().filter(e => e.status !== 'TERMINATED').length);
 
-  departmentsCount = computed(() => {
-    const depts = new Set(this.employees().map(e => e.department).filter(Boolean));
-    return depts.size;
-  });
+  departmentsCount = computed(() => countDepartments(this.employees()));
 
   filteredEmployees = computed(() => {
     const search = this.employeeSearch().toLowerCase().trim();
@@ -329,26 +244,11 @@ export class RhDashboard implements OnInit, AfterViewInit, OnDestroy {
   events = signal<CalendarEvent[]>([]);
   selectedCalendarItem: any = null;
 
-  calendarEvents = computed(() => {
-    const now = new Date();
-    const events: { title: string; date: Date; startTime: string; priority: string; type: string; raw: any }[] = [];
-    for (const ev of this.events()) {
-      const d = new Date(ev.eventDate);
-      events.push({ title: ev.title, date: d, startTime: ev.startTime || '', priority: ev.priority || 'NORMALE', type: 'event', raw: ev });
-    }
-    for (const a of this.announcements()) {
-      const d = new Date(a.createdAt);
-      events.push({ title: a.title, date: d, startTime: '', priority: a.priority, type: 'announcement', raw: a });
-    }
-    return events
-      .filter(e => e.date >= new Date(now.getFullYear(), now.getMonth(), now.getDate()))
-      .sort((a, b) => a.date.getTime() - b.date.getTime())
-      .slice(0, 6);
-  });
+  calendarEvents = computed(() => buildCalendarEvents(this.events(), this.announcements()));
 
-  get storageUsed(): string { return formatBytes(this.storageBytes()); }
-  get storageFree(): string { return formatBytes(this.diskFree()); }
-  get storageTotal(): string { return formatBytes(this.diskTotal()); }
+  get storageUsed(): string { return formatBytesBinary(this.storageBytes()); }
+  get storageFree(): string { return formatBytesBinary(this.diskFree()); }
+  get storageTotal(): string { return formatBytesBinary(this.diskTotal()); }
   get storagePercentage(): number {
     const total = this.diskTotal();
     if (total === 0) return 0;
@@ -356,25 +256,19 @@ export class RhDashboard implements OnInit, AfterViewInit, OnDestroy {
   }
 
   get docStorageUsedLabel(): string {
-    return this.formatBytes(this.docSizeTotal());
+    return this.storageAnalytics().docStorageUsedLabel;
   }
 
   get docStorageOfDiskPct(): number {
-    const total = this.diskTotal();
-    if (total <= 0) return 0;
-    return Math.min(100, +((this.docSizeTotal() / total) * 100).toFixed(1));
+    return this.storageAnalytics().docStorageOfDiskPct;
   }
 
   get diskTotalLabel(): string {
-    return this.formatBytes(this.diskTotal());
+    return this.storageAnalytics().diskTotalLabel;
   }
 
   formatBytes(bytes?: number | null): string {
-    if (bytes == null || isNaN(bytes) || bytes < 0) return '0 o';
-    if (bytes < 1024) return `${bytes} o`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} Go`;
+    return formatBytesFrench(bytes);
   }
 
   distributionColors = ['#3b82f6', '#8b5cf6', '#22c55e', '#f97316', '#ef4444', '#06b6d4', '#ec4899', '#eab308'];
@@ -393,25 +287,6 @@ export class RhDashboard implements OnInit, AfterViewInit, OnDestroy {
 
   // Helper for template
   Math = Math;
-
-  private monthSeries<T>(items: T[], months: number, dateOf: (t: T) => string): { month: string; count: number; pct: number; isCurrent: boolean }[] {
-    const counts = new Map<string, number>();
-    const now = new Date();
-    for (let i = months - 1; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      counts.set(d.toLocaleDateString('fr-FR', { month: 'short' }) + ' ' + String(d.getFullYear()).slice(2), 0);
-    }
-    for (const it of items) {
-      const v = dateOf(it);
-      if (!v) continue;
-      const d = new Date(v);
-      const key = d.toLocaleDateString('fr-FR', { month: 'short' }) + ' ' + String(d.getFullYear()).slice(2);
-      if (counts.has(key)) counts.set(key, (counts.get(key) || 0) + 1);
-    }
-    const max = Math.max(...Array.from(counts.values()), 1);
-    const currentKey = now.toLocaleDateString('fr-FR', { month: 'short' }) + ' ' + String(now.getFullYear()).slice(2);
-    return Array.from(counts.entries()).map(([month, count]) => ({ month, count, pct: (count / max) * 100, isCurrent: month === currentKey }));
-  }
 
   respColors: Array<{ bg: string; text: string }> = [
     { bg: '#eaf2ff', text: '#2563eb' },
@@ -556,25 +431,15 @@ export class RhDashboard implements OnInit, AfterViewInit, OnDestroy {
   }
 
   greeting(): string {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Bonjour';
-    if (hour < 18) return 'Bon après-midi';
-    return 'Bonsoir';
+    return currentGreeting();
   }
 
   priorityLabel(p: string): string {
-    switch (p) {
-      case 'CRITIQUE': return 'Critique';
-      case 'HAUTE': return 'Haute';
-      case 'NORMALE': return 'Normale';
-      default: return p || 'Normale';
-    }
+    return announcementPriorityLabel(p);
   }
 
   announcementEyebrow(p: string): string {
-    if (p === 'CRITIQUE') return 'Annonce importante';
-    if (p === 'HAUTE') return 'Annonce prioritaire';
-    return 'Annonce';
+    return announcementEyebrowFn(p);
   }
 
   toggleRecentGroup(employeeId: string) {
@@ -723,12 +588,4 @@ export class RhDashboard implements OnInit, AfterViewInit, OnDestroy {
       console.error('Refresh failed', err);
     }
   }
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0';
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KiB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }

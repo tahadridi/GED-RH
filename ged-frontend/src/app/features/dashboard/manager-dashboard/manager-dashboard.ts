@@ -12,6 +12,14 @@ import { Employee } from '../../../core/models/employee.model';
 import { environment } from '../../../../environments/environment';
 import { LucideUsers, LucideFolderOpen, LucideAlertCircle, LucideCheckCircle, LucideXCircle, LucideFileText, LucideChevronDown, LucideChevronRight, LucideGitBranch, LucideMegaphone, LucideCalendarDays, LucideX, LucideLayoutDashboard } from '@lucide/angular';
 import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe';
+import { buildRecentGroups, buildCalendarEvents } from '../../../shared/analytics';
+import {
+  documentTypeShortLabel,
+  employeeStatusLabel,
+  announcementPriorityLabel,
+  announcementEyebrow as announcementEyebrowFn,
+  formatDateFr
+} from '../../../shared/document-types';
 
 @Component({
   selector: 'app-manager-dashboard',
@@ -54,22 +62,7 @@ export class ManagerDashboard implements OnInit {
   events = signal<CalendarEvent[]>([]);
   selectedCalendarItem: any = null;
 
-  calendarEvents = computed(() => {
-    const now = new Date();
-    const events: { title: string; date: Date; startTime: string; priority: string; type: string; raw: any }[] = [];
-    for (const ev of this.events()) {
-      const d = new Date(ev.eventDate);
-      events.push({ title: ev.title, date: d, startTime: ev.startTime || '', priority: ev.priority || 'NORMALE', type: 'event', raw: ev });
-    }
-    for (const a of this.announcements()) {
-      const d = new Date(a.createdAt);
-      events.push({ title: a.title, date: d, startTime: '', priority: a.priority, type: 'announcement', raw: a });
-    }
-    return events
-      .filter(e => e.date >= new Date(now.getFullYear(), now.getMonth(), now.getDate()))
-      .sort((a, b) => a.date.getTime() - b.date.getTime())
-      .slice(0, 6);
-  });
+  calendarEvents = computed(() => buildCalendarEvents(this.events(), this.announcements()));
 
   teamFiltered = computed(() => {
     const p = this.authService.profile();
@@ -108,24 +101,7 @@ export class ManagerDashboard implements OnInit {
   approvedReclamations = computed(() => this.reclamations().filter(r => r.status === 'APPROVED'));
   rejectedReclamations = computed(() => this.reclamations().filter(r => r.status === 'REJECTED'));
 
-  recentGroups = computed(() => {
-    const map = new Map<string, { employeeId: string; employeeFirstName: string; employeeLastName: string; employeeMatricule: string; employeeHasPhoto: boolean; documents: any[] }>();
-    for (const doc of this.recentDocs()) {
-      const key = doc.employeeId || 'unknown';
-      if (!map.has(key)) {
-        map.set(key, {
-          employeeId: key,
-          employeeFirstName: doc.employeeFirstName || '',
-          employeeLastName: doc.employeeLastName || '',
-          employeeMatricule: doc.employeeMatricule || '',
-          employeeHasPhoto: doc.employeeHasPhoto || false,
-          documents: []
-        });
-      }
-      map.get(key)!.documents.push(doc);
-    }
-    return Array.from(map.values());
-  });
+  recentGroups = computed(() => buildRecentGroups(this.recentDocs()));
 
   constructor(
     private authService: AuthService,
@@ -225,8 +201,7 @@ export class ManagerDashboard implements OnInit {
   }
 
   statusLabel(s: string) {
-    const m: Record<string, string> = { ACTIVE: 'Actif', ON_LEAVE: 'En congé', TERMINATED: 'Terminé' };
-    return m[s] ?? s;
+    return employeeStatusLabel(s);
   }
 
   reclamationStatusLabel(s: string) {
@@ -235,28 +210,18 @@ export class ManagerDashboard implements OnInit {
   }
 
   priorityLabel(p: string) {
-    const m: Record<string, string> = { FAIBLE: 'Faible', MOYENNE: 'Moyenne', NORMALE: 'Normale', HAUTE: 'Haute', CRITIQUE: 'Critique' };
-    return m[p] ?? p;
+    return announcementPriorityLabel(p);
   }
 
   announcementEyebrow(p: string): string {
-    if (p === 'CRITIQUE') return 'Annonce importante';
-    if (p === 'HAUTE') return 'Annonce prioritaire';
-    return 'Annonce';
+    return announcementEyebrowFn(p);
   }
 
   documentTypeLabel(type: string): string {
-    const labels: Record<string, string> = {
-      EMPLOYMENT_CONTRACT: 'Contrat', PAYSLIP: 'Paie', LEAVE_REQUEST: 'Congé',
-      EVALUATION: 'Évaluation', TRAINING: 'Formation', ADMINISTRATIVE: 'Admin',
-      PERSONAL_FILE: 'Dossier', OTHER: 'Autre', INVOICE: 'Facture', CONTRACT: 'Contrat'
-    };
-    return labels[type] ?? type;
+    return documentTypeShortLabel(type);
   }
 
   formatDate(d: string) {
-    if (!d) return '';
-    const date = new Date(d);
-    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+    return formatDateFr(d);
   }
 }
