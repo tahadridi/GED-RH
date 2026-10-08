@@ -1,0 +1,38 @@
+<div *ngIf="show" class="fixed inset-0 z-50 bg-[#15213d]/50 backdrop-blur-[2px] flex items-center justify-center p-4" (click)="close.emit()">
+  <div class="bg-white rounded-[18px] shadow-[0_24px_60px_rgba(21,33,61,.28)] w-full max-w-md mx-4 overflow-hidden" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between gap-4 px-5 py-5 border-b border-[#f2f4f7]">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-[38px] h-[38px] rounded-[11px] bg-[#eaf2ff] text-[#2563eb] flex items-center justify-center shrink-0">
+          <svg lucideLayers class="w-[17px] h-[17px]"></svg>
+        </div>
+        <div class="min-w-0">
+          <div class="text-[10px] font-bold uppercase tracking-[.1em] text-[#9aa5b7] mb-0.5">Versions</div>
+          <h2 class="font-bold text-[15px] text-[#17233c] truncate">{{ doc?.name }}</h2>
+        </div>
+      </div>
+      <button (click)="close.emit()"
+        class="w-[34px] h-[34px] rounded-[9px] hover:bg-[#f6f8fb] flex items-center justify-center shrink-0" aria-label="Fermer">
+        <svg lucideX class="w-4.5 h-4.5 text-[#68758a]"></svg>
+      </button>
+    </div>
+    <div class="divide-y divide-[#eef2f7] max-h-64 overflow-y-auto">
+      <div *ngFor="let v of versions" class="p-4 flex items-center justify-between">
+        <div>
+          <p class="text-[13.5px] font-semibold text-[#17233c]">Version {{ v.versionNumber }}</p>
+          <p class="text-[12px] text-[#9aa5b7]">{{ v.createdAt | date:'dd/MM/yyyy HH:mm' }} · {{ v.uploadedBy }}</p>
+        </div>
+        <div class="flex items-center gap-1" (click)="$event.stopPropagation()">
+          <button (click)="open(v)" title="Ouvrir"
+            class="p-1.5 text-[#9aa5b7] hover:text-[#2563eb] hover:bg-[#edf4ff] rounded-[8px] transition-colors">
+            <svg lucideEye class="w-4 h-4"></svg>
+          </button>
+          <button (click)="download(v)" title="Télécharger"
+            class="p-1.5 text-[#9aa5b7] hover:text-[#16a34a] hover:bg-[#eaf8ef] rounded-[8px] transition-colors">
+            <svg lucideDownload class="w-4 h-4"></svg>
+          </button>
+        </div>
+      </div>
+      <div *ngIf="versions.length === 0" class="p-6 text-center text-[#9aa5b7] text-sm">Aucune version.</div>
+    </div>
+  </div>
+</div>
